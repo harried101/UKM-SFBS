@@ -6,12 +6,12 @@ require_once __DIR__ . '/includes/db_connect.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - UKM Sports Facilities Booking System</title>
+    <title>Login - upm Sports Facilities Booking System</title>
     <link rel="stylesheet" href="assets/css/index.css">
 </head>
 <body>
 
-    <div class="login-container">
+
         <h1>Login</h1>
 
         <form action="login.php" method="post">
