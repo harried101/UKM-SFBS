@@ -7,7 +7,7 @@ require_once __DIR__ . '/includes/db_connect.php';
 <head>
     <meta charset="UTF-8">
     <title>Login - UKM Sports Facilities Booking System</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/index.css">
 </head>
 <body>
 
