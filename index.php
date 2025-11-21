@@ -1,14 +1,30 @@
 <?php
 require_once __DIR__ . '/../includes/db_connect.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>UKM Sports Facilities Booking System</title>
+    <title>Login - UKM Sports Facilities Booking System</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Welcome to UKM Sports Facilities Booking System</h1>
-    <p>If you see this page without errors, your setup works 🎉</p>
+
+    <div class="login-container">
+        <h1>Login</h1>
+
+        <form action="login.php" method="post">
+            <label for="userIdentifier">Matric / Staff Number:</label>
+            <input type="text" id="userIdentifier" name="userIdentifier" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Log In</button>
+        </form>
+    </div>
+
 </body>
 </html>
+
