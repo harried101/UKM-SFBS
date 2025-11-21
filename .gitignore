@@ -1,0 +1,13 @@
+# OS trash
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/
+
+# Node / PHP vendors (if you add later)
+node_modules/
+vendor/
+
+# Log files
+*.log
