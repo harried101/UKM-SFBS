@@ -16,7 +16,7 @@
         }
 
 nav {
-background: #13523fff;
+background: #bfd9dc;
 padding: 10px 40px;
 border-bottom-left-radius: 25px;
 border-bottom-right-radius: 25px;
@@ -36,7 +36,7 @@ height: 65px;
 
 
 .nav-link {
-color: white;
+color: #071239ff;
 font-weight: 600;
 padding: 8px 18px;
 border-radius: 12px;
@@ -55,7 +55,7 @@ height: 45px;
 }
 
         .main-box {
-            background: #0b3d2e;
+            background: #bfd9dc;
             border-radius: 25px;
             padding: 30px;
             color: white;
@@ -72,15 +72,16 @@ height: 45px;
     letter-spacing: -1px;
     background: linear-gradient(90deg, #ffffff, #d9d9d9, #f2f2f2);
     -webkit-background-clip: text;
-    color: transparent;
+    color: #071239ff
 }
 
-        .form-label { font-weight: 600; font-size: 14px; }
+        .form-label { font-weight: 600; font-size: 14px;  color: #071239ff; }
         .form-control, .form-select, textarea {
             border-radius: 12px;
             padding: 4px 10px;
             font-size: 14px;
             margin-bottom: 4px;
+            color: #071239ff
         }
 
         .upload-box {
@@ -92,7 +93,7 @@ height: 45px;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            color: black;
+            color: #071239ff;
             font-size: 14px;
             border: 2px dashed #ccc;
             cursor: pointer;
@@ -135,7 +136,7 @@ height: 45px;
 
         <div class="d-flex align-items-center gap-1">
             <img src="user.png" class="rounded-circle" style="width:45px; height:45px;">
-            <span class="fw-bold text-white">A203914</span>
+            <span class="fw-bold" styke="color: #071239ff;">A203914</span>
         </div>
     </div>
 </nav>
