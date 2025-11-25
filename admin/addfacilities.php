@@ -136,7 +136,7 @@ height: 45px;
 
         <div class="d-flex align-items-center gap-1">
             <img src="user.png" class="rounded-circle" style="width:45px; height:45px;">
-            <span class="fw-bold" styke="color: #071239ff;">A203914</span>
+            <span class="fw-bold" style="color: #071239ff;">A203914</span>
         </div>
     </div>
 </nav>
