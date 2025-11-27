@@ -148,7 +148,7 @@ session_start();
             <div class="login-title">LOG IN</div>
 
             <!-- FORM START -->
-            <form action="auth.php" method="POST">
+            <form action="includes/auth.php" method="POST">
 
                 <!-- Username -->
                 <div class="input-group">
