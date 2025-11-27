@@ -1,17 +1,14 @@
 <?php
+// DB Configuration
+// NOTE: Ensure these credentials match your XAMPP/MySQL setup exactly.
 $host = 'localhost';
-$user = 'root';             // default for XAMPP
-$pass = '';                 // default is empty
-$dbname = 'ukm-sfbs';   // database name
+$user = 'root'; // Default XAMPP/WAMP user
+$pass = ''; // Default XAMPP/WAMP password (often blank)
+$dbname = 'ukm-sfbs'; 
 
-// Create connection
+// Establish the connection
 $conn = new mysqli($host, $user, $pass, $dbname);
 
-// Check connection
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
-}
-
-// Uncomment this line to test connection:
-// echo "Database connected successfully!";
+// Note: Connection error handling is performed in the calling script (e.g., login_processor.php)
+// to ensure a clean JSON error response is sent back to the frontend.
 ?>
