@@ -8,10 +8,13 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = trim($_POST['userIdentifier']);
+    $email = trim($_POST['email']);
+    $firstName = trim($_POST['firstName']);
+    $lastName = trim($_POST['lastName']);
     $pass = $_POST['password'];
 
-    if (empty($id) || empty($pass)) {
-        $message = '<div class="alert alert-danger">Please fill in all fields.</div>';
+    if (empty($id) || empty($email) || empty($pass)) {
+        $message = '<div class="alert alert-danger">Please fill in all required fields.</div>';
     } else {
         // Determine Role
         $firstLetter = strtoupper(substr($id, 0, 1));
@@ -29,9 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($pass, PASSWORD_DEFAULT);
 
             // Insert
-            $sql = "INSERT INTO users (UserIdentifier, PasswordHash, Role) VALUES (?, ?, ?)";
+            $sql = "INSERT INTO users (UserIdentifier, Email, PasswordHash, FirstName, LastName, Role) VALUES (?, ?, ?, ?, ?, ?)";
             if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("sss", $id, $hash, $role);
+                $stmt->bind_param("ssssss", $id, $email, $hash, $firstName, $lastName, $role);
                 if ($stmt->execute()) {
                     $message = '<div class="alert alert-success">User <strong>' . htmlspecialchars($id) . '</strong> (' . $role . ') created successfully!</div>';
                 } else {
@@ -65,11 +68,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <form method="POST">
         <div class="mb-3">
-            <label class="form-label">User ID (e.g., A204024, K204024)</label>
+            <label class="form-label">User ID (e.g., A204024, K204024) *</label>
             <input type="text" name="userIdentifier" class="form-control" required placeholder="A... or K...">
         </div>
         <div class="mb-3">
-            <label class="form-label">Password</label>
+            <label class="form-label">Email *</label>
+            <input type="email" name="email" class="form-control" required placeholder="name@example.com">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" name="firstName" class="form-control" placeholder="First Name">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="lastName" class="form-control" placeholder="Last Name">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Password *</label>
             <input type="password" name="password" class="form-control" required>
         </div>
         <button type="submit" class="btn btn-primary w-100">Create User</button>
