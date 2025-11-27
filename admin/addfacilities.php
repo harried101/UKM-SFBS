@@ -273,7 +273,7 @@ textarea {
                         <input type="number" class="form-control" name="Capacity" required>
                     </div>
 
-                    <div class="text-center mb-2">
+                    <div class="mb-2">
                         <label class="form-label d-block">Upload Photo</label>
                         <input type="file" name="PhotoURL" class="form-control" accept="image/*">
                     </div>
