@@ -13,49 +13,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    // Check user exists
-    $sql = "SELECT * FROM users WHERE matric_number = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $matric);
-    $stmt->execute();
-    $result = $stmt->get_result();
+   // Corrected SQL
+$sql = "SELECT * FROM users WHERE UserIdentifier = ?";
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
+$stmt->bind_param("s", $matric);
+$stmt->execute();
+$result = $stmt->get_result();
 
-    if ($result->num_rows == 1) {
+if ($result->num_rows == 1) {
 
-        $user = $result->fetch_assoc();
+    $user = $result->fetch_assoc();
 
-        // Check password
-        if (password_verify($password, $user['password'])) {
+    // Check password
+    if (password_verify($password, $user['PasswordHash'])) {
 
-            $_SESSION['user'] = $user; // store user data
+        $_SESSION['user'] = $user; // store user data
 
-            // ROLE DETECTION BY FIRST LETTER
-            $first = $matric[0];
+        // ROLE DETECTION BY FIRST LETTER
+        $first = strtolower($matric[0]);
 
-            if ($first == "a") {
-                header("Location: ../student/dashboard.php");
-                exit();
-            }
-
-            if ($first == "k") {
-                header("Location: ../admin/dashboard.php");
-                exit();
-            }
-
-            $_SESSION['error'] = "Invalid role.";
-            header("Location: index.php");
-            exit();
-
-        } else {
-            $_SESSION['error'] = "Incorrect password.";
-            header("Location: index.php");
+        if ($first == "a") {
+            header("Location: ../student/dashboard.php");
             exit();
         }
 
+        if ($first == "k") {
+            header("Location: ../admin/dashboard.php");
+            exit();
+        }
+
+        $_SESSION['error'] = "Invalid role.";
+        header("Location: index.php");
+        exit();
+
     } else {
-        $_SESSION['error'] = "Matric number not found.";
+        $_SESSION['error'] = "Incorrect password.";
         header("Location: index.php");
         exit();
     }
+
+} else {
+    $_SESSION['error'] = "Matric number not found.";
+    header("Location: index.php");
+    exit();
+}
 }
 ?>
