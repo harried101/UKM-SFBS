@@ -137,7 +137,7 @@ session_start();
             <img src="pusatsukan.png" width="120">
         </div>
 
-        <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
+        <h1><b>UKM Sport<br>Facilities Bookings<br>System</b></h1>
     </div>
 
 
