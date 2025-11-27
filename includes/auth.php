@@ -33,12 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $first = $matric[0];
 
             if ($first == "a") {
-                header("Location: student/dashboard.php");
+                header("Location: ../student/dashboard.php");
                 exit();
             }
 
             if ($first == "k") {
-                header("Location: admin/dashboard.php");
+                header("Location: ../admin/dashboard.php");
                 exit();
             }
 
