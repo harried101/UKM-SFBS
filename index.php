@@ -27,7 +27,7 @@
             background-size: cover;
             background-position: center;
             color: white;
-            padding: 20px 50px 50px 50px; /* moved content higher */
+            padding: 20px 50px 50px 50px;
         }
 
         /* Move logos up */
@@ -42,8 +42,6 @@
             margin-top: 100px; 
             line-height: 1.2;
         }
-
-    
 
         /* Right login box */
         .right-panel {
@@ -104,60 +102,86 @@
             font-size: 20px;
             cursor: pointer;
         }
+
+        /* Error Message */
+        .error-box {
+            margin-top: 15px;
+            color: #b30000;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .logos {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
 
-     <!-- LEFT SIDE -->
-<style>
-.left-panel .logos {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    width: 100%;
-}
-</style>
+<?php 
+session_start(); 
+?>
 
-<div class="left-panel">
-    <div class="logos">
-        <img src="logo.png" width="120">
-        <img src="pusatsukan.png" width="120">
+<div class="container">
+
+    <!-- LEFT SIDE -->
+    <div class="left-panel">
+        <div class="logos">
+            <img src="logo.png" width="120">
+            <img src="pusatsukan.png" width="120">
+        </div>
+
+        <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
     </div>
 
-    <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
 
-</div>
+    <!-- RIGHT SIDE -->
+    <div class="right-panel">
+        <div class="login-box">
 
+            <div class="login-title">LOG IN</div>
 
-        <!-- RIGHT SIDE -->
-        <div class="right-panel">
-            <div class="login-box">
-
-                <div class="login-title">LOG IN</div>
+            <!-- FORM START -->
+            <form action="auth.php" method="POST">
 
                 <!-- Username -->
                 <div class="input-group">
                     <i>👤</i>
-                    <input type="text" placeholder="Username">
+                    <input type="text" name="matric" placeholder="Matric Number" required>
                 </div>
 
                 <!-- Password -->
                 <div class="input-group">
                     <i>🔒</i>
-                    <input type="password" placeholder="Password">
+                    <input type="password" name="password" placeholder="Password" required>
                     <i style="margin-left:10px;">👁️</i>
                 </div>
 
                 <div class="forgot">Forgot Password?</div>
 
-                <button class="login-btn">Log in</button>
-            </div>
-        </div>
+                <button class="login-btn" type="submit">Log in</button>
 
+                <!-- Error message -->
+                <?php 
+                if (isset($_SESSION['error'])) {
+                    echo "<div class='error-box'>".$_SESSION['error']."</div>";
+                    unset($_SESSION['error']);
+                }
+                ?>
+
+            </form>
+            <!-- FORM END -->
+
+        </div>
     </div>
+
+</div>
+
 </body>
 </html>
