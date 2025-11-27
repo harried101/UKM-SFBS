@@ -1,3 +1,15 @@
+<?php
+session_start();
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    if ($_SESSION['role'] === 'Admin') {
+        header("Location: admin/dashboard.php");
+        exit();
+    } elseif ($_SESSION['role'] === 'Student') {
+        header("Location: student/dashboard.php");
+        exit();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

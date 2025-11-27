@@ -36,7 +36,8 @@
         <a href="addfacilities.php" class="dashboard-btn">➕ Add New Facility</a>
         
         <!-- Button to return to the login screen -->
-        <button onclick="window.location.href='../index.php'" class="dashboard-btn">↩️ Return to Login</button>
+        <!-- Button to log out -->
+        <a href="../logout.php" class="dashboard-btn">🚪 Log Out</a>
     </div>
 </body>
 </html>

@@ -74,6 +74,13 @@ if ($stmt = $conn->prepare($sql)) {
         if (password_verify($password, $stored_hash)) {
             
             $role = $user['Role'];
+            
+            // --- START SESSION AND STORE USER DATA ---
+            session_start();
+            $_SESSION['user_id'] = $identifier; 
+            $_SESSION['role'] = $role;
+            $_SESSION['logged_in'] = true;
+
             $response = [
                 'status' => 'success',
                 'message' => 'Login successful.',
