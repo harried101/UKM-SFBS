@@ -75,18 +75,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ---- Insert into database (Prepared Statement) ----
+    //Insert into database
     $sql = "INSERT INTO facilities 
             (FacilityID, Name, Description, Location, Type, Capacity, PhotoURL, Status) 
             VALUES 
             (?, ?, ?, ?, ?, ?, ?, ?)";
 
     if ($stmt = $conn->prepare($sql)) {
-        // Bind parameters: s=string, i=integer
-        // FacilityID(s), Name(s), Description(s), Location(s), Type(s), Capacity(i), PhotoURL(s), Status(s)
-        // Note: Capacity might be int in DB, but POST sends string. PHP handles type juggling, but 's' is safe for all.
-        // Let's assume Capacity is INT in DB, so 'i' or 's' works. 's' is safest if we are unsure of exact DB schema.
-        $stmt->bind_param("ssssssss", $id, $name, $description, $location, $type, $capacity, $newPhotoName, $status);
+        
+        $stmt->bind_param("sssssiss", $id, $name, $description, $location, $type, $capacity, $newPhotoName, $status);
         
         if ($stmt->execute()) {
             echo "<script>alert('Facility added successfully'); window.location='addfacilities.php';</script>";
