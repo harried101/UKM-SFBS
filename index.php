@@ -20,28 +20,71 @@
             height: 100vh;
         }
 
+        /* Responsive adjustments for mobile/smaller screens */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            .left-panel, .right-panel {
+                width: 100%;
+                min-height: 50vh;
+            }
+            .left-panel {
+                display: none; 
+            }
+            .right-panel {
+                border-radius: 0;
+                padding: 40px 20px;
+            }
+            .login-box {
+                width: 90%;
+            }
+            .login-title {
+                font-size: 40px;
+                margin-top: 0;
+            }
+        }
+        
         /* Left side background */
         .left-panel {
             width: 50%;
-            background-image: url('court.jpg');
+            background-image: url('court.jpg'); 
             background-size: cover;
             background-position: center;
             color: white;
-            padding: 20px 50px 50px 50px;
+            padding: 50px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
         }
 
         /* Move logos up */
-        .left-panel img {
-            display: block;
-            margin-bottom: 10px;
+        .left-panel .logos {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
         }
 
+        .left-panel img {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
         .left-panel h1 {
+            font-family: "Playfair Display", serif;
             font-size: 45px;
             font-weight: 700;
             margin-top: 100px; 
             line-height: 1.2;
         }
+
 
         /* Right login box */
         .right-panel {
@@ -65,6 +108,35 @@
             margin-bottom: 30px;
         }
 
+        /* Added Styles for Messages/Spinner */
+        .message-box {
+            background: #ffebeb;
+            color: #b30e22;
+            border: 1px solid #b30e22;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+            display: none; /* Hidden by default */
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #b30e22;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none; 
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Existing styles */
         .input-group {
             background: white;
             border-radius: 30px;
@@ -72,6 +144,7 @@
             align-items: center;
             padding: 10px 20px;
             margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .input-group input {
@@ -101,87 +174,158 @@
             border-radius: 30px;
             font-size: 20px;
             cursor: pointer;
+            transition: background 0.3s ease;
         }
-
-        /* Error Message */
-        .error-box {
-            margin-top: 15px;
-            color: #b30000;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .logos {
-            display: flex !important;
-            flex-direction: row !important;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
+        
+        .login-btn:hover {
+            background: #8a0d19;
         }
     </style>
 </head>
 
 <body>
+    <div class="container">
 
-<?php 
-session_start(); 
-?>
+        <!-- LEFT SIDE -->
+        <div class="left-panel">
+            <div class="logos">
+                <img src="logo.png" width="120" onerror="this.src='https://placehold.co/120x120/8a0d19/FFFFFF?text=UKM'">
+                <img src="pusatsukan.png" width="120" onerror="this.src='https://placehold.co/120x120/004c99/FFFFFF?text=Pusat+Sukan'">
+            </div>
 
-<div class="container">
-
-    <!-- LEFT SIDE -->
-    <div class="left-panel">
-        <div class="logos">
-            <img src="logo.png" width="120">
-            <img src="pusatsukan.png" width="120">
+            <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
         </div>
 
-        <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-panel">
+            <div class="login-box">
+
+                <div class="login-title">LOG IN</div>
+                
+                <div id="messageBox" class="message-box"></div>
+
+                <form id="loginForm"> 
+
+                    <!-- Username -->
+                    <div class="input-group">
+                        <i>👤</i>
+                        <input type="text" id="userIdentifier" name="userIdentifier" placeholder="Matric/Staff Number" required>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="input-group">
+                        <i>🔒</i>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        <i id="togglePassword" style="margin-left:10px; cursor: pointer;">👁️</i>
+                    </div>
+
+                    <div class="forgot">Forgot Password?</div>
+
+                    <button type="submit" id="loginBtn" class="login-btn">
+                        <span id="loginText">Log in</span>
+                        <div id="spinner" class="loading-spinner"></div>
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
     </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+            const identifierInput = document.getElementById('userIdentifier');
+            const passwordInput = document.getElementById('password');
+            const messageBox = document.getElementById('messageBox');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const spinner = document.getElementById('spinner');
+            const togglePassword = document.getElementById('togglePassword');
 
+            // CRITICAL: This points the AJAX request to the DEDICATED PHP handler file
+            const LOGIN_ENDPOINT = 'login_processor.php'; 
 
-    <!-- RIGHT SIDE -->
-    <div class="right-panel">
-        <div class="login-box">
+            const showMessage = (message, isError = true) => {
+                messageBox.textContent = message;
+                messageBox.style.display = 'block';
+                messageBox.style.backgroundColor = isError ? '#ffebeb' : '#e6ffe6';
+                messageBox.style.color = isError ? '#b30e22' : '#006400';
+                messageBox.style.borderColor = isError ? '#b30e22' : '#006400';
+            };
 
-            <div class="login-title">LOG IN</div>
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault(); 
 
-            <!-- FORM START -->
-            <form action="includes/auth.php" method="POST">
+                loginText.style.display = 'none';
+                spinner.style.display = 'block';
+                loginBtn.disabled = true;
+                messageBox.style.display = 'none';
 
-                <!-- Username -->
-                <div class="input-group">
-                    <i>👤</i>
-                    <input type="text" name="matric" placeholder="Matric Number" required>
-                </div>
+                const credentials = {
+                    userIdentifier: identifierInput.value,
+                    password: passwordInput.value
+                };
+                
+                try {
+                    const response = await fetch(LOGIN_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(credentials)
+                    });
 
-                <!-- Password -->
-                <div class="input-group">
-                    <i>🔒</i>
-                    <input type="password" name="password" placeholder="Password" required>
-                    <i style="margin-left:10px;">👁️</i>
-                </div>
+                    if (!response.ok) {
+                         const errorBody = await response.text();
+                         throw new Error(`Server returned status ${response.status}: ${errorBody.substring(0, 100)}...`);
+                    }
 
-                <div class="forgot">Forgot Password?</div>
+                    const result = await response.json();
 
-                <button class="login-btn" type="submit">Log in</button>
+                    loginText.style.display = 'inline';
+                    spinner.style.display = 'none';
+                    loginBtn.disabled = false;
+                    
+                    if (result.status === 'success') {
+                        showMessage(result.message, false); 
+                        
+                        setTimeout(() => {
+                            if (result.role === 'Admin') {
+                                window.location.href = 'admin/dashboard.php'; // PHP file extension
+                            } else if (result.role === 'Student') {
+                                window.location.href = 'student/dashboard.php'; // PHP file extension
+                            } else {
+                                console.error("Unknown user role:", result.role);
+                            }
+                        }, 1000); 
 
-                <!-- Error message -->
-                <?php 
-                if (isset($_SESSION['error'])) {
-                    echo "<div class='error-box'>".$_SESSION['error']."</div>";
-                    unset($_SESSION['error']);
+                    } else {
+                        showMessage(result.message, true);
+                    }
+
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    loginText.style.display = 'inline';
+                    spinner.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showMessage('An unexpected server or network error occurred. Check the console for details.', true);
                 }
-                ?>
-
-            </form>
-            <!-- FORM END -->
-
-        </div>
-    </div>
-
-</div>
-
+            });
+            
+            // Toggle Password Visibility
+            togglePassword.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    togglePassword.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    togglePassword.textContent = '👁️';
+                }
+            });
+            
+        });
+    </script>
 </body>
 </html>
