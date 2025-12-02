@@ -1,10 +1,7 @@
 <?php
 
- //connect db here
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "ukm-sfbs";
+require_once '../includes/db_connect.php';
+
 $limit = 4; 
 $page = $_GET['page'] ?? 1;
 $page = max(1, (int)$page);
@@ -137,39 +134,45 @@ document.getElementById('typeFilter').addEventListener('change', function(){
         </div>
 
      <!-- FACILITIES GRID -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     <?php while ($row = $result->fetch_assoc()): ?>
 
         <?php
-            // Prepare image URL from DB
-            $img = $row['PhotoURL'];
-            if ($img == "" || $img == null) {
-                $img = "https://placehold.co/600x400?text=No+Image";
-            }
+        $img = $row['PhotoURL'];
+        $img = ($img) ? "../admin/uploads/" . $img : "https://placehold.co/600x400?text=No+Image";
         ?>
 
-        <div class="facility-card shadow-sm hover:shadow-lg">
-            <img src="<?php echo $img; ?>" class="w-full h-48 object-cover">
+        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
 
-            <div class="p-5">
-                <h3 class="text-lg font-bold text-gray-800">
-                    <?php echo $row['Name']; ?>
+            <!-- Image -->
+            <div class="h-44 w-full overflow-hidden">
+                <img src="<?= $img ?>" 
+                     class="w-full h-full object-cover hover:scale-105 transition-all duration-300">
+            </div>
+
+            <!-- Content -->
+            <div class="p-5 flex flex-col h-48">
+
+                <h3 class="text-lg font-semibold text-gray-800 mb-1 leading-tight">
+                    <?= $row['Name'] ?>
                 </h3>
 
-                <p class="text-gray-500 text-sm mb-2">
-                    <?php echo $row['Location']; ?>
+                <p class="text-sm text-gray-500 mb-1">
+                    <i class="fa-solid fa-location-dot mr-1 text-blue-600"></i>
+                    <?= $row['Location'] ?>
                 </p>
 
-                <!-- DESCRIPTION FROM DATABASE -->
-                <p class="text-gray-600 text-sm mb-6">
-                    <?php echo $row['Description']; ?>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                    <?= $row['Description'] ?>
                 </p>
 
-                <a href="check_availability.php?id=<?php echo $row['FacilityID']; ?>" 
-                   class="btn-check">
-                   Check Availability
+                <a href="check_availability.php?id=<?= $row['FacilityID'] ?>"
+                   class="mt-auto block text-center bg-blue-600 hover:bg-blue-700 
+                          text-white font-semibold py-2 rounded-lg transition">
+                    Check Availability
                 </a>
             </div>
+
         </div>
 
     <?php endwhile; ?>
