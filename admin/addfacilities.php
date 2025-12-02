@@ -1,27 +1,17 @@
 <?php
 session_start();
 
-// ----------------------------
-// ACCESS CONTROL
-// ----------------------------
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
     header("Location: ../index.php");
     exit();
 }
 
-// ----------------------------
-// DATABASE CONNECTION
-// ----------------------------
 require_once '../includes/db_connect.php';
 
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
 
-// ----------------------------
-// AUTO GENERATE FACILITY ID
-// Format: F001, F002, F003 ...
-// ----------------------------
 function generateFacilityID($conn) {
     $result = $conn->query("SELECT FacilityID FROM facilities ORDER BY FacilityID DESC LIMIT 1");
     if ($result->num_rows == 0) {
@@ -36,9 +26,6 @@ function generateFacilityID($conn) {
 
 $newFacilityID = generateFacilityID($conn);
 
-// ----------------------------
-// FORM SUBMISSION LOGIC
-// ----------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id = $_POST['FacilityID'] ?? '';
@@ -49,20 +36,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $capacity = $_POST['Capacity'] ?? '';
     $status = $_POST['Status'] ?? '';
 
-    // ---- Handle File Upload ----
     $newPhotoName = '';
     if (!empty($_FILES['PhotoURL']['name'])) {
         $photoTmp = $_FILES['PhotoURL']['tmp_name'];
         $photoName = $_FILES['PhotoURL']['name'];
         $ext = pathinfo($photoName, PATHINFO_EXTENSION);
         
-        // Basic validation for image extension
+        //make sure format image 
         $allowed = ['jpg', 'jpeg', 'png', 'gif'];
         if (in_array(strtolower($ext), $allowed)) {
             $newPhotoName = $id . "_" . time() . "." . $ext;
             $uploadDir = "uploads/";
             
-            // Ensure upload directory exists
+            //directory image after upload
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);
             }
@@ -75,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    //Insert into database
     $sql = "INSERT INTO facilities 
             (FacilityID, Name, Description, Location, Type, Capacity, PhotoURL, Status) 
             VALUES 
@@ -114,7 +99,6 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
-/* NAVBAR */
 nav {
     background: #bfd9dc;
     padding: 10px 40px;
@@ -206,7 +190,6 @@ textarea {
     border-radius: 10px;
 }
 
-/* Status colors */
 .status-active { background:#2e7d32; color:white; }
 .status-maintenance { background:#f9a825; color:black; }
 .status-archived { background:#b71c1c; color:white; }
@@ -215,7 +198,6 @@ textarea {
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav class="d-flex justify-content-between align-items-center px-4 py-2">
     <div class="nav-logo d-flex align-items-center gap-3">
         <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
@@ -234,7 +216,6 @@ textarea {
     </div>
 </nav>
 
-<!-- FORM -->
 <div class="container">
     <div class="main-box position-relative">
         <h1>ADD NEW FACILITY</h1>
