@@ -25,6 +25,7 @@
     <h1>✅ STUDENT DASHBOARD LOADED SUCCESSFULLY!</h1>
     <p>Authentication and redirect successful for Student ID: A204024.</p>
     <p>This screen confirms the successful completion of the entire Login/Authentication process.</p>
+    <a href="../student/student_facilities.php" class="dashboard-btn">🚪 Facility List</a>
     <a href="../logout.php" class="dashboard-btn">🚪 Log Out</a>
 </body>
 </html>
