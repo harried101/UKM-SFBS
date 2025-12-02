@@ -1,9 +1,12 @@
 <?php
 
  //connect db here
-include '../includes/db_connect.php';
+$host = "localhost";
+$user = "root";
+$pass = "";
+$dbname = "ukm-sfbs";
 
-// Connection established in included file
+$conn = new mysqli($host, $user, $pass, $dbname);
 
 if ($conn->connect_error) {
     die("DB Connection Failed: " . $conn->connect_error);
@@ -13,7 +16,7 @@ if ($conn->connect_error) {
 $search = $_GET['search'] ?? "";
 $type   = $_GET['type'] ?? "";
 
-//yang ni untul fetch active facilities sahaja
+//yang ni untuk fetch active facilities sahaja
 $sql = "SELECT * FROM facilities WHERE Status='Active' ";
 
 if ($search !== "") {
@@ -26,6 +29,11 @@ if ($type !== "") {
     $sql .= " AND Type = '$type' ";
 }
 
+$totalResult = $conn->query($sql);
+$total = $totalResult->num_rows;
+$totalPages = ceil($total / $limit);
+
+$sql .= " LIMIT $offset, $limit";
 $result = $conn->query($sql);
 
 //for list (the dropdown)
@@ -34,6 +42,7 @@ $types = [];
 while ($row = $typeResult->fetch_assoc()) {
     $types[] = $row['Type'];
 }
+
 
 ?>
 <!DOCTYPE html>
@@ -48,9 +57,7 @@ while ($row = $typeResult->fetch_assoc()) {
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
+        body { font-family: 'Poppins', sans-serif; }
         .btn-check {
             background-color: #1a73e8;
             color: white;
@@ -60,11 +67,9 @@ while ($row = $typeResult->fetch_assoc()) {
             text-align: center;
             border-radius: 6px;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: .8rem;
         }
-        .btn-check:hover {
-            background-color: #1557b0;
-        }
+        .btn-check:hover { background-color: #1557b0; }
         .facility-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
@@ -74,88 +79,115 @@ while ($row = $typeResult->fetch_assoc()) {
 
 <body class="text-gray-800">
 
-    <!-- 1. HEADER -->
+    <!-- HEADER -->
     <header class="flex justify-between items-center py-6 px-10 border-b border-gray-100">
         <div class="text-2xl font-bold leading-tight">
             SPORT FACILITIES<br>BOOKING SYSTEM
         </div>
-        <div class="flex items-center gap-3">
-            <img src="https://placehold.co/40x40/ccc/fff?text=A" class="rounded-full w-10 h-10">
-            <span class="font-medium">Aina</span>
+        <div class="flex items-center gap-6">
+            <!-- Home Button -->
+            <a href="dashboard.php" class="flex items-center gap-2 text-gray-600 hover:text-[#1a73e8] font-semibold transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                HOME
+            </a>
+            <div class="flex items-center gap-3">
+                <img src="https://placehold.co/40x40/ccc/fff?text=A" class="rounded-full w-10 h-10">
+                <span class="font-medium">Aina</span>
+            </div>
         </div>
     </header>
 
-    <!-- 2. MAIN CONTENT -->
+    <!-- MAIN CONTENT -->
     <main class="container mx-auto px-6 py-10">
         
         <!-- Title & Search -->
         <div class="text-center mb-10 relative">
             <h1 class="text-4xl font-bold text-slate-700">Facilities List</h1>
-            
-            <!-- Search bar positioned absolutely to the right (desktop) or stacked (mobile) -->
-            <div class="mt-6 md:absolute md:right-0 md:top-0 md:mt-2 flex items-center justify-end">
-                <input type="text" placeholder="Search..." class="search-input text-sm">
+
+            <form method="GET" 
+                class="mt-6 md:absolute md:right-0 md:top-0 md:mt-2 flex items-center justify-end">
+
+                <input type="text" name="search" placeholder="Search..." 
+                       value="<?php echo $search; ?>" 
+                       class="text-sm border px-3 py-2 rounded">
+
+            <select id="typeFilter" name="type" class="ml-2 border px-3 py-2 text-sm rounded">
+    <option value="">All Types</option>
+    <?php foreach($types as $t): ?>
+        <option value="<?php echo $t; ?>" <?php if($type==$t) echo "selected"; ?>>
+            <?php echo $t; ?>
+        </option>
+    <?php endforeach; ?>
+</select>
+
+<script>
+document.getElementById('typeFilter').addEventListener('change', function(){
+    const type = this.value;
+    const search = document.querySelector('input[name="search"]').value;
+    window.location.href = `student_facilities.php?type=${type}&search=${search}`;
+});
+</script>
+
+
                 <button class="ml-2 text-gray-500">
-                    <!-- Search Icon SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                 </button>
+            </form>
+        </div>
+
+     <!-- FACILITIES GRID -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <?php while ($row = $result->fetch_assoc()): ?>
+
+        <?php
+            // Prepare image URL from DB
+            $img = $row['PhotoURL'];
+            if ($img == "" || $img == null) {
+                $img = "https://placehold.co/600x400?text=No+Image";
+            }
+        ?>
+
+        <div class="facility-card shadow-sm hover:shadow-lg">
+            <img src="<?php echo $img; ?>" class="w-full h-48 object-cover">
+
+            <div class="p-5">
+                <h3 class="text-lg font-bold text-gray-800">
+                    <?php echo $row['Name']; ?>
+                </h3>
+
+                <p class="text-gray-500 text-sm mb-2">
+                    <?php echo $row['Location']; ?>
+                </p>
+
+                <!-- DESCRIPTION FROM DATABASE -->
+                <p class="text-gray-600 text-sm mb-6">
+                    <?php echo $row['Description']; ?>
+                </p>
+
+                <a href="check_availability.php?id=<?php echo $row['FacilityID']; ?>" 
+                   class="btn-check">
+                   Check Availability
+                </a>
             </div>
         </div>
 
-        <!-- 3. THE GRID (The container for cards) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <?php endwhile; ?>
+</div>
 
-            <!-- CARD 1: Badminton -->
-            <div class="facility-card shadow-sm hover:shadow-lg">
-                <img src="https://placehold.co/600x400/2F4F4F/ffffff?text=Badminton" class="w-full h-48 object-cover">
-                <div class="p-5">
-                    <h3 class="text-lg font-bold text-gray-800">Badminton Court</h3>
-                    <p class="text-gray-500 text-sm mb-6">Kolej Keris Mas</p>
-                    <a href="#" class="btn-check">Check Availability</a>
-                </div>
-            </div>
-
-            <!-- CARD 2: Basketball -->
-            <div class="facility-card shadow-sm hover:shadow-lg">
-                <img src="https://placehold.co/600x400/D2691E/ffffff?text=Basketball" class="w-full h-48 object-cover">
-                <div class="p-5">
-                    <h3 class="text-lg font-bold text-gray-800">Basketball Court</h3>
-                    <p class="text-gray-500 text-sm mb-6">Dewan Gemilang</p>
-                    <a href="#" class="btn-check">Check Availability</a>
-                </div>
-            </div>
-
-            <!-- CARD 3: Football -->
-            <div class="facility-card shadow-sm hover:shadow-lg">
-                <img src="https://placehold.co/600x400/228B22/ffffff?text=Football" class="w-full h-48 object-cover">
-                <div class="p-5">
-                    <h3 class="text-lg font-bold text-gray-800">Football Court</h3>
-                    <p class="text-gray-500 text-sm mb-6">Padang D</p>
-                    <a href="#" class="btn-check">Check Availability</a>
-                </div>
-            </div>
-
-            <!-- CARD 4: Futsal -->
-            <div class="facility-card shadow-sm hover:shadow-lg">
-                <img src="https://placehold.co/600x400/4169E1/ffffff?text=Futsal" class="w-full h-48 object-cover">
-                <div class="p-5">
-                    <h3 class="text-lg font-bold text-gray-800">Futsal Court</h3>
-                    <p class="text-gray-500 text-sm mb-6">Kolej Pendeta Zaba</p>
-                    <a href="#" class="btn-check">Check Availability</a>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- 4. PAGINATION (Bottom numbers) -->
-        <div class="flex justify-end mt-12 gap-3 text-sm font-medium text-gray-600">
-            <span class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full cursor-pointer hover:bg-gray-100">1</span>
-            <span class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full cursor-pointer hover:bg-gray-100">2</span>
-            <span class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full cursor-pointer hover:bg-gray-100">3</span>
-            <span class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full cursor-pointer hover:bg-gray-100">4</span>
-            <span class="flex items-center">...</span>
-            <span class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full cursor-pointer hover:bg-gray-100">10</span>
-        </div>
+<div class="flex justify-center mt-8 gap-2">
+    <?php for($i=1; $i<=$totalPages; $i++): ?>
+        <a href="?page=<?php echo $i; ?>&search=<?php echo $search; ?>&type=<?php echo $type; ?>"
+           class="w-8 h-8 flex items-center justify-center border rounded hover:bg-gray-100
+                  <?php echo $i==$page?'bg-blue-500 text-white':''; ?>">
+           <?php echo $i; ?>
+        </a>
+    <?php endfor; ?>
+</div>
 
     </main>
 
