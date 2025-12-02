@@ -1,19 +1,21 @@
 <?php
 
- //connect db here
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "ukm-sfbs";
+session_start();
+
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../index.php");
+    exit();
+}
+
+require_once '../includes/db_connect.php';
+
+if ($conn->connect_error) {
+    die("DB Connection failed: " . $conn->connect_error);
+}
 $limit = 4; 
 $page = $_GET['page'] ?? 1;
 $page = max(1, (int)$page);
 $offset = ($page - 1) * $limit;
-$conn = new mysqli($host, $user, $pass, $dbname);
-
-if ($conn->connect_error) {
-    die("DB Connection Failed: " . $conn->connect_error);
-}
 
 //put search and get from db
 $search = $_GET['search'] ?? "";
