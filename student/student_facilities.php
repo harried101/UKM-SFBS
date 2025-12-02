@@ -1,60 +1,80 @@
+<?php
+
+ //connect db here
+$host = "localhost";
+$user = "root";
+$pass = "";
+$dbname = "ukm_sfbs";
+
+$conn = new mysqli($host, $user, $pass, $dbname);
+
+if ($conn->connect_error) {
+    die("DB Connection Failed: " . $conn->connect_error);
+}
+
+//put search and get from db
+$search = $_GET['search'] ?? "";
+$type   = $_GET['type'] ?? "";
+
+//yang ni untul fetch active facilities sahaja
+$sql = "SELECT * FROM facilities WHERE Status='Active' ";
+
+if ($search !== "") {
+    $search = $conn->real_escape_string($search);
+    $sql .= " AND Name LIKE '$search%' ";
+}
+
+if ($type !== "") {
+    $type = $conn->real_escape_string($type);
+    $sql .= " AND Type = '$type' ";
+}
+
+$result = $conn->query($sql);
+
+//for list (the dropdown)
+$typeResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status='Active'");
+$types = [];
+while ($row = $typeResult->fetch_assoc()) {
+    $types[] = $row['Type'];
+}
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facilities List - UKM SFBS</title>
-    <!-- Load Google Fonts (Poppins) -->
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Load Tailwind CSS for easy layout -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #ffffff;
         }
-        
-        /* Custom Blue Button matching your design */
         .btn-check {
-            background-color: #1a73e8; /* The specific blue from your image */
+            background-color: #1a73e8;
             color: white;
             font-weight: 600;
+            padding: 10px;
+            display: block;
+            text-align: center;
+            border-radius: 6px;
             text-transform: uppercase;
             font-size: 0.85rem;
-            padding: 10px 0;
-            width: 100%;
-            border-radius: 6px;
-            transition: background 0.3s;
-            text-align: center;
-            display: block;
         }
         .btn-check:hover {
             background-color: #1557b0;
-        }
-
-        /* Card Styling */
-        .facility-card {
-            border: 1px solid #eee;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            background: white;
         }
         .facility-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
-
-        /* Search Input Styling */
-        .search-input {
-            border-bottom: 1px solid #ccc;
-            padding: 8px;
-            outline: none;
-            width: 300px;
-        }
     </style>
 </head>
+
 <body class="text-gray-800">
 
     <!-- 1. HEADER -->
