@@ -1,13 +1,18 @@
 <?php
+session_start();
+
+// ----------------------------
+// ACCESS CONTROL
+// ----------------------------
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../index.php");
+    exit();
+}
+
 // ----------------------------
 // DATABASE CONNECTION
 // ----------------------------
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "ukm-sfbs";
-
-$conn = new mysqli($host, $user, $pass, $dbname);
+require_once '../includes/db_connect.php';
 
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
@@ -50,24 +55,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $photoTmp = $_FILES['PhotoURL']['tmp_name'];
         $photoName = $_FILES['PhotoURL']['name'];
         $ext = pathinfo($photoName, PATHINFO_EXTENSION);
-        $newPhotoName = $id . "_" . time() . "." . $ext;
-        $uploadDir = "uploads/";
+        
+        // Basic validation for image extension
+        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        if (in_array(strtolower($ext), $allowed)) {
+            $newPhotoName = $id . "_" . time() . "." . $ext;
+            $uploadDir = "uploads/";
+            
+            // Ensure upload directory exists
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
 
-        if (!move_uploaded_file($photoTmp, $uploadDir . $newPhotoName)) {
-            die("Error uploading image.");
+            if (!move_uploaded_file($photoTmp, $uploadDir . $newPhotoName)) {
+                die("Error uploading image.");
+            }
+        } else {
+            echo "<script>alert('Invalid file type. Only JPG, PNG, and GIF allowed.');</script>";
         }
     }
 
-    // ---- Insert into database ----
+    //Insert into database
     $sql = "INSERT INTO facilities 
             (FacilityID, Name, Description, Location, Type, Capacity, PhotoURL, Status) 
             VALUES 
-            ('$id', '$name', '$description', '$location', '$type', '$capacity', '$newPhotoName', '$status')";
+            (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    if ($conn->query($sql)) {
-        echo "<script>alert('Facility added successfully'); window.location='addfacilities.php';</script>";
+    if ($stmt = $conn->prepare($sql)) {
+        
+        $stmt->bind_param("sssssiss", $id, $name, $description, $location, $type, $capacity, $newPhotoName, $status);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Facility added successfully'); window.location='addfacilities.php';</script>";
+        } else {
+            echo "SQL Error: " . $stmt->error;
+        }
+        $stmt->close();
     } else {
-        echo "SQL Error: " . $conn->error;
+        echo "Prepare Error: " . $conn->error;
     }
 }
 ?>
@@ -204,7 +229,7 @@ textarea {
 
         <div class="d-flex align-items-center gap-1">
             <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
-            <span class="fw-bold" style="color:#071239ff;">A203914</span>
+            <span class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($_SESSION['user_id'] ?? 'User'); ?></span>
         </div>
     </div>
 </nav>
@@ -248,7 +273,7 @@ textarea {
                         <input type="number" class="form-control" name="Capacity" required>
                     </div>
 
-                    <div class="text-center mb-2">
+                    <div class="mb-2">
                         <label class="form-label d-block">Upload Photo</label>
                         <input type="file" name="PhotoURL" class="form-control" accept="image/*">
                     </div>

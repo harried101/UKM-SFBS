@@ -1,3 +1,15 @@
+<?php
+session_start();
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    if ($_SESSION['role'] === 'Admin') {
+        header("Location: admin/dashboard.php");
+        exit();
+    } elseif ($_SESSION['role'] === 'Student') {
+        header("Location: student/dashboard.php");
+        exit();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,6 +187,7 @@
             font-size: 20px;
             cursor: pointer;
             transition: background 0.3s ease;
+            margin-top: 30px;
         }
         
         .login-btn:hover {
@@ -220,7 +233,7 @@
                         <i id="togglePassword" style="margin-left:10px; cursor: pointer;">👁️</i>
                     </div>
 
-                    <div class="forgot">Forgot Password?</div>
+                    <!-- Forgot Password Link Removed -->
 
                     <button type="submit" id="loginBtn" class="login-btn">
                         <span id="loginText">Log in</span>
