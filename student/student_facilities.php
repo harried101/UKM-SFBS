@@ -4,7 +4,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "ukm_sfbs";
+$dbname = "ukm-sfbs";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 
