@@ -1,7 +1,10 @@
 <?php
 
-require_once '../includes/db_connect.php';
-
+ //connect db here
+$host = "localhost";
+$user = "root";
+$pass = "";
+$dbname = "ukm-sfbs";
 $limit = 4; 
 $page = $_GET['page'] ?? 1;
 $page = max(1, (int)$page);
@@ -84,9 +87,16 @@ while ($row = $typeResult->fetch_assoc()) {
         <div class="text-2xl font-bold leading-tight">
             SPORT FACILITIES<br>BOOKING SYSTEM
         </div>
-        <div class="flex items-center gap-3">
-            <img src="https://placehold.co/40x40/ccc/fff?text=A" class="rounded-full w-10 h-10">
-            <span class="font-medium">Aina</span>
+        <div class="flex items-center gap-6">
+            <!-- Home Button -->
+            <a href="dashboard.php" class="flex items-center gap-2 text-gray-600 hover:text-[#1a73e8] font-semibold transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                HOME
+            </a>
+            <div class="flex items-center gap-3">
+                <img src="https://placehold.co/40x40/ccc/fff?text=A" class="rounded-full w-10 h-10">
+                <span class="font-medium">Aina</span>
+            </div>
         </div>
     </header>
 
