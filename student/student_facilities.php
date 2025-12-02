@@ -1,12 +1,9 @@
 <?php
 
  //connect db here
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "ukm-sfbs";
+include '../includes/db_connect.php';
 
-$conn = new mysqli($host, $user, $pass, $dbname);
+// Connection established in included file
 
 if ($conn->connect_error) {
     die("DB Connection Failed: " . $conn->connect_error);
