@@ -177,23 +177,26 @@ while($t = $typesResult->fetch_assoc()) {
     <!-- NAV BAR -->
     <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="text-xl font-bold text-gray-800 leading-none">
-                    <span class="text-[#8a0d19]">UKM</span> SFBS
-                </div>
+            <!-- Left Side: Logos -->
+            <div class="flex items-center gap-4">
+                <img src="../img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
+                <div class="h-10 w-px bg-gray-300 hidden sm:block"></div>
+                <img src="../img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
             </div>
+            
+            <!-- Right Side: Navigation & User Profile -->
             <div class="flex items-center gap-6">
                 <a href="dashboard.php" class="text-gray-500 hover:text-[#8a0d19] font-medium transition flex items-center gap-2">
                     <i class="fa-solid fa-house"></i> Home
                 </a>
                 <div class="flex items-center gap-2 pl-6 border-l border-gray-200">
                     <div class="text-right hidden sm:block">
-                        <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($_SESSION['userIdentifier']); ?></p>
+                        <!-- Display Real User Identifier -->
+                        <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?></p>
                         <p class="text-xs text-gray-500">Student</p>
                     </div>
-                    <div class="w-9 h-9 bg-[#8a0d19] text-white rounded-full flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
+                    <!-- User Profile Image -->
+                    <img src="../img/user.png" alt="Profile" class="w-10 h-10 rounded-full border border-gray-200 object-cover shadow-sm">
                 </div>
             </div>
         </div>
@@ -202,9 +205,9 @@ while($t = $typesResult->fetch_assoc()) {
     <!-- HERO HEADER -->
     <div class="hero-section text-center">
         <div class="container mx-auto px-6">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">Find Your Space</h1>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">UKM Sport Facility Booking</h1>
             <p class="text-lg opacity-90 max-w-2xl mx-auto font-light">
-                Browse and book world-class sports facilities at Universiti Kebangsaan Malaysia.
+                Secure your spot and stay active on campus.
             </p>
         </div>
     </div>
