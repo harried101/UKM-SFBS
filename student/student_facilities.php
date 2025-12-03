@@ -79,6 +79,9 @@ while($t = $typesResult->fetch_assoc()) {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-light);
             color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         h1, h2, h3 {
@@ -87,7 +90,8 @@ while($t = $typesResult->fetch_assoc()) {
 
         /* Hero Section Styling */
         .hero-section {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('../court.jpg');
+            /* FIX: Updated path to match your folder structure (UKM-SFBS/img/background.jpg) */
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('../img/background.jpg');
             background-size: cover;
             background-position: center;
             color: white;
@@ -177,11 +181,11 @@ while($t = $typesResult->fetch_assoc()) {
     <!-- NAV BAR -->
     <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <!-- Left Side: Logos -->
+            <!-- Left Side: Logos (Updated Paths) -->
             <div class="flex items-center gap-4">
-                <img src="../img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
+                <img src="../img/ukm.png" alt="UKM Logo" class="h-12 w-auto" onerror="this.style.display='none'">
                 <div class="h-10 w-px bg-gray-300 hidden sm:block"></div>
-                <img src="../img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
+                <img src="../img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block" onerror="this.style.display='none'">
             </div>
             
             <!-- Right Side: Navigation & User Profile -->
@@ -192,7 +196,9 @@ while($t = $typesResult->fetch_assoc()) {
                 <div class="flex items-center gap-2 pl-6 border-l border-gray-200">
                     <div class="text-right hidden sm:block">
                         <!-- Display Real User Identifier -->
-                        <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?></p>
+                        <p class="text-sm font-bold text-gray-800">
+                            <?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?>
+                        </p>
                         <p class="text-xs text-gray-500">Student</p>
                     </div>
                     <!-- User Profile Image -->
@@ -212,7 +218,7 @@ while($t = $typesResult->fetch_assoc()) {
         </div>
     </div>
 
-    <main class="container mx-auto px-6 pb-20">
+    <main class="container mx-auto px-6 pb-20 flex-grow">
         
         <!-- SEARCH & FILTER -->
         <div class="filter-bar max-w-4xl mx-auto">
@@ -246,7 +252,7 @@ while($t = $typesResult->fetch_assoc()) {
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <?php while($row = $result->fetch_assoc()): ?>
                     <?php 
-                        // Image Path Logic
+                        // Image Path Logic - Points to admin uploads folder
                         $photo = $row['PhotoURL'];
                         $imgSrc = (!empty($photo) && file_exists("../admin/uploads/" . $photo)) 
                                   ? "../admin/uploads/" . $photo 
@@ -316,6 +322,20 @@ while($t = $typesResult->fetch_assoc()) {
         <?php endif; ?>
 
     </main>
+
+    <!-- FOOTER WITH SIGN OUT -->
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-500">
+                    &copy; 2025 UKM Sports Facilities Booking System
+                </div>
+                <a href="../logout.php" class="flex items-center gap-2 text-gray-600 hover:text-red-700 font-semibold transition px-4 py-2 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                </a>
+            </div>
+        </div>
+    </footer>
 
 </body>
 </html>
