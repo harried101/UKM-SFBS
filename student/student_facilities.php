@@ -2,6 +2,7 @@
 session_start();
 
 // Ensure only Students can access
+// This block guarantees no one can access the site if not logged in as a Student.
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
@@ -159,7 +160,10 @@ while ($row = $typeResult->fetch_assoc()) {
             </a>
             <div class="flex items-center gap-3">
                 <img src="../img/user.png" class="rounded-full w-10 h-10 border border-gray-300 p-1">
-                <span class="font-medium">Student</span>
+                <!-- UPDATED: Displays logged-in user identifier instead of dummy text -->
+                <span class="font-medium">
+                    <?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?>
+                </span>
             </div>
         </div>
     </header>
