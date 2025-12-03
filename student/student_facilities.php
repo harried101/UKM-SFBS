@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// FIX: Changed 'Admin' to 'Student' so students can access this page.
+// Ensure only Students can access
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
@@ -13,40 +13,37 @@ if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
 
-// --- PAGINATION SETUP ---
+// --- PAGINATION ---
 $limit = 4; 
 $page = $_GET['page'] ?? 1;
 $page = max(1, (int)$page);
 $offset = ($page - 1) * $limit;
 
-// --- SEARCH & FILTER INPUTS ---
+// --- SEARCH & FILTER ---
 $search = $_GET['search'] ?? "";
 $type   = $_GET['type'] ?? "";
 
-// --- BUILD QUERY ---
-// Start with Active facilities only
+// --- QUERY BUILDER ---
 $sql = "SELECT * FROM facilities WHERE Status='Active' ";
 
 if ($search !== "") {
-    $searchSafe = $conn->real_escape_string($search);
-    $sql .= " AND Name LIKE '%$searchSafe%' ";
+    $search = $conn->real_escape_string($search);
+    $sql .= " AND Name LIKE '%$search%' ";
 }
 
 if ($type !== "") {
-    $typeSafe = $conn->real_escape_string($type);
-    $sql .= " AND Type = '$typeSafe' ";
+    $type = $conn->real_escape_string($type);
+    $sql .= " AND Type = '$type' ";
 }
 
-// --- COUNT TOTAL RESULTS (For Pagination) ---
 $totalResult = $conn->query($sql);
 $total = $totalResult->num_rows;
 $totalPages = ceil($total / $limit);
 
-// --- FETCH PAGE RESULTS ---
 $sql .= " LIMIT $offset, $limit";
 $result = $conn->query($sql);
 
-// --- FETCH DISTINCT TYPES (For Dropdown) ---
+// --- GET TYPES FOR DROPDOWN ---
 $typeResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status='Active'");
 $types = [];
 while ($row = $typeResult->fetch_assoc()) {
@@ -59,50 +56,109 @@ while ($row = $typeResult->fetch_assoc()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facilities List - UKM SFBS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind for Grid Layout -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; }
-        .btn-check {
-            background-color: #1a73e8;
-            color: white;
-            font-weight: 600;
-            padding: 10px;
-            display: block;
-            text-align: center;
-            border-radius: 6px;
-            text-transform: uppercase;
-            font-size: .8rem;
-            transition: background 0.3s ease;
+        /* --- YOUR REQUESTED DESIGN STYLES --- */
+        
+        /* Reset & Body (Matches your snippet) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif; /* Changed to Arial */
+            background: #f2f2f2;            /* Changed to light grey */
+            color: #333;
         }
-        .btn-check:hover { background-color: #1557b0; }
+
+        /* Header Style */
+        header {
+            background: white;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Title Style */
+        h1 {
+            font-size: 28px; /* Adjusted to match your login title size feel */
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Input Fields (Search & Dropdown) - Matching your login input style */
+        input[type="text"], 
+        select {
+            padding: 10px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        /* The Facility Card - Styled like a container */
         .facility-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .facility-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        /* Buttons (Check Availability & Pagination) - Matching your #0064c8 color */
+        .btn-check, 
+        .pagination-link.active {
+            background: #0064c8; /* User's Blue */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: block;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .btn-check:hover,
+        .pagination-link.active:hover {
+            background: #004a96; /* User's Darker Blue */
+        }
+
+        .pagination-link {
+            background: white;
+            border: 1px solid #ddd;
+            color: #333;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
         }
     </style>
 </head>
 
-<body class="text-gray-800">
+<body>
 
     <!-- HEADER -->
-    <header class="bg-white flex justify-between items-center py-6 px-10 border-b border-gray-100 shadow-sm sticky top-0 z-50">
-        <div class="text-2xl font-bold leading-tight text-gray-800">
+    <header class="flex justify-between items-center py-4 px-8 shadow-sm">
+        <div class="text-xl font-bold leading-tight">
             SPORT FACILITIES<br>BOOKING SYSTEM
         </div>
         <div class="flex items-center gap-6">
             <!-- Home Button -->
-            <a href="dashboard.php" class="flex items-center gap-2 text-gray-600 hover:text-[#1a73e8] font-semibold transition">
+            <a href="dashboard.php" class="flex items-center gap-2 text-gray-600 hover:text-[#0064c8] font-semibold transition">
                 <i class="fa-solid fa-house"></i> HOME
             </a>
             <div class="flex items-center gap-3">
-                <img src="../img/user.png" class="rounded-full w-10 h-10 border border-gray-200">
+                <img src="../img/user.png" class="rounded-full w-10 h-10 border border-gray-300 p-1">
                 <span class="font-medium">Student</span>
             </div>
         </div>
@@ -111,26 +167,19 @@ while ($row = $typeResult->fetch_assoc()) {
     <!-- MAIN CONTENT -->
     <main class="container mx-auto px-6 py-10">
         
-        <!-- Title & Search Tools -->
-        <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
-            <div>
-                <h1 class="text-4xl font-bold text-slate-700">Facilities List</h1>
-                <p class="text-gray-500 mt-2">Find and book your preferred sports facility.</p>
-            </div>
+        <!-- Title & Search -->
+        <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+            <h1 class="font-bold">Facilities List</h1>
 
-            <!-- Search Form -->
-            <form method="GET" class="flex items-center gap-2 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+            <form method="GET" class="flex items-center gap-2">
                 
                 <!-- Search Input -->
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="search" placeholder="Search facility..." 
-                           value="<?php echo htmlspecialchars($search); ?>" 
-                           class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 w-64">
-                </div>
+                <input type="text" name="search" placeholder="Search..." 
+                       value="<?php echo htmlspecialchars($search); ?>" 
+                       style="width: 250px;">
 
-                <!-- Type Filter -->
-                <select id="typeFilter" name="type" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500 cursor-pointer">
+                <!-- Filter Dropdown -->
+                <select id="typeFilter" name="type">
                     <option value="">All Types</option>
                     <?php foreach($types as $t): ?>
                         <option value="<?php echo $t; ?>" <?php if($type==$t) echo "selected"; ?>>
@@ -139,78 +188,60 @@ while ($row = $typeResult->fetch_assoc()) {
                     <?php endforeach; ?>
                 </select>
 
-                <!-- Hidden submit button for JS trigger, or explicit button -->
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
-                    Filter
+                <!-- Search Button -->
+                <button type="submit" class="bg-[#0064c8] text-white p-2.5 rounded hover:bg-[#004a96]">
+                    <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </form>
         </div>
 
         <!-- FACILITIES GRID -->
-        <?php if($result->num_rows > 0): ?>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <?php while ($row = $result->fetch_assoc()): ?>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <?php while ($row = $result->fetch_assoc()): ?>
 
-                    <?php
-                    // Path correction: Images uploaded via admin are in ../admin/uploads/
-                    $imgName = $row['PhotoURL'];
-                    $imgPath = ($imgName && file_exists("../admin/uploads/" . $imgName)) 
-                               ? "../admin/uploads/" . $imgName 
-                               : "https://placehold.co/600x400?text=No+Image";
-                    ?>
+                <?php
+                $img = $row['PhotoURL'];
+                // Ensure correct path relative to this file
+                $img = ($img) ? "../admin/uploads/" . $img : "https://placehold.co/600x400?text=No+Image";
+                ?>
 
-                    <div class="facility-card bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden flex flex-col h-full">
-                        
-                        <!-- Image Area -->
-                        <div class="h-48 w-full overflow-hidden bg-gray-100 relative">
-                            <img src="<?= $imgPath ?>" class="w-full h-full object-cover">
-                            <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-gray-700 shadow-sm">
-                                <?= $row['Type'] ?>
-                            </div>
-                        </div>
-
-                        <!-- Content Area -->
-                        <div class="p-5 flex flex-col flex-grow">
-                            <h3 class="text-lg font-bold text-gray-800 mb-1 leading-tight">
-                                <?= htmlspecialchars($row['Name']) ?>
-                            </h3>
-
-                            <p class="text-sm text-gray-500 mb-3 flex items-center gap-1">
-                                <i class="fa-solid fa-location-dot text-red-500"></i>
-                                <?= htmlspecialchars($row['Location']) ?>
-                            </p>
-
-                            <p class="text-gray-600 text-sm mb-5 line-clamp-2 flex-grow">
-                                <?= htmlspecialchars($row['Description']) ?>
-                            </p>
-
-                            <!-- Booking Button -->
-                            <a href="check_availability.php?id=<?= $row['FacilityID'] ?>" class="btn-check mt-auto">
-                                Check Availability
-                            </a>
-                        </div>
+                <div class="facility-card flex flex-col h-full">
+                    
+                    <!-- Image -->
+                    <div class="h-44 w-full overflow-hidden border-b border-gray-200">
+                        <img src="<?= $img ?>" class="w-full h-full object-cover">
                     </div>
 
-                <?php endwhile; ?>
-            </div>
-        <?php else: ?>
-            <!-- No Results State -->
-            <div class="text-center py-20 bg-white rounded-xl shadow-sm border border-gray-100">
-                <div class="text-6xl mb-4">🔍</div>
-                <h3 class="text-xl font-bold text-gray-700">No Facilities Found</h3>
-                <p class="text-gray-500 mt-2">Try adjusting your search or filter criteria.</p>
-                <a href="student_facilities.php" class="inline-block mt-4 text-blue-600 hover:underline">Clear Filters</a>
-            </div>
-        <?php endif; ?>
+                    <!-- Content -->
+                    <div class="p-5 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold text-[#333] mb-1 leading-tight">
+                            <?= htmlspecialchars($row['Name']) ?>
+                        </h3>
+
+                        <p class="text-sm text-gray-500 mb-2">
+                            <i class="fa-solid fa-location-dot mr-1 text-[#0064c8]"></i>
+                            <?= htmlspecialchars($row['Location']) ?>
+                        </p>
+
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
+                            <?= htmlspecialchars($row['Description']) ?>
+                        </p>
+
+                        <a href="check_availability.php?id=<?= $row['FacilityID'] ?>" class="btn-check mt-auto">
+                            Check Availability
+                        </a>
+                    </div>
+                </div>
+
+            <?php endwhile; ?>
+        </div>
 
         <!-- PAGINATION -->
-        <!-- FIX: Show pagination if pages >= 1 (was > 1) to ensure page '1' is visible -->
         <?php if($totalPages >= 1): ?>
-        <div class="flex justify-center mt-12 gap-2">
+        <div class="flex justify-center mt-10 gap-2">
             <?php for($i=1; $i<=$totalPages; $i++): ?>
                 <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&type=<?php echo urlencode($type); ?>"
-                   class="w-10 h-10 flex items-center justify-center border rounded-lg font-medium transition-all duration-200
-                          <?php echo $i==$page ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300'; ?>">
+                   class="pagination-link <?php echo $i==$page ? 'active' : 'hover:bg-gray-200'; ?>">
                    <?php echo $i; ?>
                 </a>
             <?php endfor; ?>
@@ -219,10 +250,10 @@ while ($row = $typeResult->fetch_assoc()) {
 
     </main>
 
-    <!-- Auto-submit script for Dropdown -->
+    <!-- Auto-submit for dropdown -->
     <script>
         document.getElementById('typeFilter').addEventListener('change', function(){
-            this.form.submit(); // Cleaner way to submit the parent form
+            this.form.submit();
         });
     </script>
 
