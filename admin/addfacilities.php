@@ -27,25 +27,21 @@ if ($conn->connect_error) {
 
 
 function generateFacilityID($conn) {
-
-    $result = $conn->query("SELECT FacilityID FROM facilities ORDER BY FacilityID DESC LIMIT 1");
+    $result = $conn->query("
+        SELECT FacilityID 
+        FROM facilities 
+        ORDER BY CAST(SUBSTRING(FacilityID, 2) AS UNSIGNED) DESC 
+        LIMIT 1
+    ");
 
     if ($result->num_rows == 0) {
-
         return "F001";
-
     } else {
-
         $row = $result->fetch_assoc();
-
         $lastID = intval(substr($row['FacilityID'], 1));
-
         $newID = $lastID + 1;
-
         return "F" . str_pad($newID, 3, "0", STR_PAD_LEFT);
-
     }
-
 }
 
 
@@ -454,7 +450,7 @@ textarea {
 
                         <label class="form-label">Facility ID</label>
 
-                        <input type="text" class="form-control" name="FacilityID" value="<?php echo $newFacilityID; ?>" readonly>
+<input type="text" class="form-control" name="FacilityID" value="<?php echo $newFacilityID; ?>">
 
                     </div>
 
