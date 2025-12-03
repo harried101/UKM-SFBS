@@ -194,7 +194,7 @@ while($t = $typesResult->fetch_assoc()) {
                 <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                     <div class="text-right hidden sm:block">
                         <!-- Display Real User Identifier -->
-                        <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?></p>
+                        <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($_SESSION['user_id'] ?? 'Student'); ?></p>
                         <p class="text-xs text-gray-500 uppercase tracking-wider">Student</p>
                     </div>
                     <!-- User Profile Image -->
