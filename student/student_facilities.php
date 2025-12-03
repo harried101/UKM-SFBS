@@ -180,7 +180,7 @@ while($t = $typesResult->fetch_assoc()) {
             <div class="flex items-center gap-4">
                 <img src="../img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
                 <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-                <img src="../img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
+                <img src="..assets/img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
             </div>
             
             <!-- Right Side: Navigation & User Profile -->
@@ -198,7 +198,7 @@ while($t = $typesResult->fetch_assoc()) {
                         <p class="text-xs text-gray-500 uppercase tracking-wider">Student</p>
                     </div>
                     <!-- User Profile Image -->
-                    <img src="../img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover">
+                    <img src="..assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover">
                 </div>
             </div>
         </div>
@@ -328,7 +328,7 @@ while($t = $typesResult->fetch_assoc()) {
         <div class="container mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-3 opacity-80">
-                    <img src="../img/ukm.png" alt="UKM" class="h-8 grayscale hover:grayscale-0 transition">
+                    <img src="..assets/img/ukm.png" alt="UKM" class="h-8 grayscale hover:grayscale-0 transition">
                     <div class="h-4 w-px bg-gray-300"></div>
                     <p class="text-sm text-gray-500">&copy; 2025 UKM Sports Facilities Booking System</p>
                 </div>
