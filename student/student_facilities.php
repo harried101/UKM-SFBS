@@ -178,7 +178,7 @@ while($t = $typesResult->fetch_assoc()) {
         <div class="container mx-auto px-6 py-3 flex justify-between items-center">
             <!-- Left Side: Logos -->
             <div class="flex items-center gap-4">
-                <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-8 w-auto">
+                <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-16 w-auto">
                 <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
                 <img src="../assets/img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-8 w-auto hidden sm:block">
             </div>
