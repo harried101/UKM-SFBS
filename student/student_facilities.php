@@ -204,7 +204,8 @@ while ($row = $typeResult->fetch_assoc()) {
         <?php endif; ?>
 
         <!-- PAGINATION -->
-        <?php if($totalPages > 1): ?>
+        <!-- FIX: Show pagination if pages >= 1 (was > 1) to ensure page '1' is visible -->
+        <?php if($totalPages >= 1): ?>
         <div class="flex justify-center mt-12 gap-2">
             <?php for($i=1; $i<=$totalPages; $i++): ?>
                 <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&type=<?php echo urlencode($type); ?>"
