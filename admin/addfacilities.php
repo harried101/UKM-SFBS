@@ -1,7 +1,8 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
+// SECURITY CHECK: Redirect if not logged in or role is not Student
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
 }
@@ -12,273 +13,288 @@ if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
 
-function generateFacilityID($conn) {
-    $result = $conn->query("SELECT FacilityID FROM facilities ORDER BY FacilityID DESC LIMIT 1");
-    if ($result->num_rows == 0) {
-        return "F001";
-    } else {
-        $row = $result->fetch_assoc();
-        $lastID = intval(substr($row['FacilityID'], 1));
-        $newID = $lastID + 1;
-        return "F" . str_pad($newID, 3, "0", STR_PAD_LEFT);
-    }
+// --- PAGINATION ---
+$limit = 6; 
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $limit;
+
+// --- SEARCH & FILTER ---
+$search = $_GET['search'] ?? "";
+$type   = $_GET['type'] ?? "";
+
+// --- QUERY BUILDER ---
+// We only want to show 'Active' facilities to students
+$sql = "SELECT * FROM facilities WHERE Status='Active' ";
+
+if ($search !== "") {
+    $search = $conn->real_escape_string($search);
+    $sql .= " AND (Name LIKE '%$search%' OR Location LIKE '%$search%') ";
 }
 
-$newFacilityID = generateFacilityID($conn);
+if ($type !== "") {
+    $type = $conn->real_escape_string($type);
+    $sql .= " AND Type = '$type' ";
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Count total for pagination
+$countSql = str_replace("SELECT *", "SELECT COUNT(*) as total", $sql);
+$totalResult = $conn->query($countSql);
+$totalRows = $totalResult->fetch_assoc()['total'];
+$totalPages = ceil($totalRows / $limit);
 
-    $id = $_POST['FacilityID'] ?? '';
-    $name = $_POST['Name'] ?? '';
-    $description = $_POST['Description'] ?? '';
-    $location = $_POST['Location'] ?? '';
-    $type = $_POST['Type'] ?? '';
-    $capacity = $_POST['Capacity'] ?? '';
-    $status = $_POST['Status'] ?? '';
+// Fetch data
+$sql .= " ORDER BY CreatedAt DESC LIMIT $offset, $limit";
+$result = $conn->query($sql);
 
-    $newPhotoName = '';
-    if (!empty($_FILES['PhotoURL']['name'])) {
-        $photoTmp = $_FILES['PhotoURL']['tmp_name'];
-        $photoName = $_FILES['PhotoURL']['name'];
-        $ext = pathinfo($photoName, PATHINFO_EXTENSION);
-        
-        //make sure format image 
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-        if (in_array(strtolower($ext), $allowed)) {
-            $newPhotoName = $id . "_" . time() . "." . $ext;
-            $uploadDir = "uploads/";
-            
-            //directory image after upload
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-
-            if (!move_uploaded_file($photoTmp, $uploadDir . $newPhotoName)) {
-                die("Error uploading image.");
-            }
-        } else {
-            echo "<script>alert('Invalid file type. Only JPG, PNG, and GIF allowed.');</script>";
-        }
-    }
-
-    $sql = "INSERT INTO facilities 
-            (FacilityID, Name, Description, Location, Type, Capacity, PhotoURL, Status) 
-            VALUES 
-            (?, ?, ?, ?, ?, ?, ?, ?)";
-
-    if ($stmt = $conn->prepare($sql)) {
-        
-        $stmt->bind_param("sssssiss", $id, $name, $description, $location, $type, $capacity, $newPhotoName, $status);
-        
-        if ($stmt->execute()) {
-            echo "<script>alert('Facility added successfully'); window.location='addfacilities.php';</script>";
-        } else {
-            echo "SQL Error: " . $stmt->error;
-        }
-        $stmt->close();
-    } else {
-        echo "Prepare Error: " . $conn->error;
-    }
+// Get types for dropdown
+$typeResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status='Active'");
+$types = [];
+while ($row = $typeResult->fetch_assoc()) {
+    $types[] = $row['Type'];
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add New Facility</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facilities List - UKM SFBS</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind for Grid Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<style>
-body {
-    background: url('../assets/img/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    font-family: 'Poppins', sans-serif;
-}
+    <style>
+        /* --- RESTORED SIMPLE DESIGN --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-nav {
-    background: #bfd9dc;
-    padding: 10px 40px;
-    border-bottom-left-radius: 25px;
-    border-bottom-right-radius: 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
+        header {
+            background: white;
+            border-bottom: 1px solid #ddd;
+        }
 
-.nav-logo img {
-    height: 65px;
-}
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 20px;
+        }
 
-.nav-link {
-    color: #071239ff;
-    font-weight: 600;
-    padding: 8px 18px;
-    border-radius: 12px;
-    transition: 0.3s ease;
-}
+        /* Input Fields */
+        input[type="text"], 
+        select {
+            padding: 10px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
 
-.nav-link:hover,
-.nav-link.active {
-    background: rgba(255,255,255,0.5);
-}
+        /* Facility Card */
+        .facility-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .facility-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
 
-.main-box {
-    background: #bfd9dc;
-    border-radius: 25px;
-    padding: 30px 40px;
-    max-width: 600px;
-    margin: 40px auto;
-    box-shadow: 0 0 20px rgba(0,0,0,0.25);
-}
+        /* Blue Buttons (#0064c8) */
+        .btn-check, 
+        .pagination-link.active,
+        .btn-search {
+            background: #0064c8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: block;
+            text-align: center;
+            transition: background 0.3s;
+        }
 
-h1 {
-    font-weight: 900;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 36px;
-    color: #071239ff;
-}
+        .btn-check:hover, 
+        .pagination-link.active:hover,
+        .btn-search:hover {
+            background: #004a96;
+        }
 
-.form-label { 
-    font-weight: 600; 
-    font-size: 14px;  
-    color: #071239ff; 
-}
-
-.form-control, 
-.form-select, 
-textarea {
-    border-radius: 12px;
-    padding: 6px 12px;
-    font-size: 14px;
-    color: #071239ff;
-}
-
-.upload-box {
-    background: white;
-    width: 180px;
-    height: 180px;
-    border-radius: 14px;
-    border: 2px dashed #ccc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    cursor: pointer;
-    margin: auto;
-}
-
-.btn-reset {
-    background: #c62828;
-    color: white;
-    padding: 6px 22px;
-    border-radius: 10px;
-}
-
-.btn-submit {
-    background: #1e40af;
-    color: white;
-    padding: 6px 22px;
-    border-radius: 10px;
-}
-
-.status-active { background:#2e7d32; color:white; }
-.status-maintenance { background:#f9a825; color:black; }
-.status-archived { background:#b71c1c; color:white; }
-</style>
-
+        .pagination-link {
+            background: white;
+            border: 1px solid #ddd;
+            color: #333;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        
+        /* Footer Style */
+        footer {
+            background: white;
+            border-top: 1px solid #ddd;
+            margin-top: auto;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
 </head>
+
 <body>
 
-<nav class="d-flex justify-content-between align-items-center px-4 py-2">
-    <div class="nav-logo d-flex align-items-center gap-3">
-        <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
-        <img src="../assets/img/pusatsukan.png" alt="Pusat Sukan Logo" height="45">
-    </div>
-
-    <div class="d-flex align-items-center gap-4">
-        <a class="nav-link active" href="#">Facility</a>
-        <a class="nav-link" href="#">Booking</a>
-        <a class="nav-link" href="#">Report</a>
-
-        <div class="d-flex align-items-center gap-1">
-            <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
-            <span class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($_SESSION['user_id'] ?? 'User'); ?></span>
+    <!-- HEADER -->
+    <header class="flex justify-between items-center py-4 px-8 shadow-sm">
+        <div class="text-xl font-bold leading-tight">
+            SPORT FACILITIES<br>BOOKING SYSTEM
         </div>
-    </div>
-</nav>
-
-<div class="container">
-    <div class="main-box position-relative">
-        <h1>ADD NEW FACILITY</h1>
-
-        <form method="POST" enctype="multipart/form-data">
-            <div class="row g-3 justify-content-center">
-                <div class="col-md-8">
-
-                    <div class="mb-2">
-                        <label class="form-label">Facility ID</label>
-                        <input type="text" class="form-control" name="FacilityID" value="<?php echo $newFacilityID; ?>" readonly>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Facility Name</label>
-                        <input type="text" class="form-control" name="Name" required>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="3" name="Description" required></textarea>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Location</label>
-                        <input type="text" class="form-control" name="Location" required>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Facility Type</label>
-                        <input type="text" class="form-control" name="Type" required>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Capacity</label>
-                        <input type="number" class="form-control" name="Capacity" required>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label d-block">Upload Photo</label>
-                        <input type="file" name="PhotoURL" class="form-control" accept="image/*">
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" name="Status" required>
-                            <option value="active">Active</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="archived">Archived</option>
-                        </select>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <button type="reset" class="btn btn-reset me-2">Reset</button>
-                        <button type="submit" class="btn btn-submit">Submit</button>
-                    </div>
-
-                </div>
+        <div class="flex items-center gap-6">
+            <!-- Home Button -->
+            <a href="dashboard.php" class="flex items-center gap-2 text-gray-600 hover:text-[#0064c8] font-semibold transition">
+                <i class="fa-solid fa-house"></i> HOME
+            </a>
+            <div class="flex items-center gap-3">
+                <img src="../img/user.png" class="rounded-full w-10 h-10 border border-gray-300 p-1">
+                <!-- Displays the logged-in Student ID dynamically -->
+                <span class="font-medium">
+                    <?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?>
+                </span>
             </div>
-        </form>
+        </div>
+    </header>
 
-    </div>
-</div>
+    <!-- MAIN CONTENT -->
+    <main class="container mx-auto px-6 py-10 flex-grow">
+        
+        <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+            <h1 class="font-bold">Facilities List</h1>
+
+            <form method="GET" class="flex items-center gap-2">
+                <!-- Search Input -->
+                <input type="text" name="search" placeholder="Search..." 
+                       value="<?php echo htmlspecialchars($search); ?>" 
+                       style="width: 250px;">
+
+                <!-- Filter Dropdown -->
+                <select id="typeFilter" name="type">
+                    <option value="">All Types</option>
+                    <?php foreach($types as $t): ?>
+                        <option value="<?php echo $t; ?>" <?php if($type==$t) echo "selected"; ?>>
+                            <?php echo $t; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <button type="submit" class="btn-search" style="width: auto; padding: 10px 15px;">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- FACILITIES GRID -->
+        <?php if ($result->num_rows > 0): ?>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <?php while ($row = $result->fetch_assoc()): ?>
+
+                    <?php
+                    // Dynamic Image Path Logic
+                    // We check if the file exists in the admin uploads folder.
+                    $imgName = $row['PhotoURL'];
+                    $imgPath = "../admin/uploads/" . $imgName;
+                    
+                    // Fallback if image doesn't exist or is empty
+                    if (empty($imgName) || !file_exists($imgPath)) {
+                        $displayImg = "https://placehold.co/600x400?text=No+Image";
+                    } else {
+                        $displayImg = $imgPath;
+                    }
+                    ?>
+
+                    <div class="facility-card flex flex-col h-full">
+                        
+                        <!-- Image -->
+                        <div class="h-44 w-full overflow-hidden border-b border-gray-200">
+                            <img src="<?= $displayImg ?>" class="w-full h-full object-cover">
+                        </div>
+
+                        <!-- Content -->
+                        <div class="p-5 flex flex-col flex-grow">
+                            <h3 class="text-lg font-bold text-[#333] mb-1 leading-tight">
+                                <?= htmlspecialchars($row['Name']) ?>
+                            </h3>
+
+                            <p class="text-sm text-gray-500 mb-2">
+                                <i class="fa-solid fa-location-dot mr-1 text-[#0064c8]"></i>
+                                <?= htmlspecialchars($row['Location']) ?>
+                            </p>
+
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
+                                <?= htmlspecialchars($row['Description']) ?>
+                            </p>
+
+                            <a href="check_availability.php?id=<?= $row['FacilityID'] ?>" class="btn-check mt-auto">
+                                Check Availability
+                            </a>
+                        </div>
+                    </div>
+
+                <?php endwhile; ?>
+            </div>
+
+            <!-- PAGINATION -->
+            <?php if ($totalPages >= 1): ?>
+            <div class="flex justify-center mt-10 gap-2">
+                <?php for($i=1; $i<=$totalPages; $i++): ?>
+                    <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&type=<?php echo urlencode($type); ?>"
+                       class="pagination-link <?php echo $i==$page ? 'active' : 'hover:bg-gray-200'; ?>">
+                       <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+            </div>
+            <?php endif; ?>
+
+        <?php else: ?>
+            <div class="text-center py-20 text-gray-500">
+                <i class="fa-regular fa-folder-open text-4xl mb-3 text-gray-300"></i>
+                <p>No facilities found.</p>
+                <a href="student_facilities.php" class="text-[#0064c8] hover:underline mt-2 inline-block">Reset Filters</a>
+            </div>
+        <?php endif; ?>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="flex justify-between items-center max-w-6xl mx-auto px-4">
+            <span class="text-sm text-gray-500">&copy; 2025 UKM SFBS</span>
+            <a href="../logout.php" class="text-[#0064c8] font-bold text-sm hover:underline flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </a>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('typeFilter').addEventListener('change', function(){
+            this.form.submit();
+        });
+    </script>
 
 </body>
 </html>
