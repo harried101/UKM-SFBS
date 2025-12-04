@@ -1,0 +1,132 @@
+/* Global Body Styles */
+body {
+    /* Path assumes style.css is in a 'css' folder, so it goes up one level (../) to root, then into 'img' */
+    background: url('../img/background.jpg'); 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Navbar Styling */
+nav {
+    background: #bfd9dc;
+    padding: 10px 40px;
+    border-bottom-left-radius: 25px;
+    border-bottom-right-radius: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.nav-logo img {
+    height: 65px;
+}
+
+.nav-link {
+    color: #071239ff;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 12px;
+    transition: 0.3s ease;
+    text-decoration: none;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: rgba(255,255,255,0.5);
+}
+
+/* Main Container Box */
+.main-box {
+    background: #bfd9dc;
+    border-radius: 25px;
+    padding: 30px 40px;
+    max-width: 600px;
+    margin: 40px auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.25);
+}
+
+/* Headings */
+h1 {
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 36px;
+    color: #071239ff;
+}
+
+/* Form Elements */
+.form-label { 
+    font-weight: 600; 
+    font-size: 14px;  
+    color: #071239ff; 
+}
+
+.form-control, 
+.form-select, 
+textarea {
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #071239ff;
+    border: 1px solid #ccc; /* Added default border for clarity */
+    width: 100%; /* Ensure inputs take full width */
+    box-sizing: border-box; /* Fix padding issues */
+    margin-bottom: 10px;
+}
+
+/* Upload Box specific */
+.upload-box {
+    background: white;
+    width: 180px;
+    height: 180px;
+    border-radius: 14px;
+    border: 2px dashed #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    cursor: pointer;
+    margin: auto;
+}
+
+/* Buttons */
+.btn-reset {
+    background: #c62828;
+    color: white;
+    padding: 6px 22px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-reset:hover {
+    background: #b71c1c;
+}
+
+.btn-submit {
+    background: #1e40af;
+    color: white;
+    padding: 6px 22px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-submit:hover {
+    background: #154090;
+}
+
+/* Status Indicators (if used elsewhere) */
+.status-active { background:#2e7d32; color:white; }
+.status-maintenance { background:#f9a825; color:black; }
+.status-archived { background:#b71c1c; color:white; }
