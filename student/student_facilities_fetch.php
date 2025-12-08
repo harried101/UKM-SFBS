@@ -48,13 +48,17 @@ if ($result->num_rows > 0) {
                 </div>
                 <p class="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed flex-grow">'.htmlspecialchars($row['Description']).'</p>
                 <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                        <i class="fa-solid fa-user-group text-[#8a0d19]"></i> Max: '.$row['Capacity'].'
-                    </div>
-                    <a href="check_availability.php?id='.$row['FacilityID'].'" class="text-white bg-[#8a0d19] hover:bg-[#6d0a14] px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm hover:shadow">
-                        Check Availability
-                    </a>
-                </div>
+    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+        <i class="fa-solid fa-user-group text-[#8a0d19]"></i> Max: '.$row['Capacity'].'
+    </div>
+
+    <button 
+        onclick="openCalendar(\''.$row['FacilityID'].'\')" 
+        class="text-white bg-[#8a0d19] hover:bg-[#6d0a14] px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm hover:shadow">
+        Check Availability
+    </button>
+</div>
+
             </div>
         </div>
         ';

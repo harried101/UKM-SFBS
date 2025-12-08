@@ -126,6 +126,62 @@ footer {
 }
 </style>
 </head>
+
+<!-- CALENDAR POPUP -->
+<div id="calendarModal"
+     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+
+    <div class="bg-white rounded-xl shadow-xl w-[90%] max-w-4xl p-4 relative">
+
+        <!-- Close Button -->
+        <button onclick="closeCalendar()"
+                class="absolute top-3 right-3 text-gray-700 hover:text-red-600 text-xl">
+            ✕
+        </button>
+
+        <!-- Loading Text -->
+        <div id="calendarLoader"
+             class="text-center py-10 text-gray-500 text-lg">
+            Loading calendar...
+        </div>
+
+        <!-- Here we load booking_calendar.php -->
+        <iframe id="calendarFrame"
+                class="w-full h-[600px] rounded-lg hidden"
+                style="border:none;"></iframe>
+
+    </div>
+</div>
+
+<script>
+function openCalendar(facilityID) {
+    const modal = document.getElementById("calendarModal");
+    const loader = document.getElementById("calendarLoader");
+    const frame = document.getElementById("calendarFrame");
+
+    modal.classList.remove("hidden");
+    loader.classList.remove("hidden");
+    frame.classList.add("hidden");
+
+    // Load external PHP file
+    frame.src = "book.php?facility_id=" + facilityID;
+
+    frame.onload = () => {
+        loader.classList.add("hidden");
+        frame.classList.remove("hidden");
+    };
+}
+
+function closeCalendar() {
+    document.getElementById("calendarModal").classList.add("hidden");
+    document.getElementById("calendarFrame").src = "";
+}
+</script>
+
+
+
+
+
 <body>
 
 <!-- NAV BAR -->
