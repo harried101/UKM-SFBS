@@ -80,6 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $ext = pathinfo($photoName, PATHINFO_EXTENSION);
 
+        $availability = [];
+if (!empty($_POST['available_days'])) {
+    foreach ($_POST['available_days'] as $day) {
+        $start = $_POST['start_time'][$day] ?? '';
+        $end = $_POST['end_time'][$day] ?? '';
+        $availability[$day] = ['start' => $start, 'end' => $end];
+    }
+}
+
+// Convert to JSON to save in DB
+$availabilityJSON = json_encode($availability);
+
+// Then add $availabilityJSON to your facilities table if you have a column for it, e.g. Availability
+
        
 
         //make sure format image
@@ -532,6 +546,25 @@ textarea {
 
                     </div>
 
+<div class="mb-4">
+    <label class="form-label">Availability Schedule (7 Days)</label>
+    <div class="row g-2">
+        <?php
+        $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+        foreach($days as $day):
+        ?>
+        <div class="col-12">
+            <div class="d-flex align-items-center gap-2">
+                <input type="checkbox" class="form-check-input mt-1" name="available_days[]" value="<?php echo $day; ?>" id="<?php echo $day; ?>" checked>
+                <label class="form-label mb-0" for="<?php echo $day; ?>" style="min-width:80px;"><?php echo $day; ?></label>
+                <input type="time" class="form-control" name="start_time[<?php echo $day; ?>]" required>
+                <span class="mx-1">to</span>
+                <input type="time" class="form-control" name="end_time[<?php echo $day; ?>]" required>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
 
 
                     <div class="text-center mt-4">
