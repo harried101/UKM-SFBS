@@ -40,7 +40,7 @@
 </head>
 <body class="p-4">
 <div class="container">
-    <h1 class="mb-4 text-center">Sports Facility Booking System</h1>
+    <h1 class="mb-4 text-center"> UKM Sports Facility Booking System</h1>
 
     <!-- Check Availability Button -->
     <div class="text-center mb-3">
