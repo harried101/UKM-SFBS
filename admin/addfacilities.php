@@ -363,8 +363,8 @@ h1 {
                             <?php else: ?>
                                 <div class="input-group">
                                     <select class="form-select" name="FacilityPrefix" id="FacilityPrefix" style="max-width: 80px;" required>
-                                        <option value="ID" selected>ID</option> 
-                                        <option value="OD">OD</option> 
+                                        <option value="ID" selected>ID (Indoor)</option> 
+                                        <option value="OD">OD (Outdoor)</option> 
                                     </select>
                                     <input type="text" class="form-control" name="FacilityNumber" id="FacilityNumber" value="<?php echo $nextFacilityNumber; ?>" pattern="[0-9]*" maxlength="5" required>
                                 </div>
