@@ -14,25 +14,64 @@ $limit = 6;
 $page = 1;
 $offset = ($page - 1) * $limit;
 
-$sql = "SELECT * FROM facilities WHERE Status='Active'";
-if (!empty($search)) {
-    $safeSearch = $conn->real_escape_string($search);
-    $sql .= " AND (Name LIKE '%$safeSearch%' OR Location LIKE '%$safeSearch%')";
-}
-if (!empty($typeFilter)) {
-    $safeType = $conn->real_escape_string($typeFilter);
-    $sql .= " AND Type='$safeType'";
-}
-$sql .= " ORDER BY CreatedAt DESC LIMIT $offset, $limit";
+// --- SQL BASE QUERY: Include 'Active' AND 'Maintenance' statuses ---
+$sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
 
-$result = $conn->query($sql);
+$params = [];
+$types_str = "";
+
+// Apply Search Filter (using prepared statements for safety)
+if (!empty($search)) {
+    $search_param = "%" . $search . "%"; 
+    // Removed Description search as the original logic didn't account for it with real_escape_string fully
+    $sql .= " AND (Name LIKE ? OR Location LIKE ?)";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $types_str .= "ss";
+}
+
+// Apply Type Filter
+if (!empty($typeFilter)) {
+    $sql .= " AND Type = ?";
+    $params[] = $typeFilter;
+    $types_str .= "s";
+}
+
+// Final Ordering and Pagination (using prepared statements)
+$sql .= " ORDER BY CreatedAt DESC LIMIT ?, ?"; 
+$params[] = $offset;
+$params[] = $limit;
+$types_str .= "ii";
+
+// --- Execute the Query ---
+$stmt = $conn->prepare($sql);
+
+if (!$stmt) {
+    // Handle prepare error
+    exit('<p class="text-danger">SQL Prepare Error: ' . $conn->error . '</p>');
+}
+
+if (!empty($params)) {
+    // Dynamically bind parameters
+    $stmt->bind_param($types_str, ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $photo = $row['PhotoURL'];
         $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
-                  ? "../admin/uploads/".$photo
-                  : "https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image";
+                 ? "../admin/uploads/".$photo
+                 : "https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image";
+
+        // Determine status badge color and text
+        $statusBadgeText = htmlspecialchars($row['Status']);
+        $statusBadgeClass = ($row['Status'] === 'Maintenance') 
+                          ? 'bg-orange-500 text-white' 
+                          : 'bg-green-500 text-white'; // Active
+
         echo '
         <div class="facility-card group">
             <div class="card-img-container">
@@ -48,17 +87,17 @@ if ($result->num_rows > 0) {
                 </div>
                 <p class="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed flex-grow">'.htmlspecialchars($row['Description']).'</p>
                 <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-        <i class="fa-solid fa-user-group text-[#8a0d19]"></i> Max: '.$row['Capacity'].'
-    </div>
-
-    <button 
-        onclick="openCalendar(\''.$row['FacilityID'].'\')" 
-        class="text-white bg-[#8a0d19] hover:bg-[#6d0a14] px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm hover:shadow">
-        Check Availability
-    </button>
-</div>
-
+                    
+                    <div class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-100 '.$statusBadgeClass.'">
+                        '. $statusBadgeText .'
+                    </div>
+                    
+                    <button 
+                        onclick="openCalendar(\''.$row['FacilityID'].'\')" 
+                        class="text-white bg-[#8a0d19] hover:bg-[#6d0a14] px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm hover:shadow">
+                        Check Availability
+                    </button>
+                </div>
             </div>
         </div>
         ';
@@ -66,7 +105,10 @@ if ($result->num_rows > 0) {
 } else {
     echo '<div class="col-span-3 text-center py-24 bg-white rounded-2xl border border-dashed border-gray-300">
             <h3 class="text-xl font-bold text-gray-700 mb-2">No facilities found</h3>
-            <p class="text-gray-500">Try searching again or remove filters.</p>
+            <p class="text-gray-500">Try searching again or remove filters. (Only Active or Maintenance facilities are shown.)</p>
           </div>';
 }
+
+$stmt->close();
+$conn->close();
 ?>

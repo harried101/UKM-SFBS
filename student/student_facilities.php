@@ -14,8 +14,8 @@ if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
 
-// --- FETCH FILTER OPTIONS ---
-$typesResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status='Active'");
+// --- FETCH FILTER OPTIONS (CORRECTED to include Maintenance) ---
+$typesResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status IN ('Active', 'Maintenance')");
 $types = [];
 while($t = $typesResult->fetch_assoc()) {
     $types[] = $t['Type'];
@@ -28,11 +28,8 @@ while($t = $typesResult->fetch_assoc()) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Browse Facilities - UKM SFBS</title>
 
-<!-- Fonts: Playfair Display & Inter -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
@@ -127,25 +124,21 @@ footer {
 </style>
 </head>
 
-<!-- CALENDAR POPUP -->
 <div id="calendarModal"
      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
 
     <div class="bg-white rounded-xl shadow-xl w-[90%] max-w-4xl p-4 relative">
 
-        <!-- Close Button -->
         <button onclick="closeCalendar()"
                 class="absolute top-3 right-3 text-gray-700 hover:text-red-600 text-xl">
             ✕
         </button>
 
-        <!-- Loading Text -->
         <div id="calendarLoader"
              class="text-center py-10 text-gray-500 text-lg">
             Loading calendar...
         </div>
 
-        <!-- Here we load booking_calendar.php -->
         <iframe id="calendarFrame"
                 class="w-full h-[600px] rounded-lg hidden"
                 style="border:none;"></iframe>
@@ -184,7 +177,6 @@ function closeCalendar() {
 
 <body>
 
-<!-- NAV BAR -->
 <nav class="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -210,7 +202,6 @@ function closeCalendar() {
     </div>
 </nav>
 
-<!-- HERO HEADER -->
 <div class="hero-section text-center">
     <div class="container mx-auto px-6">
         <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">UKM Sport Facility Booking</h1>
@@ -222,13 +213,12 @@ function closeCalendar() {
 
 <main class="container mx-auto px-6 pb-20 flex-grow">
     
-    <!-- SEARCH & FILTER -->
     <div class="filter-bar max-w-5xl mx-auto">
         <form id="searchForm" class="flex flex-col md:flex-row gap-4 items-center" onsubmit="return false;">
             <div class="flex-grow w-full relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <input type="text" id="searchInput" name="search" placeholder="Search facilities..." 
-                       class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#8a0d19] focus:ring-1 focus:ring-[#8a0d19] transition">
+                        class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#8a0d19] focus:ring-1 focus:ring-[#8a0d19] transition">
             </div>
             <div class="w-full md:w-56 relative">
                 <i class="fa-solid fa-layer-group absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -243,14 +233,11 @@ function closeCalendar() {
         </form>
     </div>
 
-    <!-- RESULTS GRID -->
     <div id="facilitiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Dynamic content will be loaded here via fetch -->
-    </div>
+        </div>
 
 </main>
 
-<!-- FOOTER -->
 <footer class="bg-white border-t border-gray-200 py-8">
     <div class="container mx-auto px-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
