@@ -7,9 +7,7 @@ if (!isset($_GET['id'])) {
 }
 
 $id = $_GET['id'];
-
-// Strip non-numeric characters (F001 → 1)
-$id = preg_replace('/[^0-9]/', '', $id);
+$id = preg_replace('/[^0-9]/', '', $id); // remove non-numeric
 $id = intval($id);
 
 $stmt = $conn->prepare("SELECT * FROM facilities WHERE FacilityID = ?");
