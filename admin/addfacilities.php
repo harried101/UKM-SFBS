@@ -6,30 +6,18 @@ require '../includes/db_connect.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add Facility</title>
+    <title>Add / Update Facility</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body class="p-4">
 
 <div class="container">
-    <h2 class="mb-4">Add Facility</h2>
+    <h2 class="mb-4">Add / Update Facility</h2>
 
-    <!-- Select Facility to Autofill -->
+    <!-- Facility ID Input -->
     <div class="mb-4">
-        <label class="form-label">Select Facility</label>
-        <select id="facilityID" class="form-control">
-            <option value="">-- Select Facility --</option>
-            <?php
-            $sql = "SELECT FacilityID, Name FROM facilities ORDER BY FacilityID ASC";
-            $result = $conn->query($sql);
-
-            while ($row = $result->fetch_assoc()) {
-                $fid = $row['FacilityID'];
-                $fname = $row['Name'];
-                echo "<option value='$fid'>$fid - $fname</option>";
-            }
-            ?>
-        </select>
+        <label class="form-label">Facility ID (e.g., F001)</label>
+        <input type="text" id="facilityID" class="form-control" placeholder="F001">
     </div>
 
     <!-- Facility Form -->
@@ -84,12 +72,9 @@ require '../includes/db_connect.php';
 <!-- AUTO FILL SCRIPT -->
 <script>
 document.getElementById("facilityID").addEventListener("change", function () {
-    let id = this.value;
-
-    document.getElementById("hiddenFacilityID").value = id; // store hidden ID for save
-
+    let id = this.value.trim();
     if (id === "") {
-        // Reset all fields
+        document.getElementById("hiddenFacilityID").value = "";
         document.getElementById("nameField").value = "";
         document.getElementById("descriptionField").value = "";
         document.getElementById("locationField").value = "";
@@ -108,13 +93,13 @@ document.getElementById("facilityID").addEventListener("change", function () {
                 return;
             }
 
+            document.getElementById("hiddenFacilityID").value = data.FacilityID;
             document.getElementById("nameField").value = data.Name ?? "";
             document.getElementById("descriptionField").value = data.Description ?? "";
             document.getElementById("locationField").value = data.Location ?? "";
             document.getElementById("typeField").value = data.Type ?? "General";
             document.getElementById("capacityField").value = data.Capacity ?? "";
             document.getElementById("statusField").value = data.Status ?? "Active";
-
             document.getElementById("photoPreview").src = data.PhotoURL ? "../uploads/" + data.PhotoURL : "";
         })
         .catch(err => console.error("Fetch error:", err));
