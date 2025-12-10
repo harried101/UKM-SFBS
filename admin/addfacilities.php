@@ -316,7 +316,6 @@ h1 {
 
     <div class="d-flex align-items-center gap-4">
         <a class="nav-link active" href="#">Facility</a>
-        <a class="nav-link" href="manage_closures.php">Closures Management</a> 
         <a class="nav-link" href="#">Booking</a>
         <a class="nav-link" href="#">Report</a>
 
