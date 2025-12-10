@@ -6,9 +6,12 @@ if (!isset($_GET['id'])) {
     exit;
 }
 
-$id = intval($_GET['id']); // FacilityID is int
+$id = $_GET['id'];
 
-// Use prepared statement
+// Strip non-numeric characters (F001 → 1)
+$id = preg_replace('/[^0-9]/', '', $id);
+$id = intval($id);
+
 $stmt = $conn->prepare("SELECT * FROM facilities WHERE FacilityID = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -19,7 +22,5 @@ if ($result->num_rows === 0) {
     exit;
 }
 
-// Fetch data and return JSON
-$data = $result->fetch_assoc();
-echo json_encode($data);
+echo json_encode($result->fetch_assoc());
 ?>
