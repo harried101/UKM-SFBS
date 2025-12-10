@@ -6,22 +6,18 @@ if (!isset($_GET['id'])) {
     exit;
 }
 
-$id = intval($_GET['id']);
+// Strip non-numeric characters (F001 → 1)
+$id = preg_replace('/[^0-9]/', '', $_GET['id']);
+$id = intval($id);
 
-// Debug: check DB connection and query
-if($conn->connect_error){
-    die(json_encode(['error'=>'DB connection failed']));
-}
+// Query the database
+$stmt = $conn->prepare("SELECT * FROM facilities WHERE FacilityID = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-$sql = "SELECT * FROM facilities WHERE FacilityID = $id";
-$result = $conn->query($sql);
-
-if(!$result){
-    die(json_encode(['error'=>'Query failed', 'sql'=>$sql, 'err'=>$conn->error]));
-}
-
-if ($result->num_rows === 0) {
-    echo json_encode(['error' => 'not found', 'sql'=>$sql]);
+if (!$result || $result->num_rows === 0) {
+    echo json_encode(['error' => 'not found']);
     exit;
 }
 
