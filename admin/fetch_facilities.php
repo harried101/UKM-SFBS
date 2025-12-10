@@ -1,30 +1,20 @@
 <?php
-require_once '../includes/db_connect.php';
+require '../includes/db_connect.php';
 
-$id = $_GET['id'] ?? '';
-$id = trim($id);
-
-header('Content-Type: application/json');
-
-if ($id === '') {
-    echo json_encode(["error" => "empty id"]);
+if (!isset($_GET['id'])) {
+    echo json_encode(['error' => 'missing id']);
     exit;
 }
 
-$sql = "SELECT FacilityID, Name, Description, Location, Type, Capacity, PhotoURL, Status FROM facilities WHERE FacilityID = ? LIMIT 1";
-$stmt = $conn->prepare($sql);
-if (!$stmt) {
-    echo json_encode(["error" => "db prepare failed"]);
+$id = intval($_GET['id']);  // ensure it's number
+
+$sql = "SELECT * FROM facilities WHERE FacilityID = $id";
+$result = $conn->query($sql);
+
+if ($result->num_rows === 0) {
+    echo json_encode(['error' => 'not found']);
     exit;
 }
-$stmt->bind_param("s", $id);
-$stmt->execute();
-$res = $stmt->get_result();
-if ($res && $res->num_rows > 0) {
-    $row = $res->fetch_assoc();
-    echo json_encode($row);
-} else {
-    echo json_encode(["error" => "not found"]);
-}
-$stmt->close();
+
+echo json_encode($result->fetch_assoc());
 ?>
