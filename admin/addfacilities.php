@@ -422,27 +422,181 @@ h1 {
                     <div class="section-card">
                         <h5 class="section-title">2. Weekly Recurring Schedule</h5>
                         
-                        <small class="text-muted d-block mb-3">Check box if OPEN. Set times & slot duration (mins).</small>
-                        <div class="row g-2">
-                            <?php 
-                                $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-                                foreach($days as $day):
-                                    $dayData = $existingSchedules[$day] ?? ['OpenTime' => '08:00:00', 'CloseTime' => '17:00:00', 'SlotDuration' => 60]; 
-                                    $isChecked = isset($existingSchedules[$day]); 
-                            ?>
-                            <div class="col-12">
-                                <div class="d-flex align-items-center gap-2">
-                                    <input type="checkbox" class="form-check-input mt-1 schedule-day" name="available_days[]" value="<?php echo $day; ?>" id="<?php echo $day; ?>" <?php echo $isChecked ? 'checked' : ''; ?>>
-                                    <label class="form-label mb-0" for="<?php echo $day; ?>" style="min-width:40px; font-size:13px;"><?php echo substr($day, 0, 3); ?></label> 
-                                    <input type="time" class="form-control form-control-sm schedule-input" name="start_time[<?php echo $day; ?>]" value="<?php echo substr($dayData['OpenTime'], 0, 5); ?>" required>
-                                    <span class="mx-1">-</span>
-                                    <input type="time" class="form-control form-control-sm schedule-input" name="end_time[<?php echo $day; ?>]" value="<?php echo substr($dayData['CloseTime'], 0, 5); ?>" required>
-                                    <input type="number" class="form-control form-control-sm schedule-input" name="slot_duration[<?php echo $day; ?>]" value="<?php echo $dayData['SlotDuration']; ?>" min="1" step="5" style="max-width: 55px;" required>
-                                    <span class="text-muted" style="font-size:12px;">m</span>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
+ <small class="text-muted d-block mb-3">
+    Check box if OPEN. Set times & slot duration (mins).
+</small>
+
+<style>
+    .time-btn {
+        padding: 4px 8px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #f8f9fa;
+        cursor: pointer;
+        margin: 2px;
+    }
+    .time-btn.active {
+        background: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+    .time-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .schedule-section { display:none; }
+</style>
+
+<?php 
+$days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+$timeOptions = [];
+for ($h = 9; $h <= 21; $h++) {
+    $timeOptions[] = date("h:i A", strtotime("$h:00"));
+}
+?>
+
+<!-- Day Dropdown -->
+<div class="mb-3">
+    <label class="form-label fw-bold">Select Day</label>
+    <select id="daySelector" class="form-select form-select-sm">
+        <option selected disabled>-- Choose Day --</option>
+        <?php foreach($days as $day): ?>
+            <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
+<!-- Day Sections -->
+<?php foreach($days as $day): 
+    $dayData = $existingSchedules[$day] ?? [
+        'OpenTime'=>'08:00:00','CloseTime'=>'17:00:00','SlotDuration'=>60
+    ];
+    $isChecked = !empty($existingSchedules[$day]);
+?>
+<div class="schedule-section" id="section-<?php echo $day; ?>">
+
+    <div class="border rounded p-3 mb-3 bg-light">
+
+        <!-- Open Checkbox -->
+        <div class="form-check mb-3">
+            <input class="form-check-input day-open-checkbox"
+                   type="checkbox"
+                   name="available_days[]"
+                   id="open-<?php echo $day; ?>"
+                   value="<?php echo $day; ?>"
+                   <?php echo $isChecked ? 'checked' : ''; ?>>
+            <label class="form-check-label" for="open-<?php echo $day; ?>">
+                Open on <?php echo $day; ?>
+            </label>
+        </div>
+
+        <!-- Time buttons & slot duration container -->
+        <div class="day-schedule-controls">
+
+            <!-- Start Time -->
+            <label class="text-muted mb-1">Start Time</label>
+            <div>
+                <?php foreach ($timeOptions as $t): 
+                    $isActiveStart = $isChecked && ($t == date("h:i A", strtotime($dayData['OpenTime'])));
+                ?>
+                    <button type="button"
+                        class="time-btn start-btn-<?php echo $day; ?> <?php echo $isActiveStart ? 'active' : ''; ?>"
+                        onclick="selectTime('<?php echo $day; ?>','start','<?php echo $t; ?>', this)">
+                        <?php echo $t; ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+
+            <input type="hidden" 
+                   name="start_time[<?php echo $day; ?>]"
+                   id="start-<?php echo $day; ?>"
+                   value="<?php echo date('H:i', strtotime($dayData['OpenTime'])); ?>">
+
+            <!-- End Time -->
+            <label class="text-muted mt-3 mb-1">End Time</label>
+            <div>
+                <?php foreach ($timeOptions as $t): 
+                    $isActiveEnd = $isChecked && ($t == date("h:i A", strtotime($dayData['CloseTime'])));
+                ?>
+                    <button type="button"
+                        class="time-btn end-btn-<?php echo $day; ?> <?php echo $isActiveEnd ? 'active' : ''; ?>"
+                        onclick="selectTime('<?php echo $day; ?>','end','<?php echo $t; ?>', this)">
+                        <?php echo $t; ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+
+            <input type="hidden" 
+                   name="end_time[<?php echo $day; ?>]"
+                   id="end-<?php echo $day; ?>"
+                   value="<?php echo date('H:i', strtotime($dayData['CloseTime'])); ?>">
+
+            <!-- Slot Duration -->
+            <div class="mt-3">
+                <label class="form-label mb-1">Slot Duration (minutes)</label>
+                <div class="d-flex align-items-center">
+                    <input type="number"
+                        class="form-control form-control-sm slot-duration-<?php echo $day; ?>"
+                        name="slot_duration[<?php echo $day; ?>]"
+                        value="<?php echo $dayData['SlotDuration']; ?>"
+                        min="5" step="5" style="max-width:70px;">
+                    <span class="ms-1 text-muted">mins</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<?php endforeach; ?>
+
+<script>
+// Show selected day section
+document.getElementById("daySelector").addEventListener("change", function() {
+    let day = this.value;
+    document.querySelectorAll(".schedule-section").forEach(sec => sec.style.display = "none");
+    document.getElementById("section-" + day).style.display = "block";
+});
+
+// Select time button
+function selectTime(day, type, timeValue, btn) {
+    const date = new Date("1970-01-01 " + timeValue);
+    const formatted = date.toTimeString().substring(0,5);
+
+    document.getElementById(type + "-" + day).value = formatted;
+
+    document.querySelectorAll("." + type + "-btn-" + day).forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+}
+
+// Enable/disable time buttons & slot input based on checkbox
+document.querySelectorAll('.day-open-checkbox').forEach(cb => {
+    toggleDayControls(cb); // initial state
+    cb.addEventListener('change', () => toggleDayControls(cb));
+});
+
+function toggleDayControls(checkbox) {
+    const day = checkbox.value;
+    const isEnabled = checkbox.checked;
+
+    document.querySelectorAll(`.start-btn-${day}, .end-btn-${day}`).forEach(b => {
+        b.disabled = !isEnabled;
+        b.style.opacity = isEnabled ? '1' : '0.5';
+        b.style.cursor = isEnabled ? 'pointer' : 'not-allowed';
+    });
+
+    const slotInput = document.querySelector(`.slot-duration-${day}`);
+    slotInput.disabled = !isEnabled;
+
+    // Remove active state from buttons if disabled
+    if (!isEnabled) {
+        document.querySelectorAll(`.start-btn-${day}, .end-btn-${day}`).forEach(b => b.classList.remove('active'));
+    }
+}
+</script>
+
                         
                         <div class="mt-4 pt-3 border-top text-center">
                             <p class="text-muted small mb-2">CLOSE FACILITY</p>
