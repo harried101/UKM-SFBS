@@ -15,7 +15,6 @@ if (isset($_GET['get_slots'])) {
     }
 
     // A. CHECK CLOSURES (scheduleoverrides)
-    // We check if the requested date falls within any closure range
     $closure_sql = "SELECT Reason FROM scheduleoverrides 
                     WHERE FacilityID = ? 
                     AND ? BETWEEN DATE(StartTime) AND DATE(EndTime) 
@@ -27,7 +26,7 @@ if (isset($_GET['get_slots'])) {
     
     if ($closure_row = $closure_res->fetch_assoc()) {
         echo json_encode([
-            'success' => true, 
+            'success' => false, 
             'slots' => [], 
             'message' => 'Facility Closed: ' . $closure_row['Reason'],
             'is_closed' => true
@@ -47,22 +46,20 @@ if (isset($_GET['get_slots'])) {
     $stmt->execute();
     $sched_res = $stmt->get_result();
     
+    // --- UPDATED LOGIC: Default to 9AM - 10PM if no schedule found ---
     if ($sched_res->num_rows === 0) {
-        echo json_encode([
-            'success' => true, 
-            'slots' => [], 
-            'message' => 'Closed on ' . $dayOfWeek . 's', 
-            'is_closed' => true
-        ]);
-        exit;
+        $openTime = '09:00:00';
+        $closeTime = '22:00:00'; // 10 PM
+        $slotDuration = 60;      // 1 Hour default
+    } else {
+        $schedule = $sched_res->fetch_assoc();
+        $openTime = $schedule['OpenTime'];
+        $closeTime = $schedule['CloseTime'];
+        $slotDuration = intval($schedule['SlotDuration']);
     }
 
-    $schedule = $sched_res->fetch_assoc();
-    $openTime = $schedule['OpenTime'];
-    $closeTime = $schedule['CloseTime'];
-    $slotDuration = intval($schedule['SlotDuration']); // e.g., 60 minutes
-
     // C. FETCH EXISTING BOOKINGS
+    // We select TIME(StartTime) to compare easily
     $bk_sql = "SELECT TIME(StartTime) as booked_time 
                FROM bookings 
                WHERE FacilityID = ? 
@@ -75,8 +72,8 @@ if (isset($_GET['get_slots'])) {
     
     $booked_times = [];
     while ($row = $bk_res->fetch_assoc()) {
-        // Store just the HH:MM part for comparison
-        $booked_times[] = substr($row['booked_time'], 0, 5);
+        // Take only HH:MM to ensure match even if seconds differ
+        $booked_times[] = substr($row['booked_time'], 0, 5); 
     }
     $stmt->close();
 
@@ -86,18 +83,17 @@ if (isset($_GET['get_slots'])) {
     $end = strtotime($date . ' ' . $closeTime);
 
     while ($current < $end) {
+        // Formats: "09:00:00" for DB, "09:00" for comparison, "09:00 AM" for display
         $startTimeStr = date('H:i:s', $current);
-        $compareTime = date('H:i', $current); // 09:00
-        $labelTime = date('h:i A', $current); // 09:00 AM
+        $compareTime = date('H:i', $current); 
+        $labelTime = date('h:i A', $current); 
         
-        // Calculate end of this specific slot
         $slotEndTime = $current + ($slotDuration * 60);
         
-        // If this slot goes past closing time, ignore it
-        if ($slotEndTime > $end) {
-            break;
-        }
+        // Stop if the slot exceeds closing time
+        if ($slotEndTime > $end) break;
 
+        // Check if this time exists in booked_times array
         $isBooked = in_array($compareTime, $booked_times);
 
         $slots[] = [
@@ -106,7 +102,6 @@ if (isset($_GET['get_slots'])) {
             'status' => $isBooked ? 'booked' : 'available'
         ];
 
-        // Jump to next slot
         $current = $slotEndTime;
     }
 
@@ -124,10 +119,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $userIdentifier = $_SESSION['user_id'];
     $facilityID = $_POST['facility_id'];
-    $startTime = $_POST['start_time']; // e.g., "2023-10-25 09:00:00"
+    $startTime = $_POST['start_time']; 
     
-    // We do NOT trust the End Time from the frontend. We calculate it using DB duration.
-    // 1. Get Slot Duration
+    // 1. Get Slot Duration (or default to 60)
     $dayOfWeek = date('l', strtotime($startTime));
     $dur_sql = "SELECT SlotDuration FROM facilityschedules WHERE FacilityID = ? AND DayOfWeek = ?";
     $d_stmt = $conn->prepare($dur_sql);
@@ -138,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($dur_row = $dur_res->fetch_assoc()) {
         $durationMinutes = intval($dur_row['SlotDuration']);
     } else {
-        $durationMinutes = 60; // Fallback
+        $durationMinutes = 60;
     }
     $d_stmt->close();
 
