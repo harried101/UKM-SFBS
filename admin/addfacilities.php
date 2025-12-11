@@ -332,6 +332,24 @@ h1 {
 .btn-submit { background: #1e40af; color: white; padding: 6px 22px; border-radius: 10px; }
 .btn-search { background: #071239ff; color: white; border-radius: 10px; padding: 6px 15px;}
 
+.btn-closure {
+    background-color: #2d4baeff; /* soft navy */
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 12px; /* soft rounded corners */
+    padding: 10px 18px;
+    text-align: center;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.btn-closure:hover {
+    background-color: #627fbdff; /* slightly lighter blue on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(208, 208, 208, 1);
+}
+
 .section-card {
     background: rgba(255, 255, 255, 0.5); 
     border-radius: 15px;
@@ -353,7 +371,7 @@ h1 {
 .btn-closure-nav {
     font-weight: 700;
     padding: 10px 18px; 
-    background: #1e40af; 
+    background: #3f58acff; 
     color: white;
     border-radius: 4px; 
     text-decoration: none;
@@ -366,7 +384,7 @@ h1 {
     border: none; 
 }
 .btn-closure-nav:hover { 
-    background: #007bff; 
+    background: #707eb0ff; 
     color: white;
     transform: translateY(-1px);
 }
@@ -687,15 +705,20 @@ function toggleDayControls(checkbox) {
 </script>
 
                         
-                        <div class="mt-4 pt-3 border-top text-center">
-                            <p class="text-muted small mb-2">CLOSE FACILITY</p>
-                           <button type="button" class="btn-closure-nav" id="btnManageClosure">
-                                    Go to Closures Management
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        
+<div class="col-md-6 mb-4">
+        
+            <h5 class="section-title">3. Facility Closure</h5>
+             <small class="text-muted d-block mb-3">
+    Manage temporary closures for this facility.
+</small>
+            <a href="manage_closures.php" class="btn btn-closure w-100 mt-3">
+    <span class="me-2">📅</span> Go to Closures Management
+</a>
+        </div>
+    </div>
+</div>
+
 
             <div class="text-center mt-4">
                 <button type="reset" class="btn btn-reset me-2">Reset</button>
@@ -780,48 +803,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Closure Management Modal Logic
-    document.getElementById('btnManageClosure').addEventListener('click', function() {
-        // Show the modal
-        var closureModal = new bootstrap.Modal(document.getElementById('closureModal'));
-        closureModal.show();
-
-        // Load content via AJAX
-        const facilityId = isUpdateMode ? document.querySelector('input[name="FacilityIDHidden"]').value : null;
-        
-        // Pass Facility ID to the manage_closures script if in update mode
-        let url = 'manage_closures.php' + (facilityId ? '?facility_id=' + facilityId : '');
-
-        fetch(url)
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('closureModalContent').innerHTML = html;
-                 // Set the modal title to be dynamic
-                 document.getElementById('closureModalLabel').textContent = facilityId ? `Manage Closures for ${facilityId}` : 'Manage Closures (Select Facility First)';
-            })
-            .catch(err => {
-                document.getElementById('closureModalContent').innerHTML = '<p class="text-danger text-center">Failed to load content.</p>';
-                console.error(err);
-            });
-    });
+   
 });
 </script>
 </body>
-<div class="modal fade" id="closureModal" tabindex="-1" aria-labelledby="closureModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="closureModalLabel">Manage Closures</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div id="closureModalContent">
-            <p class="text-center">Loading...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+
 
  
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
