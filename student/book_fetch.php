@@ -1,12 +1,9 @@
 <?php
-// book_fetch.php
+
 session_start();
 require_once '../includes/db_connect.php';
 header("Content-Type: application/json; charset=utf-8");
 
-/**
- * normalizeDateTime: converts various human formats to Y-m-d H:i:s
- */
 function normalizeDateTime($input) {
     if (!$input) return false;
     $ts = strtotime(trim($input));
@@ -14,9 +11,7 @@ function normalizeDateTime($input) {
     return false;
 }
 
-/**
- * getActualUserID: get user id from session identifier
- */
+// guna UserIdentifier untuk cari UserID sebab guna untuk login
 function getActualUserID($conn, $identifier) {
     if (!$identifier) return 0;
     $stmt = $conn->prepare("SELECT UserID FROM users WHERE UserIdentifier = ? LIMIT 1");
@@ -33,7 +28,7 @@ function jres($arr) {
     exit;
 }
 
-/* ---------------- GET AVAILABLE SLOTS ---------------- */
+// get slot yang available
 if (isset($_GET['get_slots'])) {
     $facilityID = $_GET['facility_id'] ?? '';
     $dateInput = $_GET['date'] ?? '';
@@ -83,7 +78,7 @@ if (isset($_GET['get_slots'])) {
     jres(["success"=>true,"is_closed"=>false,"slots"=>$slots]);
 }
 
-/* ---------------- POST BOOKING ---------------- */
+// masuk table bookings
 if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['facility_id'], $_POST['start_time'])){
     $facilityID = $_POST['facility_id'];
     $rawStart = $_POST['start_time'];
@@ -110,9 +105,10 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['facility_id'], $_POST['s
     if($slotTS<$openT || ($slotTS+$duration*60)>$closeT) jres(["success"=>false,"message"=>"Slot outside operating hours"]);
 
     $conn->begin_transaction();
-$stmt = $conn->prepare("INSERT INTO bookings (UserID,FacilityID,StartTime,EndTime,Status,CreatedByAdminID,BookedAt,UpdatedAt) VALUES (?,?,?,?, 'Pending', NULL, NOW(), NOW())");
-$stmt->bind_param("isss",$userID,$facilityID,$startTimeDT,$endTimeDT);
-try{
+    $stmt = $conn->prepare("INSERT INTO bookings (UserID,FacilityID,StartTime,EndTime,Status,CreatedByAdminID,BookedAt,UpdatedAt) VALUES (?,?,?,?, 'Pending', NULL, NOW(), NOW())");
+    $stmt->bind_param("isss",$userID,$facilityID,$startTimeDT,$endTimeDT);
+
+    try{
     if(!$stmt->execute()){
         $errno=$stmt->errno;
         $conn->rollback();

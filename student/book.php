@@ -42,7 +42,7 @@ if ($facility_id) {
     </div>
 
     <div class="max-w-xl mx-auto bg-white rounded-xl">
-        <!-- Month Navigation -->
+        <!-- Month  -->
         <div class="flex justify-between items-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
             <button id="prevMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#8a0d19] transition"><i class="fa-solid fa-chevron-left text-sm"></i></button>
             <h3 id="monthYear" class="text-lg font-bold text-gray-800"></h3>
@@ -212,11 +212,11 @@ if ($facility_id) {
                 alert(`Success! Booking submitted. Your booking ID: ${data.booking_id}`);
                 bookingForm.reset();
                 bookingForm.classList.add('hidden');
-                // Optional: refresh available slots for selected date
+                
                 const selectedDateText = document.getElementById('selectedDateDisplay').innerText;
                 if (selectedDateText) {
                     const dateParts = selectedDateText.split(' ');
-                    // fallback: just reload calendar & slots from selected date string
+                   
                 }
             } else {
                 alert(`Error: ${data.message}`);
