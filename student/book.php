@@ -18,10 +18,10 @@ if ($facility_id) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         body::-webkit-scrollbar { display: none; }
         body { -ms-overflow-style: none; scrollbar-width: none; }
@@ -32,6 +32,7 @@ if ($facility_id) {
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
+    <title>Book Facility - <?php echo htmlspecialchars($facility_name); ?></title>
 </head>
 <body class="bg-white p-4 font-sans select-none">
 
@@ -49,7 +50,9 @@ if ($facility_id) {
         </div>
 
         <!-- Calendar -->
-        <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+        <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm mb-8"></div>
 
         <!-- Legend -->
@@ -73,8 +76,8 @@ if ($facility_id) {
 
         <!-- Booking Form -->
         <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
-            <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
-            <input type="hidden" name="start_time" id="hiddenStartTime">
+            <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>" />
+            <input type="hidden" name="start_time" id="hiddenStartTime" />
             <div class="flex justify-between items-center mb-4 text-sm">
                 <span class="text-gray-500">Selected Time:</span>
                 <span id="summaryTime" class="font-bold text-[#8a0d19] text-lg">--:--</span>
@@ -83,118 +86,151 @@ if ($facility_id) {
         </form>
     </div>
 
-    <script>
-        const facilityId = "<?php echo $facility_id; ?>";
-        let currDate = new Date();
-        let currMonth = currDate.getMonth();
-        let currYear = currDate.getFullYear();
+<script>
+    const facilityId = "<?php echo $facility_id; ?>";
+    let currDate = new Date();
+    let currMonth = currDate.getMonth();
+    let currYear = currDate.getFullYear();
 
-        const calendarGrid = document.getElementById('calendarGrid');
-        const monthYear = document.getElementById('monthYear');
-        const slotsSection = document.getElementById('timeSlotsSection');
-        const slotsContainer = document.getElementById('slotsContainer');
-        const slotsLoader = document.getElementById('slotsLoader');
-        const bookingForm = document.getElementById('bookingForm');
-        const legend = document.getElementById('legend');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const monthYear = document.getElementById('monthYear');
+    const slotsSection = document.getElementById('timeSlotsSection');
+    const slotsContainer = document.getElementById('slotsContainer');
+    const slotsLoader = document.getElementById('slotsLoader');
+    const bookingForm = document.getElementById('bookingForm');
+    const legend = document.getElementById('legend');
 
-        function renderCalendar(month, year) {
-            calendarGrid.innerHTML = "";
-            monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
-            let firstDay = new Date(year, month, 1).getDay();
-            let daysInMonth = new Date(year, month + 1, 0).getDate();
-            for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+    function renderCalendar(month, year) {
+        calendarGrid.innerHTML = "";
+        monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+        let firstDay = new Date(year, month, 1).getDay();
+        let daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateDiv = document.createElement('div');
-                dateDiv.innerText = day;
-                dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
-                
-                const checkDate = new Date(year, month, day);
-                const today = new Date();
-                today.setHours(0,0,0,0);
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateDiv = document.createElement('div');
+            dateDiv.innerText = day;
+            dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
+            
+            const checkDate = new Date(year, month, day);
+            const today = new Date();
+            today.setHours(0,0,0,0);
 
-                if (checkDate < today) {
-                    dateDiv.classList.add('disabled');
-                } else {
-                    dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
-                }
-                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateDiv.classList.add('today');
-                calendarGrid.appendChild(dateDiv);
+            if (checkDate < today) {
+                dateDiv.classList.add('disabled');
+            } else {
+                dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
             }
+            if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateDiv.classList.add('today');
+            calendarGrid.appendChild(dateDiv);
         }
+    }
 
-        function selectDate(day, month, year, element) {
-            document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            document.getElementById('selectedDateDisplay').innerText = new Date(year, month, day).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
-            
-            legend.classList.remove('hidden');
-            slotsSection.classList.remove('hidden');
-            bookingForm.classList.add('hidden');
-            slotsSection.scrollIntoView({ behavior: 'smooth' });
-            fetchSlots(dateStr);
-        }
+    function selectDate(day, month, year, element) {
+        document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        document.getElementById('selectedDateDisplay').innerText = new Date(year, month, day).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
+        
+        legend.classList.remove('hidden');
+        slotsSection.classList.remove('hidden');
+        bookingForm.classList.add('hidden');
+        slotsSection.scrollIntoView({ behavior: 'smooth' });
+        fetchSlots(dateStr);
+    }
 
-        function fetchSlots(dateStr) {
-            slotsContainer.innerHTML = '';
-            slotsLoader.classList.remove('hidden');
+    function fetchSlots(dateStr) {
+        slotsContainer.innerHTML = '';
+        slotsLoader.classList.remove('hidden');
 
-            fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
-                .then(res => res.json())
-                .then(data => {
-                    slotsLoader.classList.add('hidden');
+        fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
+            .then(res => res.json())
+            .then(data => {
+                slotsLoader.classList.add('hidden');
+                
+                if (data.is_closed) {
+                    slotsContainer.innerHTML = `
+                        <div class="col-span-full bg-red-50 border border-red-100 text-red-600 rounded-lg p-4 text-center">
+                            <i class="fa-solid fa-circle-exclamation text-xl mb-2 block"></i>
+                            <p class="font-bold">Not Available</p>
+                            <p class="text-sm opacity-90">${data.message}</p>
+                        </div>`;
+                    return;
+                }
+
+                data.slots.forEach(slot => {
+                    const btn = document.createElement('button');
+                    const isBooked = slot.status === 'booked';
+                    btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                        isBooked 
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-75' 
+                        : 'bg-white text-green-700 border-green-200 hover:border-green-500 hover:shadow-md'
+                    }`;
                     
-                    // HANDLE "CLOSED" STATUS
-                    if (data.is_closed) {
-                        slotsContainer.innerHTML = `
-                            <div class="col-span-full bg-red-50 border border-red-100 text-red-600 rounded-lg p-4 text-center">
-                                <i class="fa-solid fa-circle-exclamation text-xl mb-2 block"></i>
-                                <p class="font-bold">Not Available</p>
-                                <p class="text-sm opacity-90">${data.message}</p>
-                            </div>`;
-                        return;
+                    btn.innerHTML = `${slot.label} ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}`;
+                    
+                    if(isBooked) {
+                        btn.disabled = true;
+                    } else {
+                        btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
                     }
-
-                    // RENDER SLOTS
-                    data.slots.forEach(slot => {
-                        const btn = document.createElement('button');
-                        const isBooked = slot.status === 'booked';
-                        btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
-                            isBooked 
-                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-75' 
-                            : 'bg-white text-green-700 border-green-200 hover:border-green-500 hover:shadow-md'
-                        }`;
-                        
-                        btn.innerHTML = `${slot.label} ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}`;
-                        
-                        if(isBooked) {
-                            btn.disabled = true;
-                        } else {
-                            btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
-                        }
-                        slotsContainer.appendChild(btn);
-                    });
-                })
-                .catch(err => {
-                    slotsLoader.classList.add('hidden');
-                    slotsContainer.innerHTML = '<div class="col-span-full text-red-400 text-center text-sm">Connection Error</div>';
+                    slotsContainer.appendChild(btn);
                 });
-        }
+            })
+            .catch(err => {
+                slotsLoader.classList.add('hidden');
+                slotsContainer.innerHTML = '<div class="col-span-full text-red-400 text-center text-sm">Connection Error</div>';
+            });
+    }
 
-        function selectSlot(startTime, label, dateStr, btn) {
-            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
-            btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#8a0d19] border-[#8a0d19] text-white shadow-md transform scale-105';
-            
-            document.getElementById('hiddenStartTime').value = `${dateStr} ${startTime}`;
-            document.getElementById('summaryTime').innerText = label;
-            bookingForm.classList.remove('hidden');
-            setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
-        }
+    function selectSlot(startTime, label, dateStr, btn) {
+        document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
+        btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#8a0d19] border-[#8a0d19] text-white shadow-md transform scale-105';
+        
+        document.getElementById('hiddenStartTime').value = startTime;
+        document.getElementById('summaryTime').innerText = label;
+        bookingForm.classList.remove('hidden');
+        setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
+    }
 
-        document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
-        document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
-        renderCalendar(currMonth, currYear);
-    </script>
+    // AJAX form submit to avoid raw JSON response showing in browser
+    bookingForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(bookingForm);
+
+        fetch(bookingForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Success! Booking submitted. Your booking ID: ${data.booking_id}`);
+                bookingForm.reset();
+                bookingForm.classList.add('hidden');
+                // Optional: refresh available slots for selected date
+                const selectedDateText = document.getElementById('selectedDateDisplay').innerText;
+                if (selectedDateText) {
+                    const dateParts = selectedDateText.split(' ');
+                    // fallback: just reload calendar & slots from selected date string
+                }
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        })
+        .catch(() => {
+            alert('Network error. Please try again.');
+        });
+    });
+
+    document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
+    document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
+    renderCalendar(currMonth, currYear);
+</script>
+
 </body>
 </html>
