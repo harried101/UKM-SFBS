@@ -21,59 +21,62 @@ while ($row = $facility_result->fetch_assoc()) {
     $facilities[] = $row;
 }
 
-// Fetch all existing overrides
+// Fetch all existing overrides (using scheduleoverrides table)
 $override_sql = "SELECT c.OverrideID, c.FacilityID, c.StartTime, c.EndTime, c.Reason, f.Name 
-                 FROM scheduleoverrides c 
-                 JOIN facilities f ON c.FacilityID = f.FacilityID
-                 ORDER BY c.StartTime DESC";
+                FROM scheduleoverrides c 
+                JOIN facilities f ON c.FacilityID = f.FacilityID
+                ORDER BY c.StartTime DESC";
 $override_result = $conn->query($override_sql);
 while ($row = $override_result->fetch_assoc()) {
     $overrides[] = $row;
 }
 
-// --- Handle Override Addition ---
+// --- Handle Override Addition (POST Request) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_override'])) {
-    $facilityId = trim($_POST['FacilityID'] ?? '');
-    $startDate = trim($_POST['ClosureStartDate'] ?? '');
-    $endDate = trim($_POST['ClosureEndDate'] ?? '');
-    $reason = trim($_POST['Reason'] ?? '');
+    $facilityId = $_POST['FacilityID'] ?? '';
+    $startDate = $_POST['ClosureStartDate'] ?? '';
+    $endDate = $_POST['ClosureEndDate'] ?? '';
+    $reason = $_POST['Reason'] ?? '';
     
     if (empty($facilityId) || empty($startDate) || empty($endDate) || empty($reason)) {
         echo "<script>alert('Please fill in Facility, Start Date, End Date, and Reason.'); window.location='manage_closures.php';</script>";
         exit();
     }
-
+    
+    // Convert DATE input to DATETIME start/end of day for the DATETIME columns
+    $startTime = $startDate . " 00:00:00"; 
+    $endTime = $endDate . " 23:59:59";
+    
     if (strtotime($startDate) > strtotime($endDate)) {
         echo "<script>alert('Error: End Date cannot be before Start Date.'); window.location='manage_closures.php';</script>";
         exit();
     }
-
-    $startTime = $startDate . " 00:00:00"; 
-    $endTime = $endDate . " 23:59:59";
-
+    
+    // SQL uses StartTime and EndTime (DATETIME) columns
     $stmt = $conn->prepare("INSERT INTO scheduleoverrides (FacilityID, StartTime, EndTime, Reason) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("ssss", $facilityId, $startTime, $endTime, $reason);
 
     if ($stmt->execute()) {
         echo "<script>alert('Facility closure successfully scheduled from {$startDate} to {$endDate}.'); window.location='manage_closures.php';</script>";
     } else {
-        echo "<script>alert('Error adding closure: " . htmlspecialchars($stmt->error) . "'); window.location='manage_closures.php';</script>";
+        echo "<script>alert('Error adding closure: " . $stmt->error . "'); window.location='manage_closures.php';</script>";
     }
     $stmt->close();
-    exit();
+    exit(); 
 }
 
-// --- Handle Override Deletion ---
+// --- Handle Override Deletion (GET Request with delete_id) ---
 if (isset($_GET['delete_id'])) {
-    $delete_id = intval($_GET['delete_id']);
+    $delete_id = $_GET['delete_id'];
     
+    // SQL uses OverrideID column
     $stmt = $conn->prepare("DELETE FROM scheduleoverrides WHERE OverrideID = ?");
     $stmt->bind_param("i", $delete_id);
     
     if ($stmt->execute()) {
         echo "<script>alert('Closure successfully deleted.'); window.location='manage_closures.php';</script>";
     } else {
-        echo "<script>alert('Error deleting closure: " . htmlspecialchars($stmt->error) . "'); window.location='manage_closures.php';</script>";
+        echo "<script>alert('Error deleting closure: " . $stmt->error . "'); window.location='manage_closures.php';</script>";
     }
     $stmt->close();
     exit();
@@ -86,11 +89,14 @@ if (isset($_GET['delete_id'])) {
     <meta charset="UTF-8">
     <title>Manage Facility Closures</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <style>
+        /* Base and Nav Styles */
         body { 
             background: url('../assets/img/background.jpg'); 
             background-size: cover; 
             background-position: center; 
+            background-repeat: no-repeat; 
             font-family: 'Poppins', sans-serif; 
         }
         nav { 
@@ -106,6 +112,15 @@ if (isset($_GET['delete_id'])) {
             z-index: 1000; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
         }
+        .nav-logo img { height: 65px; }
+        .nav-link { 
+            color: #071239ff; 
+            font-weight: 600; 
+            padding: 8px 18px; 
+            border-radius: 12px; 
+            transition: 0.3s ease; 
+        }
+        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.5); }
         .main-box { 
             background: #bfd9dc; 
             border-radius: 25px; 
@@ -114,19 +129,97 @@ if (isset($_GET['delete_id'])) {
             margin: 40px auto; 
             box-shadow: 0 0 20px rgba(0,0,0,0.25); 
         }
-        h1 { font-weight: 900; text-align: center; margin-bottom: 20px; font-size: 36px; color: #071239ff; }
-        .form-label { font-weight: 600; font-size: 14px; color: #071239ff; margin-bottom: 5px; }
-        .form-control, .form-select, textarea { border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #071239ff; }
-        .btn-submit { background: #1e40af; color: white; padding: 8px 25px; border-radius: 8px; font-weight: 700; }
-        .btn-danger { padding: 6px 12px; border-radius: 6px; }
-        .closure-card { background: #ffffff; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 1px solid #ddd; }
-        .section-title { font-weight: 800; color: #1e40af; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #1e40af; padding-bottom: 5px; }
-        .table { border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .table thead th { background-color: #071239ff; color: white; font-weight: 600; vertical-align: middle; }
-        .table tbody tr:hover { background-color: #e9ecef; }
-        .date-range-group { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid #ced4da; display: flex; flex-direction: column; gap: 10px; }
-        .date-range-group input[type="date"] { border-radius: 6px; padding: 10px 15px; font-size: 16px; height: auto; text-align: center; }
-        .date-range-group .input-group-text { background: #071239ff; color: white; border-color: #071239ff; font-weight: 600; padding: 10px 15px; border-radius: 0; }
+        h1 { 
+            font-weight: 900; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-size: 36px; 
+            color: #071239ff; 
+        }
+        .form-label { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #071239ff; 
+            margin-bottom: 5px;
+        }
+        .form-control, .form-select, textarea { 
+            border-radius: 8px; 
+            padding: 8px 12px; 
+            font-size: 14px; 
+            color: #071239ff; 
+        }
+        .btn-submit { 
+            background: #1e40af; 
+            color: white; 
+            padding: 8px 25px; 
+            border-radius: 8px; 
+            font-weight: 700;
+        }
+        .btn-danger { 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+        }
+        
+        /* Specific Styles for Content */
+        .closure-card { 
+            background: #ffffff; 
+            border-radius: 15px; 
+            padding: 25px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+            border: 1px solid #ddd;
+        }
+        .section-title {
+            font-weight: 800;
+            color: #1e40af;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 5px;
+            text-align: left;
+        }
+        
+        /* Table Styles */
+        .table {
+            border-radius: 10px;
+            overflow: hidden; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .table thead th { 
+            background-color: #071239ff; 
+            color: white; 
+            font-weight: 600;
+            vertical-align: middle;
+        }
+        .table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        /* [NEW STYLE] Enhanced Calendar Look */
+        .date-range-group {
+            background: #f8f9fa;
+            padding: 15px; /* Increased padding */
+            border-radius: 10px;
+            border: 2px solid #ced4da; /* Slightly thicker border */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .date-range-group input[type="date"] {
+            border-radius: 6px;
+            padding: 10px 15px; /* Bigger input area */
+            font-size: 16px; /* Larger text */
+            height: auto;
+            text-align: center;
+        }
+        .date-range-group .input-group-text {
+            background: #071239ff; /* Dark background for separator */
+            color: white;
+            border-color: #071239ff;
+            font-weight: 600;
+            padding: 10px 15px;
+            border-radius: 0; /* Sharp separation */
+        }
     </style>
 </head>
 <body>
@@ -161,7 +254,7 @@ if (isset($_GET['delete_id'])) {
                     <div class="col-md-3">
                         <label class="form-label">Select Facility</label>
                         <select class="form-select" name="FacilityID" required>
-                            <option value="" hidden selected>Choose Facility...</option>
+                            <option value="" disabled selected>Choose Facility...</option>
                             <?php foreach ($facilities as $fac): ?>
                                 <option value="<?php echo $fac['FacilityID']; ?>"><?php echo htmlspecialchars($fac['Name']) . " (" . $fac['FacilityID'] . ")"; ?></option>
                             <?php endforeach; ?>
@@ -172,9 +265,9 @@ if (isset($_GET['delete_id'])) {
                         <label class="form-label">Closure Date Range</label>
                         <div class="date-range-group">
                             <div class="input-group">
-                                <input type="date" class="form-control" name="ClosureStartDate" required>
+                                <input type="date" class="form-control" name="ClosureStartDate" required title="Closure Start Date">
                                 <span class="input-group-text">TO</span>
-                                <input type="date" class="form-control" name="ClosureEndDate" required>
+                                <input type="date" class="form-control" name="ClosureEndDate" required title="Closure End Date">
                             </div>
                             <small class="text-muted d-block" style="font-size: 11px;">Use the calendar icon on the inputs to select the exact start and end dates.</small>
                         </div>
@@ -211,16 +304,18 @@ if (isset($_GET['delete_id'])) {
                         <tr><td colspan="7" class="text-center text-muted">No specific date closures are currently scheduled.</td></tr>
                     <?php else: ?>
                         <?php foreach ($overrides as $override): 
+                            // Extracting only the date part for display
                             $start_date = new DateTime(substr($override['StartTime'], 0, 10)); 
                             $end_date = new DateTime(substr($override['EndTime'], 0, 10));
+                            
                             $interval = $start_date->diff($end_date);
                             $durationDays = $interval->days + 1; 
                         ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($override['Name']); ?></td>
                                 <td><?php echo htmlspecialchars($override['FacilityID']); ?></td>
-                                <td><?php echo $start_date->format('Y-m-d'); ?></td>
-                                <td><?php echo $end_date->format('Y-m-d'); ?></td>
+                                <td><?php echo htmlspecialchars($start_date->format('Y-m-d')); ?></td>
+                                <td><?php echo htmlspecialchars($end_date->format('Y-m-d')); ?></td>
                                 <td><?php echo $durationDays . " days"; ?></td>
                                 <td><?php echo htmlspecialchars($override['Reason']); ?></td>
                                 <td>
