@@ -11,13 +11,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 $search = $_GET['search'] ?? '';
 $typeFilter = $_GET['type'] ?? '';
 
-// --- SQL QUERY CONSTRUCTION ---
-// We use prepared statements for everything to prevent SQL injection
+// SQL: Fetch based on Name/Location/Type
 $sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
 $params = [];
 $types_str = "";
 
-// 1. Search Filter
 if (!empty($search)) {
     $sql .= " AND (Name LIKE ? OR Location LIKE ?)";
     $search_param = "%" . $search . "%";
@@ -26,17 +24,14 @@ if (!empty($search)) {
     $types_str .= "ss";
 }
 
-// 2. Type Filter
 if (!empty($typeFilter)) {
     $sql .= " AND Type = ?";
     $params[] = $typeFilter;
     $types_str .= "s";
 }
 
-// 3. Sorting
 $sql .= " ORDER BY Name ASC";
 
-// --- EXECUTE ---
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
     $stmt->bind_param($types_str, ...$params);
@@ -44,29 +39,31 @@ if (!empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-// --- OUTPUT HTML ---
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         
-        // Image Handling
         $photo = $row['PhotoURL'];
         $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
                   ? "../admin/uploads/".$photo
                   : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
 
-        // Status Logic
+        // --- STATUS LOGIC ---
+        // If 'Maintenance' in facilities table, disable button entirely
         $isMaintenance = ($row['Status'] === 'Maintenance');
         $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
         $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
         
-        // Button Logic (Disable if maintenance)
-        $btnAttr = $isMaintenance ? 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed"' : 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#8a0d19] text-white py-2.5 rounded-lg font-bold hover:bg-[#6d0a13] transition shadow-md hover:shadow-lg transform active:scale-95"';
-        $btnText = $isMaintenance ? 'Under Maintenance' : 'Check Availability';
+        // Button Logic
+        if ($isMaintenance) {
+            $btnAttr = 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
+            $btnText = 'Under Maintenance';
+        } else {
+            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#8a0d19] text-white py-2.5 rounded-lg font-bold hover:bg-[#6d0a13] transition shadow-md hover:shadow-lg transform active:scale-95"';
+            $btnText = 'Check Availability';
+        }
 
         echo '
         <div class="facility-card group bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-            
-            <!-- Image Area -->
             <div class="relative h-56 overflow-hidden">
                 <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#8a0d19] shadow-sm uppercase tracking-wide border border-gray-100">
@@ -74,7 +71,6 @@ if ($result->num_rows > 0) {
                 </div>
             </div>
             
-            <!-- Content Area -->
             <div class="p-5 flex flex-col flex-grow">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#8a0d19] transition-colors">
@@ -96,7 +92,6 @@ if ($result->num_rows > 0) {
                     '.htmlspecialchars($row['Description']).'
                 </p>
                 
-                <!-- Action Area -->
                 <div class="mt-auto pt-4 border-t border-gray-50">
                     <button '.$btnAttr.'>
                         '.$btnText.'
@@ -106,14 +101,12 @@ if ($result->num_rows > 0) {
         </div>';
     }
 } else {
-    // Empty State
     echo '
     <div class="col-span-full py-16 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
             <i class="fa-solid fa-magnifying-glass text-gray-400 text-2xl"></i>
         </div>
         <h3 class="text-lg font-semibold text-gray-700 mb-1">No facilities found</h3>
-        <p class="text-gray-500 text-sm">Try adjusting your search or filters.</p>
     </div>';
 }
 

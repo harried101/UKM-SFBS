@@ -49,7 +49,6 @@ while($t = $typesResult->fetch_assoc()) {
     h1, h2, h3 {
         font-family: 'Playfair Display', serif;
     }
-    /* Hero Section */
     .hero-section {
         background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('../court.jpg');
         background-size: cover;
@@ -60,7 +59,6 @@ while($t = $typesResult->fetch_assoc()) {
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         border-radius: 0 0 30px 30px;
     }
-    /* Card Styling */
     .facility-card {
         background: white;
         border-radius: 16px;
@@ -103,7 +101,6 @@ while($t = $typesResult->fetch_assoc()) {
         text-transform: uppercase;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    /* Filter Bar */
     .filter-bar {
         background: white;
         padding: 20px;
@@ -115,7 +112,6 @@ while($t = $typesResult->fetch_assoc()) {
         position: relative;
         z-index: 10;
     }
-    /* Footer */
     footer {
         background: white;
         border-top: 1px solid #eee;
@@ -203,33 +199,28 @@ while($t = $typesResult->fetch_assoc()) {
         </div>
     </footer>
 
-    <!-- MODAL (POPUP) CODE - MOVED INSIDE BODY -->
+    <!-- MODAL (POPUP) CODE - CRITICAL FOR FUNCTIONALITY -->
     <div id="calendarModal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-[95%] max-w-4xl h-[90vh] md:h-[600px] relative flex flex-col overflow-hidden animate-fade-in">
             
-            <!-- Close Button -->
             <button onclick="closeCalendar()" class="absolute top-4 right-4 z-10 bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <!-- Loader -->
             <div id="calendarLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-0">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#8a0d19] mb-3"></i>
                 <p class="text-gray-500 font-medium">Loading booking system...</p>
             </div>
 
-            <!-- The Iframe (Loads book.php) -->
             <iframe id="calendarFrame" class="w-full h-full border-none opacity-0 transition-opacity duration-300" src=""></iframe>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script>
         const searchInput = document.getElementById('searchInput');
         const typeSelect = document.getElementById('typeSelect');
         const facilitiesContainer = document.getElementById('facilitiesContainer');
 
-        // AJAX Fetch for Facilities
         function fetchFacilities() {
             const search = encodeURIComponent(searchInput.value);
             const type = encodeURIComponent(typeSelect.value);
@@ -240,11 +231,9 @@ while($t = $typesResult->fetch_assoc()) {
                 .catch(err => console.error(err));
         }
 
-        // Trigger fetch on input or filter change
         searchInput.addEventListener('input', () => fetchFacilities());
         typeSelect.addEventListener('change', () => fetchFacilities());
 
-        // Initial load
         fetchFacilities();
 
         // --- MODAL FUNCTIONS ---
@@ -253,16 +242,13 @@ while($t = $typesResult->fetch_assoc()) {
             const loader = document.getElementById("calendarLoader");
             const frame = document.getElementById("calendarFrame");
 
-            if(!modal || !frame) {
-                console.error("Error: Modal elements not found.");
-                return;
-            }
+            if(!modal || !frame) return;
 
             modal.classList.remove("hidden");
             loader.classList.remove("hidden");
             frame.classList.add("opacity-0");
             
-            // Load book.php with facility ID
+            // Loads book.php
             frame.src = "book.php?facility_id=" + encodeURIComponent(facilityID);
 
             frame.onload = () => {
@@ -274,20 +260,17 @@ while($t = $typesResult->fetch_assoc()) {
         function closeCalendar() {
             const modal = document.getElementById("calendarModal");
             const frame = document.getElementById("calendarFrame");
-            
             if(modal) {
                 modal.classList.add("hidden");
-                if(frame) frame.src = ""; // Stop content
+                if(frame) frame.src = "";
             }
         }
 
-        // Close when clicking outside
         document.getElementById("calendarModal").addEventListener("click", function(e) {
             if (e.target === this) {
                 closeCalendar();
             }
         });
     </script>
-
 </body>
 </html>

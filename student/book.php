@@ -59,7 +59,7 @@ if ($facility_id) {
             <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-[#8a0d19] mr-1.5"></span> Selected</div>
         </div>
 
-        <!-- Slots -->
+        <!-- Slots Section -->
         <div id="timeSlotsSection" class="hidden fade-in">
             <h4 class="font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <span><i class="fa-regular fa-clock mr-2 text-[#8a0d19]"></i> Available Slots</span>
@@ -71,7 +71,7 @@ if ($facility_id) {
             <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
         </div>
 
-        <!-- Form -->
+        <!-- Booking Form -->
         <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
             <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
             <input type="hidden" name="start_time" id="hiddenStartTime">
@@ -145,15 +145,21 @@ if ($facility_id) {
                 .then(data => {
                     slotsLoader.classList.add('hidden');
                     
-                    if (!data.success && data.is_closed) {
-                        slotsContainer.innerHTML = `<div class="col-span-full text-red-500 font-medium text-center py-4 bg-red-50 rounded-lg border border-red-100"><i class="fa-solid fa-triangle-exclamation mr-2"></i>${data.message}</div>`;
+                    // HANDLE "CLOSED" STATUS
+                    if (data.is_closed) {
+                        slotsContainer.innerHTML = `
+                            <div class="col-span-full bg-red-50 border border-red-100 text-red-600 rounded-lg p-4 text-center">
+                                <i class="fa-solid fa-circle-exclamation text-xl mb-2 block"></i>
+                                <p class="font-bold">Not Available</p>
+                                <p class="text-sm opacity-90">${data.message}</p>
+                            </div>`;
                         return;
                     }
 
+                    // RENDER SLOTS
                     data.slots.forEach(slot => {
                         const btn = document.createElement('button');
                         const isBooked = slot.status === 'booked';
-                        // Add 'cursor-not-allowed' and specific grey styling for booked slots
                         btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                             isBooked 
                             ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-75' 
@@ -162,10 +168,8 @@ if ($facility_id) {
                         
                         btn.innerHTML = `${slot.label} ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}`;
                         
-                        // IMPORTANT: Force the disabled attribute so it is not clickable
                         if(isBooked) {
                             btn.disabled = true;
-                            btn.setAttribute("aria-disabled", "true");
                         } else {
                             btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
                         }
@@ -179,4 +183,18 @@ if ($facility_id) {
         }
 
         function selectSlot(startTime, label, dateStr, btn) {
-            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className
+            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
+            btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#8a0d19] border-[#8a0d19] text-white shadow-md transform scale-105';
+            
+            document.getElementById('hiddenStartTime').value = `${dateStr} ${startTime}`;
+            document.getElementById('summaryTime').innerText = label;
+            bookingForm.classList.remove('hidden');
+            setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
+
+        document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
+        document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
+        renderCalendar(currMonth, currYear);
+    </script>
+</body>
+</html>

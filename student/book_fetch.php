@@ -2,7 +2,7 @@
 session_start();
 require_once '../includes/db_connect.php';
 
-// --- 1. GET REQUEST: Fetch Dynamic Slots (Synced with DB) ---
+// --- 1. GET REQUEST: Fetch Dynamic Slots ---
 if (isset($_GET['get_slots'])) {
     header('Content-Type: application/json');
     
@@ -15,6 +15,7 @@ if (isset($_GET['get_slots'])) {
     }
 
     // A. CHECK CLOSURES (scheduleoverrides)
+    // Check if the requested date is inside a maintenance range
     $closure_sql = "SELECT Reason FROM scheduleoverrides 
                     WHERE FacilityID = ? 
                     AND ? BETWEEN DATE(StartTime) AND DATE(EndTime) 
@@ -26,7 +27,7 @@ if (isset($_GET['get_slots'])) {
     
     if ($closure_row = $closure_res->fetch_assoc()) {
         echo json_encode([
-            'success' => false, 
+            'success' => true, 
             'slots' => [], 
             'message' => 'Facility Closed: ' . $closure_row['Reason'],
             'is_closed' => true
@@ -46,11 +47,12 @@ if (isset($_GET['get_slots'])) {
     $stmt->execute();
     $sched_res = $stmt->get_result();
     
-    // --- UPDATED LOGIC: Default to 9AM - 10PM if no schedule found ---
+    // --- DEFAULT LOGIC IF NO SCHEDULE ---
     if ($sched_res->num_rows === 0) {
+        // Default: 9 AM to 10 PM
         $openTime = '09:00:00';
-        $closeTime = '22:00:00'; // 10 PM
-        $slotDuration = 60;      // 1 Hour default
+        $closeTime = '22:00:00';
+        $slotDuration = 60;
     } else {
         $schedule = $sched_res->fetch_assoc();
         $openTime = $schedule['OpenTime'];
@@ -59,7 +61,6 @@ if (isset($_GET['get_slots'])) {
     }
 
     // C. FETCH EXISTING BOOKINGS
-    // We select TIME(StartTime) to compare easily
     $bk_sql = "SELECT TIME(StartTime) as booked_time 
                FROM bookings 
                WHERE FacilityID = ? 
@@ -72,8 +73,7 @@ if (isset($_GET['get_slots'])) {
     
     $booked_times = [];
     while ($row = $bk_res->fetch_assoc()) {
-        // Take only HH:MM to ensure match even if seconds differ
-        $booked_times[] = substr($row['booked_time'], 0, 5); 
+        $booked_times[] = substr($row['booked_time'], 0, 5); // Store "09:00"
     }
     $stmt->close();
 
@@ -83,17 +83,15 @@ if (isset($_GET['get_slots'])) {
     $end = strtotime($date . ' ' . $closeTime);
 
     while ($current < $end) {
-        // Formats: "09:00:00" for DB, "09:00" for comparison, "09:00 AM" for display
-        $startTimeStr = date('H:i:s', $current);
-        $compareTime = date('H:i', $current); 
-        $labelTime = date('h:i A', $current); 
+        $startTimeStr = date('H:i:s', $current); // "09:00:00"
+        $compareTime = date('H:i', $current);    // "09:00"
+        $labelTime = date('h:i A', $current);    // "09:00 AM"
         
         $slotEndTime = $current + ($slotDuration * 60);
         
-        // Stop if the slot exceeds closing time
+        // Stop if slot goes past closing
         if ($slotEndTime > $end) break;
 
-        // Check if this time exists in booked_times array
         $isBooked = in_array($compareTime, $booked_times);
 
         $slots[] = [
@@ -121,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $facilityID = $_POST['facility_id'];
     $startTime = $_POST['start_time']; 
     
-    // 1. Get Slot Duration (or default to 60)
+    // Calculate End Time based on duration
     $dayOfWeek = date('l', strtotime($startTime));
     $dur_sql = "SELECT SlotDuration FROM facilityschedules WHERE FacilityID = ? AND DayOfWeek = ?";
     $d_stmt = $conn->prepare($dur_sql);
@@ -129,30 +127,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $d_stmt->execute();
     $dur_res = $d_stmt->get_result();
     
-    if ($dur_row = $dur_res->fetch_assoc()) {
-        $durationMinutes = intval($dur_row['SlotDuration']);
-    } else {
-        $durationMinutes = 60;
-    }
+    $durationMinutes = ($dur_row = $dur_res->fetch_assoc()) ? intval($dur_row['SlotDuration']) : 60;
     $d_stmt->close();
 
-    // 2. Calculate End Time
     $endTime = date('Y-m-d H:i:s', strtotime($startTime . " +$durationMinutes minutes"));
 
-    // 3. Get User ID
+    // Get User ID
     $u_stmt = $conn->prepare("SELECT UserID FROM users WHERE UserIdentifier = ?");
     $u_stmt->bind_param("s", $userIdentifier);
     $u_stmt->execute();
     $res = $u_stmt->get_result();
-    
-    if ($row = $res->fetch_assoc()) {
-        $userID = $row['UserID'];
-    } else {
-        $userID = $userIdentifier; 
-    }
+    $userID = ($row = $res->fetch_assoc()) ? $row['UserID'] : $userIdentifier;
     $u_stmt->close();
 
-    // 4. Double Booking Check
+    // Double Booking Check
     $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID = ? AND StartTime = ? AND Status IN ('Approved', 'Pending')");
     $check->bind_param("ss", $facilityID, $startTime);
     $check->execute();
@@ -163,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     $check->close();
 
-    // 5. Insert
+    // Insert
     $status = 'Pending';
     $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status) VALUES (?, ?, ?, ?, ?)");
     $ins->bind_param("issss", $userID, $facilityID, $startTime, $endTime, $status);
