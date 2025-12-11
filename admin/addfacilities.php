@@ -13,12 +13,8 @@ if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
 
-// ----------------------------------------------------------------------
-// LOGIC FOR SUGGESTED ID (Find the highest existing number)
-// ----------------------------------------------------------------------
-
 function getNextFacilityNumber($conn) {
-    // Find the last FacilityID and extract the number (ignoring ID/OD prefix)
+    // Find the last FacilityID and extract the number
     $result = $conn->query("
         SELECT FacilityID 
         FROM facilities 
@@ -27,34 +23,50 @@ function getNextFacilityNumber($conn) {
     ");
 
     if ($result->num_rows == 0) {
-        return "001"; // Start from 001 if no records exist
+        return "001";
     } else {
         $row = $result->fetch_assoc();
-        // Get the last 3 characters
         $lastIDNumber = substr($row['FacilityID'], -3); 
         $newID = intval($lastIDNumber) + 1;
-        // Format back to 3 digits (e.g., 6 -> '006')
         return str_pad($newID, 3, "0", STR_PAD_LEFT);
     }
 }
 
 $nextFacilityNumber = getNextFacilityNumber($conn);
 
+// untuk day mapping guna int
+$dayNameToIndex = [
+    "Sunday"    => 0,
+    "Monday"    => 1,
+    "Tuesday"   => 2,
+    "Wednesday" => 3,
+    "Thursday"  => 4,
+    "Friday"    => 5,
+    "Saturday"  => 6
+];
+$dayIndexToName = array_flip($dayNameToIndex);
+$dayIndexToName = [
+    0 => 'Sunday',
+    1 => 'Monday',
+    2 => 'Tuesday',
+    3 => 'Wednesday',
+    4 => 'Thursday',
+    5 => 'Friday',
+    6 => 'Saturday'
+];
 
-// ----------------------------------------------------------------------
-// INITIAL DATA FETCHING (Checks URL for ID or processes search redirect)
-// ----------------------------------------------------------------------
-
+// data fetch
 $facilityData = null;
 $isUpdate = false;
 $currentFacilityID = $_GET['id'] ?? '';
 $formTitle = "ADD NEW FACILITY";
 $existingSchedules = [];
-$existingOverrides = []; // RENAMED from $existingClosures
+$existingOverrides = []; 
 
-// IF ID IS PRESENT IN URL, LOAD UPDATE MODE
+
+// untuk update existing facility
 if (!empty($currentFacilityID)) {
-    // 1. Fetch Facility Details
+   
     $stmt = $conn->prepare("SELECT * FROM facilities WHERE FacilityID = ?");
     $stmt->bind_param("s", $currentFacilityID);
     $stmt->execute();
@@ -65,13 +77,12 @@ if (!empty($currentFacilityID)) {
         $isUpdate = true;
         $formTitle = "UPDATE FACILITY: " . $currentFacilityID;
     } else {
-        // If ID in URL is not found
         echo "<script>alert('Error: Facility ID \\'{$currentFacilityID}\\' not found. Switching to Add mode.'); window.location='addfacilities.php';</script>";
         exit();
     }
     $stmt->close();
 
-    // 2. Fetch Existing Schedules
+// kalau dah ada schedule
     $schedule_sql = "SELECT DayOfWeek, OpenTime, CloseTime, SlotDuration 
                       FROM facilityschedules WHERE FacilityID = ?";
     $schedule_stmt = $conn->prepare($schedule_sql);
@@ -79,27 +90,30 @@ if (!empty($currentFacilityID)) {
     $schedule_stmt->execute();
     $schedule_result = $schedule_stmt->get_result();
     while ($row = $schedule_result->fetch_assoc()) {
-        $existingSchedules[$row['DayOfWeek']] = $row;
+        
+        $idx = intval($row['DayOfWeek']);
+        $dayName = $dayIndexToName[$idx] ?? null;
+        if ($dayName !== null) {
+            $existingSchedules[$dayName] = $row;
+        }
     }
     $schedule_stmt->close();
 
-    // 3. Fetch Existing Overrides (CORRECTED SQL)
+// tutup facility
     $override_sql = "SELECT OverrideID, StartTime, EndTime, Reason FROM scheduleoverrides WHERE FacilityID = ? ORDER BY StartTime DESC";
     $override_stmt = $conn->prepare($override_sql);
     $override_stmt->bind_param("s", $currentFacilityID);
     $override_stmt->execute();
-    $override_result = $override_stmt->get_result(); // Corrected function call
+    $override_result = $override_stmt->get_result();
     while ($row = $override_result->fetch_assoc()) {
-        $existingOverrides[] = $row; // Renamed variable here
+        $existingOverrides[] = $row;
     }
     $override_stmt->close();
 }
 
 
-// --- HANDLE POST REQUESTS ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // CASE 0: SEARCH ID FOR UPDATE (Handled by POST/URL Redirect)
     if (isset($_POST['search_id'])) {
         $searchID = strtoupper(trim($_POST['search_id']));
         if (!empty($searchID)) {
@@ -107,39 +121,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              exit();
         }
     }
-    
-    // CASE A: ADD NEW CLOSURE (Removed, as navigation directs to manage_closures.php)
-    
-    // CASE C: MAIN FACILITY DETAILS UPDATE/INSERT
+  
     if (!isset($_POST['add_closure']) && !isset($_POST['search_id'])) { 
-        
-        // Determine the ID (Combined Prefix + Number or Hidden ID)
+    
         $id = $_POST['FacilityIDHidden'] ?? $_POST['FacilityIDCombined'] ?? ''; 
-        
-      // Gather inputs (ordered by DB structure)
         $name = $_POST['Name'] ?? '';
         $description = $_POST['Description'] ?? '';
         $location = $_POST['Location'] ?? '';
         $type = $_POST['Type'] ?? '';
         $status = $_POST['Status'] ?? 'Active';
         
-        // ensure required
         if (empty($id) || empty($name)) {
             echo "<script>alert('Please fill Facility ID and Name'); window.history.back();</script>";
             exit();
         }
 
-        // Logic Upload Gambar (handle both add & update)
-        // Start with existing photo if update
         $newPhotoName = $facilityData['PhotoURL'] ?? ''; 
 
-        // --- HANDLE IMAGE UPLOAD ---
+        // upload photo
         if (isset($_FILES['PhotoURL']) && isset($_FILES['PhotoURL']['name']) && $_FILES['PhotoURL']['name'] !== '') {
             if ($_FILES['PhotoURL']['error'] === 0) {
                 $uploadDir = __DIR__ . "/../uploads/facilities/"; // absolute server path
                 $webUploadDir = "../uploads/facilities/"; // web path for storing file name only
 
-                // Create folder if not exists
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
@@ -174,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // 1. Save to 'facilities' table
+  // simpan data update dalam table facilities
         if ($isUpdate) {
             $sql = "UPDATE facilities SET Name=?, Description=?, Location=?, Type=?, PhotoURL=?, Status=? WHERE FacilityID=?";
             if ($stmt = $conn->prepare($sql)) {
@@ -186,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         } else {
-            // Check duplicate ID
+            // check duplicate ID
             $check = $conn->query("SELECT FacilityID FROM facilities WHERE FacilityID = '". $conn->real_escape_string($id) ."'");
             if ($check->num_rows > 0) {
                 echo "<script>alert('Error: Facility ID $id already exists.'); window.location='addfacilities.php';</script>";
@@ -202,26 +206,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($stmt && $stmt->execute()) {
-            // 2. Save Weekly Schedule
-            $conn->query("DELETE FROM facilityschedules WHERE FacilityID = '$id'");
+            
+            $del_stmt = $conn->prepare("DELETE FROM facilityschedules WHERE FacilityID = ?");
+            if ($del_stmt) {
+                $del_stmt->bind_param("s", $id);
+                $del_stmt->execute();
+                $del_stmt->close();
+            } else {
+                // fallback to query if prepare fails 
+                $conn->query("DELETE FROM facilityschedules WHERE FacilityID = '$id'");
+            }
+
             $schedule_stmt = $conn->prepare("INSERT INTO facilityschedules (FacilityID, DayOfWeek, OpenTime, CloseTime, SlotDuration) VALUES (?, ?, ?, ?, ?)");
             
             if ($schedule_stmt === false) {
-                // debug
-                // echo "Schedule prepare failed: " . $conn->error;
+                
+                // error_log
             } else {
                 if (!empty($_POST['available_days'])) {
                     foreach ($_POST['available_days'] as $day) {
-                        $start = $_POST['start_time'][$day] ?? '00:00:00'; 
-                        $end = $_POST['end_time'][$day] ?? '00:00:00';
+                        if (!isset($dayNameToIndex[$day])) {
+                            continue;
+                        }
+                        $dayIndex = intval($dayNameToIndex[$day]);
+
+                        
+                        $startRaw = $_POST['start_time'][$day] ?? '00:00';
+                        $endRaw = $_POST['end_time'][$day] ?? '00:00';
+
+                        
+                        $start = date('H:i:s', strtotime($startRaw));
+                        $end = date('H:i:s', strtotime($endRaw));
+
                         $slot_duration = intval($_POST['slot_duration'][$day] ?? 60); 
 
-                        $schedule_stmt->bind_param("sssii", $id, $day, $start, $end, $slot_duration);
+                        $schedule_stmt->bind_param("sissi", $id, $dayIndex, $start, $end, $slot_duration);
                         $schedule_stmt->execute();
                     }
                 }
                 $schedule_stmt->close();
-            } // <-- CORRECTED: Added missing closing brace here
+            } 
 
             echo "<script>alert('$successMsg'); window.location='$redirectFile';</script>";
         } else {
@@ -240,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-/* --- CSS Styles (Unified) --- */
+
 body {
     background: url('../assets/img/background.jpg');
     background-size: cover;
@@ -325,7 +349,7 @@ h1 {
     padding-bottom: 5px;
 }
 
-/* --- Gaya Butang Navigasi Penutupan (Segi Empat) --- */
+
 .btn-closure-nav {
     font-weight: 700;
     padding: 10px 18px; 
@@ -520,7 +544,8 @@ h1 {
 <?php 
 $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 $timeOptions = [];
-// Generate time options from 9 AM to 9 PM (21:00)
+
+// default pilih 9 pagi - 9 malam
 for ($h = 9; $h <= 21; $h++) { 
     $timeOptions[] = date("h:i A", strtotime("$h:00"));
 }
@@ -563,7 +588,7 @@ for ($h = 9; $h <= 21; $h++) {
             <label class="text-muted mb-1">Start Time</label>
             <div>
                 <?php foreach ($timeOptions as $t): 
-                    // Convert stored DB time (e.g., 08:00:00) to human readable (e.g., 08:00 AM) for comparison
+                    
                     $isActiveStart = $isChecked && ($t == date("h:i A", strtotime($dayData['OpenTime'])));
                 ?>
                     <button type="button"
@@ -684,10 +709,7 @@ function toggleDayControls(checkbox) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // The previous PHP-based toggleInputs logic is now handled by the JS function `toggleDayControls`
-    // which is called immediately and on change for all checkboxes in the section above.
-    
-    // Facility ID Combination Logic (for Add Mode)
+    // id combination logic
     const form = document.querySelector('form');
     const prefixSelect = document.getElementById('FacilityPrefix');
     const numberInput = document.getElementById('FacilityNumber');
@@ -702,9 +724,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let number = numberInput.value.replace(/[^0-9]/g, ''); 
             
             if (number.length > 0) {
-                 // Pad number to 3 digits (e.g., 1 -> '001')
+                
                  number = number.padStart(3, '0');
-                 // Ensure the input field also displays the padded number (optional)
                  numberInput.value = number; 
             }
             
@@ -715,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (prefixSelect && numberInput) {
     
         if (!isUpdateMode) {
-             // Ensure the input starts with the suggested number in Add mode
+             // ensure the input starts with the suggested number in Add Facility
              numberInput.value = nextIdNumber;
         }
         
@@ -726,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCombinedID(); // Initial call to set the hidden field
         
         form.addEventListener('submit', function(e) {
-            // Client-side validation for Facility ID in Add mode
+            
             if (!isUpdateMode && (!combinedInput.value || combinedInput.value.length < 5)) { 
                 e.preventDefault();
                 alert('Please complete the Facility ID (Prefix + 3-digit Number).');
