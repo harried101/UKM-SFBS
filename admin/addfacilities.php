@@ -73,7 +73,7 @@ if (!empty($currentFacilityID)) {
 
     // 2. Fetch Existing Schedules
     $schedule_sql = "SELECT DayOfWeek, OpenTime, CloseTime, SlotDuration 
-                     FROM facilityschedules WHERE FacilityID = ?";
+                      FROM facilityschedules WHERE FacilityID = ?";
     $schedule_stmt = $conn->prepare($schedule_sql);
     $schedule_stmt->bind_param("s", $currentFacilityID);
     $schedule_stmt->execute();
@@ -116,17 +116,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Determine the ID (Combined Prefix + Number or Hidden ID)
         $id = $_POST['FacilityIDHidden'] ?? $_POST['FacilityIDCombined'] ?? ''; 
         
-        // Gather inputs (ordered by DB structure)
+      // Gather inputs (ordered by DB structure)
         $name = $_POST['Name'] ?? '';
         $description = $_POST['Description'] ?? '';
         $location = $_POST['Location'] ?? '';
         $type = $_POST['Type'] ?? '';
-        $status = $_POST['Status'] ?? '';
+        $status = $_POST['Status'] ?? 'Active';
         
-        // Logic Upload Gambar
+        // ensure required
+        if (empty($id) || empty($name)) {
+            echo "<script>alert('Please fill Facility ID and Name'); window.history.back();</script>";
+            exit();
+        }
+
+        // Logic Upload Gambar (handle both add & update)
+        // Start with existing photo if update
         $newPhotoName = $facilityData['PhotoURL'] ?? ''; 
-        
-        // (Full logic for photo upload and file handling is omitted for brevity)
+
+        // --- HANDLE IMAGE UPLOAD ---
+        if (isset($_FILES['PhotoURL']) && isset($_FILES['PhotoURL']['name']) && $_FILES['PhotoURL']['name'] !== '') {
+            if ($_FILES['PhotoURL']['error'] === 0) {
+                $uploadDir = __DIR__ . "/../uploads/facilities/"; // absolute server path
+                $webUploadDir = "../uploads/facilities/"; // web path for storing file name only
+
+                // Create folder if not exists
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                $fileTmp = $_FILES['PhotoURL']['tmp_name'];
+                // sanitize filename
+                $originalName = basename($_FILES['PhotoURL']['name']);
+                $ext = pathinfo($originalName, PATHINFO_EXTENSION);
+                $safeBase = preg_replace("/[^A-Za-z0-9_\-]/", '_', pathinfo($originalName, PATHINFO_FILENAME));
+                $fileName = time() . "_" . $safeBase . "." . $ext;
+                $filePath = $uploadDir . $fileName;
+
+                if (move_uploaded_file($fileTmp, $filePath)) {
+                    // delete old file if updating and different
+                    if ($isUpdate && !empty($facilityData['PhotoURL']) && $facilityData['PhotoURL'] !== $fileName) {
+                        $oldFile = $uploadDir . $facilityData['PhotoURL'];
+                        if (is_file($oldFile)) {
+                            @unlink($oldFile);
+                        }
+                    }
+                    // store the filename only
+                    $newPhotoName = $fileName;
+                } else {
+                    // upload failed
+                    echo "<script>alert('Failed to move uploaded file.'); window.history.back();</script>";
+                    exit();
+                }
+            } else {
+                // upload error (you can handle more cases)
+                echo "<script>alert('Error uploading image. Error code: " . intval($_FILES['PhotoURL']['error']) . "'); window.history.back();</script>";
+                exit();
+            }
+        }
 
         // 1. Save to 'facilities' table
         if ($isUpdate) {
@@ -135,10 +181,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("sssssss", $name, $description, $location, $type, $newPhotoName, $status, $id);
                 $successMsg = "Facility updated successfully";
                 $redirectFile = "addfacilities.php?id=" . $id; 
+            } else {
+                echo "Prepare failed: " . $conn->error;
+                exit();
             }
         } else {
             // Check duplicate ID
-            $check = $conn->query("SELECT FacilityID FROM facilities WHERE FacilityID = '$id'");
+            $check = $conn->query("SELECT FacilityID FROM facilities WHERE FacilityID = '". $conn->real_escape_string($id) ."'");
             if ($check->num_rows > 0) {
                 echo "<script>alert('Error: Facility ID $id already exists.'); window.location='addfacilities.php';</script>";
                 exit();
@@ -157,18 +206,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("DELETE FROM facilityschedules WHERE FacilityID = '$id'");
             $schedule_stmt = $conn->prepare("INSERT INTO facilityschedules (FacilityID, DayOfWeek, OpenTime, CloseTime, SlotDuration) VALUES (?, ?, ?, ?, ?)");
             
-            if (!empty($_POST['available_days'])) {
-                foreach ($_POST['available_days'] as $day) {
-                    $start = $_POST['start_time'][$day] ?? '00:00:00'; 
-                    $end = $_POST['end_time'][$day] ?? '00:00:00';
-                    $slot_duration = intval($_POST['slot_duration'][$day] ?? 60); 
+            if ($schedule_stmt === false) {
+                // debug
+                // echo "Schedule prepare failed: " . $conn->error;
+            } else {
+                if (!empty($_POST['available_days'])) {
+                    foreach ($_POST['available_days'] as $day) {
+                        $start = $_POST['start_time'][$day] ?? '00:00:00'; 
+                        $end = $_POST['end_time'][$day] ?? '00:00:00';
+                        $slot_duration = intval($_POST['slot_duration'][$day] ?? 60); 
 
-                    $schedule_stmt->bind_param("sssii", $id, $day, $start, $end, $slot_duration);
-                    $schedule_stmt->execute();
+                        $schedule_stmt->bind_param("sssii", $id, $day, $start, $end, $slot_duration);
+                        $schedule_stmt->execute();
+                    }
                 }
-            }
-            $schedule_stmt->close();
-            
+                $schedule_stmt->close();
+            } // <-- CORRECTED: Added missing closing brace here
+
             echo "<script>alert('$successMsg'); window.location='$redirectFile';</script>";
         } else {
             echo "SQL Error: " . $conn->error;
@@ -302,6 +356,14 @@ h1 {
     margin-bottom: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+/* image preview */
+.img-preview {
+    max-width: 220px;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
 </style>
 
 </head>
@@ -341,7 +403,7 @@ h1 {
                 </div>
                 <div class="col-md-4">
                     <?php if ($isUpdate): ?>
-                         <a href="addfacilities.php" class="btn btn-reset w-100">+ Add New Facility</a>
+                           <a href="addfacilities.php" class="btn btn-reset w-100">+ Add New Facility</a>
                     <?php endif; ?>
                 </div>
             </form>
@@ -375,7 +437,7 @@ h1 {
                         <div class="mb-3">
                             <label class="form-label">Facility Name</label>
                             <input type="text" class="form-control" name="Name" 
-                                   value="<?php echo htmlspecialchars($facilityData['Name'] ?? ''); ?>" required>
+                                       value="<?php echo htmlspecialchars($facilityData['Name'] ?? ''); ?>" required>
                         </div>
 
                         <div class="mb-3">
@@ -386,18 +448,25 @@ h1 {
                         <div class="mb-3">
                             <label class="form-label">Location</label>
                             <input type="text" class="form-control" name="Location" 
-                                   value="<?php echo htmlspecialchars($facilityData['Location'] ?? ''); ?>" required>
+                                       value="<?php echo htmlspecialchars($facilityData['Location'] ?? ''); ?>" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Facility Type</label>
                             <input type="text" class="form-control" name="Type" 
-                                   value="<?php echo htmlspecialchars($facilityData['Type'] ?? ''); ?>" required>
+                                       value="<?php echo htmlspecialchars($facilityData['Type'] ?? ''); ?>" required>
                         </div>
 
-                        <div class="mb-3">
+                       <div class="mb-3">
                             <label class="form-label d-block">Upload Photo</label>
-                            <input type="file" name="PhotoURL" class="form-control" accept="image/*" <?php echo $isUpdate && empty($facilityData['PhotoURL']) ? '' : ''; ?>>
+                            <input type="file" id="photoInput" name="PhotoURL" class="form-control" accept="image/*" <?php echo $isUpdate && empty($facilityData['PhotoURL']) ? '' : ''; ?>>
+                            <div class="mt-2">
+                                <?php if (!empty($facilityData['PhotoURL'])): ?>
+                                    <img id="photoPreview" class="img-preview" src="../uploads/facilities/<?php echo htmlspecialchars($facilityData['PhotoURL']); ?>" alt="Current photo">
+                                <?php else: ?>
+                                    <img id="photoPreview" class="img-preview" src="../assets/img/no-photo.png" alt="Preview" style="display:block;">
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -451,12 +520,12 @@ h1 {
 <?php 
 $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 $timeOptions = [];
-for ($h = 9; $h <= 21; $h++) {
+// Generate time options from 9 AM to 9 PM (21:00)
+for ($h = 9; $h <= 21; $h++) { 
     $timeOptions[] = date("h:i A", strtotime("$h:00"));
 }
 ?>
 
-<!-- Day Dropdown -->
 <div class="mb-3">
     <label class="form-label fw-bold">Select Day</label>
     <select id="daySelector" class="form-select form-select-sm">
@@ -467,7 +536,6 @@ for ($h = 9; $h <= 21; $h++) {
     </select>
 </div>
 
-<!-- Day Sections -->
 <?php foreach($days as $day): 
     $dayData = $existingSchedules[$day] ?? [
         'OpenTime'=>'08:00:00','CloseTime'=>'17:00:00','SlotDuration'=>60
@@ -478,7 +546,6 @@ for ($h = 9; $h <= 21; $h++) {
 
     <div class="border rounded p-3 mb-3 bg-light">
 
-        <!-- Open Checkbox -->
         <div class="form-check mb-3">
             <input class="form-check-input day-open-checkbox"
                    type="checkbox"
@@ -491,13 +558,12 @@ for ($h = 9; $h <= 21; $h++) {
             </label>
         </div>
 
-        <!-- Time buttons & slot duration container -->
         <div class="day-schedule-controls">
 
-            <!-- Start Time -->
             <label class="text-muted mb-1">Start Time</label>
             <div>
                 <?php foreach ($timeOptions as $t): 
+                    // Convert stored DB time (e.g., 08:00:00) to human readable (e.g., 08:00 AM) for comparison
                     $isActiveStart = $isChecked && ($t == date("h:i A", strtotime($dayData['OpenTime'])));
                 ?>
                     <button type="button"
@@ -509,11 +575,10 @@ for ($h = 9; $h <= 21; $h++) {
             </div>
 
             <input type="hidden" 
-                   name="start_time[<?php echo $day; ?>]"
-                   id="start-<?php echo $day; ?>"
-                   value="<?php echo date('H:i', strtotime($dayData['OpenTime'])); ?>">
+                    name="start_time[<?php echo $day; ?>]"
+                    id="start-<?php echo $day; ?>"
+                    value="<?php echo date('H:i', strtotime($dayData['OpenTime'])); ?>">
 
-            <!-- End Time -->
             <label class="text-muted mt-3 mb-1">End Time</label>
             <div>
                 <?php foreach ($timeOptions as $t): 
@@ -528,11 +593,10 @@ for ($h = 9; $h <= 21; $h++) {
             </div>
 
             <input type="hidden" 
-                   name="end_time[<?php echo $day; ?>]"
-                   id="end-<?php echo $day; ?>"
-                   value="<?php echo date('H:i', strtotime($dayData['CloseTime'])); ?>">
+                    name="end_time[<?php echo $day; ?>]"
+                    id="end-<?php echo $day; ?>"
+                    value="<?php echo date('H:i', strtotime($dayData['CloseTime'])); ?>">
 
-            <!-- Slot Duration -->
             <div class="mt-3">
                 <label class="form-label mb-1">Slot Duration (minutes)</label>
                 <div class="d-flex align-items-center">
@@ -563,7 +627,7 @@ document.getElementById("daySelector").addEventListener("change", function() {
 // Select time button
 function selectTime(day, type, timeValue, btn) {
     const date = new Date("1970-01-01 " + timeValue);
-    const formatted = date.toTimeString().substring(0,5);
+    const formatted = date.toTimeString().substring(0,5); // Gets H:i format
 
     document.getElementById(type + "-" + day).value = formatted;
 
@@ -601,28 +665,9 @@ function toggleDayControls(checkbox) {
                         <div class="mt-4 pt-3 border-top text-center">
                             <p class="text-muted small mb-2">CLOSE FACILITY</p>
                            <button type="button" class="btn-closure-nav" id="btnManageClosure">
-                                 Go to Closures Management
+                                    Go to Closures Management
                             </button>
-                    <script>
-document.getElementById('btnManageClosure').addEventListener('click', function() {
-    // Show the modal
-    var closureModal = new bootstrap.Modal(document.getElementById('closureModal'));
-    closureModal.show();
-
-    // Load content via AJAX
-    fetch('manage_closures.php')
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('closureModalContent').innerHTML = html;
-        })
-        .catch(err => {
-            document.getElementById('closureModalContent').innerHTML = '<p class="text-danger text-center">Failed to load content.</p>';
-            console.error(err);
-        });
-});
-</script>
                         </div>
-                        
                     </div>
                 </div>
             </div>
@@ -639,27 +684,10 @@ document.getElementById('btnManageClosure').addEventListener('click', function()
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
+    // The previous PHP-based toggleInputs logic is now handled by the JS function `toggleDayControls`
+    // which is called immediately and on change for all checkboxes in the section above.
     
-    const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    days.forEach(day => {
-        const checkbox = document.getElementById(day);
-        const inputs = [
-            document.querySelector(`input[name="start_time[${day}]"]`),
-            document.querySelector(`input[name="end_time[${day}]"]`),
-            document.querySelector(`input[name="slot_duration[${day}]"]`)
-        ];
-        
-        function toggleInputs() {
-            const isDisabled = !checkbox.checked;
-            inputs.forEach(input => { if(input) input.disabled = isDisabled; });
-        }
-        
-        if (checkbox) {
-            toggleInputs();
-            checkbox.addEventListener('change', toggleInputs);
-        }
-    });
-
+    // Facility ID Combination Logic (for Add Mode)
     const form = document.querySelector('form');
     const prefixSelect = document.getElementById('FacilityPrefix');
     const numberInput = document.getElementById('FacilityNumber');
@@ -674,8 +702,10 @@ document.addEventListener('DOMContentLoaded', function() {
             let number = numberInput.value.replace(/[^0-9]/g, ''); 
             
             if (number.length > 0) {
+                 // Pad number to 3 digits (e.g., 1 -> '001')
                  number = number.padStart(3, '0');
-                 numberInput.value = number;
+                 // Ensure the input field also displays the padded number (optional)
+                 numberInput.value = number; 
             }
             
             combinedInput.value = prefix + number;
@@ -685,6 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (prefixSelect && numberInput) {
     
         if (!isUpdateMode) {
+             // Ensure the input starts with the suggested number in Add mode
              numberInput.value = nextIdNumber;
         }
         
@@ -692,12 +723,13 @@ document.addEventListener('DOMContentLoaded', function() {
         prefixSelect.addEventListener('change', updateCombinedID);
         
         
-        updateCombinedID();
+        updateCombinedID(); // Initial call to set the hidden field
         
         form.addEventListener('submit', function(e) {
+            // Client-side validation for Facility ID in Add mode
             if (!isUpdateMode && (!combinedInput.value || combinedInput.value.length < 5)) { 
                 e.preventDefault();
-                alert('Please complete the Facility ID (Prefix + Number).');
+                alert('Please complete the Facility ID (Prefix + 3-digit Number).');
             }
         });
     }
@@ -708,10 +740,52 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.toUpperCase().trim();
         });
     }
+
+    // Photo preview
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+    if (photoInput) {
+        photoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (photoPreview) {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                }
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Closure Management Modal Logic
+    document.getElementById('btnManageClosure').addEventListener('click', function() {
+        // Show the modal
+        var closureModal = new bootstrap.Modal(document.getElementById('closureModal'));
+        closureModal.show();
+
+        // Load content via AJAX
+        const facilityId = isUpdateMode ? document.querySelector('input[name="FacilityIDHidden"]').value : null;
+        
+        // Pass Facility ID to the manage_closures script if in update mode
+        let url = 'manage_closures.php' + (facilityId ? '?facility_id=' + facilityId : '');
+
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('closureModalContent').innerHTML = html;
+                 // Set the modal title to be dynamic
+                 document.getElementById('closureModalLabel').textContent = facilityId ? `Manage Closures for ${facilityId}` : 'Manage Closures (Select Facility First)';
+            })
+            .catch(err => {
+                document.getElementById('closureModalContent').innerHTML = '<p class="text-danger text-center">Failed to load content.</p>';
+                console.error(err);
+            });
+    });
 });
 </script>
 </body>
-<!-- Closure Management Modal -->
 <div class="modal fade" id="closureModal" tabindex="-1" aria-labelledby="closureModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
