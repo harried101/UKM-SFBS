@@ -10,14 +10,21 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 $search = $_GET['search'] ?? '';
 $typeFilter = $_GET['type'] ?? '';
+$now = date('Y-m-d H:i:s'); // current datetime
 
-// SQL: Fetch facilities based on Name/Location/Type
-$sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
-$params = [];
-$types_str = "";
+// --- SQL: Fetch facilities excluding currently overridden/closed ones ---
+$sql = "SELECT f.* FROM facilities f
+        LEFT JOIN `Override` o 
+        ON f.FacilityID = o.FacilityID
+        AND o.StartTime <= ? AND o.EndTime >= ?
+        WHERE f.Status IN ('Active', 'Maintenance') 
+        AND o.OverrideID IS NULL"; // exclude closed facilities
+
+$params = [$now, $now];
+$types_str = "ss";
 
 if (!empty($search)) {
-    $sql .= " AND (Name LIKE ? OR Location LIKE ?)";
+    $sql .= " AND (f.Name LIKE ? OR f.Location LIKE ?)";
     $search_param = "%" . $search . "%";
     $params[] = $search_param;
     $params[] = $search_param;
@@ -25,12 +32,12 @@ if (!empty($search)) {
 }
 
 if (!empty($typeFilter)) {
-    $sql .= " AND Type = ?";
+    $sql .= " AND f.Type = ?";
     $params[] = $typeFilter;
     $types_str .= "s";
 }
 
-$sql .= " ORDER BY Name ASC";
+$sql .= " ORDER BY f.Name ASC";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
@@ -42,8 +49,6 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $photo = $row['PhotoURL'];
-
-        // Correct path for your folder structure
         $imgSrc = (!empty($photo) && file_exists("../uploads/facilities/".$photo))
                   ? "../uploads/facilities/".$photo
                   : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
