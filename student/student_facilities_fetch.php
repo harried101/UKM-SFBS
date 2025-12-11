@@ -11,7 +11,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 $search = $_GET['search'] ?? '';
 $typeFilter = $_GET['type'] ?? '';
 
-// SQL: Fetch based on Name/Location/Type
+// SQL: Fetch facilities based on Name/Location/Type
 $sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
 $params = [];
 $types_str = "";
@@ -41,17 +41,18 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        
         $photo = $row['PhotoURL'];
-        $imgSrc = (!empty($photo) && file_exists("../admin/uploads/facilities/".$photo))
-                  ? "../admin/uploads/facilities/".$photo
+
+        // Correct path for your folder structure
+        $imgSrc = (!empty($photo) && file_exists("../uploads/facilities/".$photo))
+                  ? "../uploads/facilities/".$photo
                   : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
 
         // --- STATUS LOGIC ---
         $isMaintenance = ($row['Status'] === 'Maintenance');
         $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
         $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
-        
+
         // Button Logic
         if ($isMaintenance) {
             $btnAttr = 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
