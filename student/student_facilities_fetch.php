@@ -17,7 +17,7 @@ $now = date('Y-m-d H:i:s'); // current date and time
 $sql = "SELECT * FROM facilities f 
         WHERE f.Status IN ('Active', 'Maintenance') 
         AND NOT EXISTS (
-            SELECT 1 FROM `Override` o
+            SELECT 1 FROM `ScheduleOverrides` o
             WHERE o.FacilityID = f.FacilityID
             AND o.StartTime <= ? AND o.EndTime >= ?
         )";
