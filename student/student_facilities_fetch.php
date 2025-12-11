@@ -43,12 +43,11 @@ if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         
         $photo = $row['PhotoURL'];
-        $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
-                  ? "../admin/uploads/".$photo
+        $imgSrc = (!empty($photo) && file_exists("../admin/uploads/facilities/".$photo))
+                  ? "../admin/uploads/facilities/".$photo
                   : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
 
         // --- STATUS LOGIC ---
-        // If 'Maintenance' in facilities table, disable button entirely
         $isMaintenance = ($row['Status'] === 'Maintenance');
         $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
         $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
