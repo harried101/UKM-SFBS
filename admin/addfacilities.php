@@ -600,9 +600,27 @@ function toggleDayControls(checkbox) {
                         
                         <div class="mt-4 pt-3 border-top text-center">
                             <p class="text-muted small mb-2">CLOSE FACILITY</p>
-                            <a href="manage_closures.php" class="btn-closure-nav">
-                                Go to Closures Management
-                            </a>
+                           <button type="button" class="btn-closure-nav" id="btnManageClosure">
+                                 Go to Closures Management
+                            </button>
+                    <script>
+document.getElementById('btnManageClosure').addEventListener('click', function() {
+    // Show the modal
+    var closureModal = new bootstrap.Modal(document.getElementById('closureModal'));
+    closureModal.show();
+
+    // Load content via AJAX
+    fetch('manage_closures.php')
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('closureModalContent').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('closureModalContent').innerHTML = '<p class="text-danger text-center">Failed to load content.</p>';
+            console.error(err);
+        });
+});
+</script>
                         </div>
                         
                     </div>
@@ -693,4 +711,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 </body>
+<!-- Closure Management Modal -->
+<div class="modal fade" id="closureModal" tabindex="-1" aria-labelledby="closureModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="closureModalLabel">Manage Closures</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="closureModalContent">
+            <p class="text-center">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+ 
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </html>
