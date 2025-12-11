@@ -667,76 +667,104 @@ document.getElementById('btnManageClosure').addEventListener('click', function()
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    
+
+    // --- Days and Schedule ---
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     days.forEach(day => {
-        const checkbox = document.getElementById(day);
-        const inputs = [
-            document.querySelector(`input[name="start_time[${day}]"]`),
-            document.querySelector(`input[name="end_time[${day}]"]`),
-            document.querySelector(`input[name="slot_duration[${day}]"]`)
-        ];
-        
+        const checkbox = document.getElementById('open-' + day); // updated checkbox ID
+        const startInput = document.getElementById('start-' + day);
+        const endInput = document.getElementById('end-' + day);
+        const slotInput = document.querySelector('.slot-duration-' + day);
+
         function toggleInputs() {
             const isDisabled = !checkbox.checked;
-            inputs.forEach(input => { if(input) input.disabled = isDisabled; });
+            if (startInput) startInput.disabled = isDisabled;
+            if (endInput) endInput.disabled = isDisabled;
+            if (slotInput) slotInput.disabled = isDisabled;
+
+            document.querySelectorAll('.start-btn-' + day).forEach(btn => btn.disabled = isDisabled);
+            document.querySelectorAll('.end-btn-' + day).forEach(btn => btn.disabled = isDisabled);
         }
-        
+
         if (checkbox) {
             toggleInputs();
             checkbox.addEventListener('change', toggleInputs);
+
+            // Show section if checked
+            if (checkbox.checked) {
+                const section = document.getElementById('section-' + day);
+                if (section) section.style.display = 'block';
+            }
         }
     });
 
+    // --- Day dropdown to show section ---
+    const daySelector = document.getElementById('daySelector');
+    daySelector.addEventListener('change', function() {
+        const selectedDay = this.value;
+
+        // Hide all sections first
+        document.querySelectorAll('.schedule-section').forEach(sec => {
+            sec.style.display = 'none';
+        });
+
+        // Show selected section
+        const section = document.getElementById('section-' + selectedDay);
+        if (section) section.style.display = 'block';
+    });
+
+    // --- Time button selection ---
+    window.selectTime = function(day, type, time, button) {
+        document.querySelectorAll('.' + type + '-btn-' + day).forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        document.getElementById(type + '-' + day).value = time;
+    };
+
+    // --- Facility ID combination ---
     const form = document.querySelector('form');
     const prefixSelect = document.getElementById('FacilityPrefix');
     const numberInput = document.getElementById('FacilityNumber');
     const combinedInput = document.getElementById('FacilityIDCombined');
-    
     const nextIdNumber = <?php echo json_encode($nextFacilityNumber); ?>;
     const isUpdateMode = <?php echo json_encode($isUpdate); ?>;
-    
+
     function updateCombinedID() {
         if (prefixSelect && numberInput && combinedInput) {
             const prefix = prefixSelect.value;
-            let number = numberInput.value.replace(/[^0-9]/g, ''); 
-            
+            let number = numberInput.value.replace(/[^0-9]/g, '');
             if (number.length > 0) {
-                 number = number.padStart(3, '0');
-                 numberInput.value = number;
+                number = number.padStart(3, '0');
+                numberInput.value = number;
             }
-            
             combinedInput.value = prefix + number;
         }
     }
 
     if (prefixSelect && numberInput) {
-    
-        if (!isUpdateMode) {
-             numberInput.value = nextIdNumber;
-        }
-        
+        if (!isUpdateMode) numberInput.value = nextIdNumber;
         numberInput.addEventListener('input', updateCombinedID);
         prefixSelect.addEventListener('change', updateCombinedID);
-        
-        
         updateCombinedID();
-        
+
         form.addEventListener('submit', function(e) {
-            if (!isUpdateMode && (!combinedInput.value || combinedInput.value.length < 5)) { 
+            if (!isUpdateMode && (!combinedInput.value || combinedInput.value.length < 5)) {
                 e.preventDefault();
                 alert('Please complete the Facility ID (Prefix + Number).');
             }
         });
     }
-    
+
+    // --- Search input uppercase ---
     const searchInput = document.getElementById('searchIDInput');
     if(searchInput) {
         searchInput.addEventListener('input', function() {
             this.value = this.value.toUpperCase().trim();
         });
     }
+
+});
+</script>
+
 
     // Photo preview
     const photoInput = document.getElementById('photoInput');
