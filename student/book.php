@@ -1,344 +1,293 @@
 <?php
 session_start();
+require_once '../includes/db_connect.php';
 
-require_once '../includes/db_connect.php'; 
+// 1. Get Facility ID
+$facility_id = $_GET['facility_id'] ?? '';
+$facility_name = "Facility";
 
-if ($conn->connect_error) {
-    die("DB Connection failed. Please try again later.");
-}
-
-if (!isset($_GET['facility_id'])) {
-    die("Error: Facility ID is missing.");
-}
-
-$facilityID = htmlspecialchars($_GET['facility_id']);
-$facilityName = $facilityID;
-
-// Fetch facility name for display
-$sql_facility = "SELECT Name FROM facilities WHERE FacilityID = ? AND Status = 'Active'";
-if ($stmt_f = $conn->prepare($sql_facility)) {
-    $stmt_f->bind_param("s", $facilityID);
-    $stmt_f->execute();
-    $result_f = $stmt_f->get_result();
-    if ($row_f = $result_f->fetch_assoc()) {
-        $facilityName = $row_f['Name'] . " (" . $facilityID . ")";
+if ($facility_id) {
+    // Fetch the facility name to display at the top
+    $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
+    $stmt->bind_param("s", $facility_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $facility_name = $row['Name'];
     }
-    $stmt_f->close();
 }
-
-$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sports Facility Booking</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    #calendar {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 5px;
-        margin-top: 10px;
-    }
-
-    .calendar-weekday {
-        font-weight: bold;
-        text-align: center;
-        padding: 10px 0;
-        background-color: #007bff;
-        color: white;
-        border-radius: 5px;
-    }
-
-    .calendar-day {
-        padding: 20px 0;
-        text-align: center;
-        cursor: pointer;
-        border-radius: 5px;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        transition: all 0.2s;
-        opacity: 1; 
-        pointer-events: auto;
-    }
-    
-    .past-day {
-        opacity: 0.5;
-        pointer-events: none;
-    }
-
-    .calendar-day:hover { background-color: #cce5ff; }
-    .selected-day { background-color: #007bff; color: white; }
-    .today { border: 2px solid #28a745; font-weight: bold; }
-
-    .time-slot-btn {
-        transition: background-color 0.2s, color 0.2s;
-    }
-    .time-slot-btn.selected-day {
-        background-color: #007bff;
-        color: white;
-        border-color: #007bff;
-    }
-    .time-slot-btn:disabled {
-        background-color: #ffcccc !important;
-        color: #8a0000 !important;
-        border-color: #ffcccc !important;
-        cursor: not-allowed;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modern scrollbar hiding for clean UI */
+        body::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Calendar Styles */
+        .calendar-day { transition: all 0.2s ease; }
+        .calendar-day:hover:not(.disabled):not(.selected) { background-color: #ffe4e6; color: #8a0d19; cursor: pointer; transform: scale(1.05); }
+        .calendar-day.selected { background-color: #8a0d19; color: white; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(138, 13, 25, 0.3); }
+        .calendar-day.today { border: 2px solid #8a0d19; font-weight: bold; color: #8a0d19; }
+        .calendar-day.disabled { color: #d1d5db; cursor: default; background: transparent; }
+        
+        /* Smooth fade in for slots */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-<body class="p-4">
-<div class="container">
-    <h1 class="mb-4 text-center">UKM Sports Facility Booking System</h1>
+<body class="bg-white p-4 sm:p-6 font-sans select-none">
 
-    <div class="text-center mb-3">
-        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#bookingModal">
-            Check Availability
-        </button>
+    <!-- Header -->
+    <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-[#8a0d19] tracking-tight"><?php echo htmlspecialchars($facility_name); ?></h2>
+        <p class="text-gray-500 text-sm mt-1">Select a date to check availability</p>
     </div>
 
-    <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <form id="bookingForm" action="book_fetch.php" method="POST"> 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Book Facility: **<?php echo htmlspecialchars($facilityName); ?>**</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        
-                        <input type="hidden" name="facility_id" id="hiddenFacilityID" value="<?php echo $facilityID; ?>">
-                        <input type="hidden" name="start_time" id="hiddenStartTime" value="">
-                        <input type="hidden" name="end_time" id="hiddenEndTime" value="">
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <button id="prevMonth" type="button" class="btn btn-sm btn-outline-secondary">&lt; Prev</button>
-                            <h5 id="monthYear" class="mb-0"></h5>
-                            <button id="nextMonth" type="button" class="btn btn-sm btn-outline-secondary">Next &gt;</button>
-                        </div>
-
-                        <div id="calendar"></div>
-
-                        <div id="courtSelect" style="margin-top:20px;"> 
-                            <h6>Selected Facility: **<?php echo htmlspecialchars($facilityName); ?>**</h6>
-                            <p class="text-muted small">Please select a date and time slot below.</p>
-                        </div>
-
-                        <div id="timeSlots" style="margin-top:20px; display:none;">
-                            <h6>Available Time Slots for Selected Date:</h6>
-                            <div class="d-flex flex-wrap" id="timeSlotButtons">
-                                <p class="text-muted" id="timeSlotMessage">Select a date to check availability.</p>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success" id="submitBookingBtn" disabled>Confirm Booking</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </form>
-            </div>
+    <div class="max-w-xl mx-auto bg-white rounded-xl">
+        
+        <!-- Month Navigation -->
+        <div class="flex justify-between items-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
+            <button id="prevMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-gray-600 hover:text-[#8a0d19] transition">
+                <i class="fa-solid fa-chevron-left text-sm"></i>
+            </button>
+            <h3 id="monthYear" class="text-lg font-bold text-gray-800 tracking-wide"></h3>
+            <button id="nextMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-gray-600 hover:text-[#8a0d19] transition">
+                <i class="fa-solid fa-chevron-right text-sm"></i>
+            </button>
         </div>
+
+        <!-- Calendar Grid -->
+        <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm mb-8">
+            <!-- JS Populates this -->
+        </div>
+
+        <!-- Legend -->
+        <div id="legend" class="hidden flex justify-center gap-4 text-xs text-gray-500 mb-4 border-t border-gray-100 pt-4">
+            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-white border border-green-500 mr-1.5"></span> Available</div>
+            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 mr-1.5"></span> Booked</div>
+            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-[#8a0d19] mr-1.5"></span> Selected</div>
+        </div>
+
+        <!-- Time Slots Section -->
+        <div id="timeSlotsSection" class="hidden fade-in">
+            <h4 class="font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span><i class="fa-regular fa-clock mr-2 text-[#8a0d19]"></i> Available Slots</span>
+                <span id="selectedDateDisplay" class="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded"></span>
+            </h4>
+            
+            <!-- Loader -->
+            <div id="slotsLoader" class="flex flex-col items-center justify-center py-8 text-gray-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-[#8a0d19]"></i>
+                <span class="text-xs">Fetching schedule...</span>
+            </div>
+
+            <!-- Slots Grid -->
+            <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
+        </div>
+
+        <!-- Booking Form (Submitted to book_fetch.php) -->
+        <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
+            <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
+            <input type="hidden" name="start_time" id="hiddenStartTime">
+            <input type="hidden" name="end_time" id="hiddenEndTime">
+            
+            <div class="flex justify-between items-center mb-4 text-sm">
+                <span class="text-gray-500">Selected Time:</span>
+                <span id="summaryTime" class="font-bold text-[#8a0d19] text-lg">--:--</span>
+            </div>
+
+            <button type="submit" class="w-full bg-[#8a0d19] text-white py-3.5 rounded-xl font-bold hover:bg-[#720b15] transition shadow-lg shadow-red-900/20 flex justify-center items-center gap-2 group transform active:scale-[0.98]">
+                <span>Confirm Booking</span>
+                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </form>
+
     </div>
 
-</div>
+    <script>
+        const facilityId = "<?php echo $facility_id; ?>";
+        
+        // Define your time slots here. 
+        // This list creates the buttons. The 'isBooked' check later will disable buttons if taken.
+        const TIME_SLOTS = [
+            { start: "09:00:00", label: "09:00 AM" },
+            { start: "10:00:00", label: "10:00 AM" },
+            { start: "11:00:00", label: "11:00 AM" },
+            { start: "12:00:00", label: "12:00 PM" },
+            { start: "13:00:00", label: "01:00 PM" },
+            { start: "14:00:00", label: "02:00 PM" },
+            { start: "15:00:00", label: "03:00 PM" },
+            { start: "16:00:00", label: "04:00 PM" },
+            { start: "17:00:00", label: "05:00 PM" },
+            { start: "18:00:00", label: "06:00 PM" },
+            { start: "19:00:00", label: "07:00 PM" },
+            { start: "20:00:00", label: "08:00 PM" },
+            { start: "21:00:00", label: "09:00 PM" }
+        ];
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const calendar = document.getElementById('calendar');
-    const monthYear = document.getElementById('monthYear');
-    const timeSlotsDiv = document.getElementById('timeSlots');
-    const timeSlotButtonsDiv = document.getElementById('timeSlotButtons');
-    const timeSlotMessage = document.getElementById('timeSlotMessage');
-    const submitBookingBtn = document.getElementById('submitBookingBtn');
-    const prevMonthBtn = document.getElementById('prevMonth');
-    const nextMonthBtn = document.getElementById('nextMonth');
+        let currDate = new Date();
+        let currMonth = currDate.getMonth();
+        let currYear = currDate.getFullYear();
 
-    const hiddenFacilityID = document.getElementById('hiddenFacilityID');
-    const hiddenStartTime = document.getElementById('hiddenStartTime');
-    const hiddenEndTime = document.getElementById('hiddenEndTime');
+        // DOM Elements
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthYear = document.getElementById('monthYear');
+        const slotsSection = document.getElementById('timeSlotsSection');
+        const slotsContainer = document.getElementById('slotsContainer');
+        const slotsLoader = document.getElementById('slotsLoader');
+        const bookingForm = document.getElementById('bookingForm');
+        const legend = document.getElementById('legend');
 
-    const ALL_TIME_SLOTS = [
-        { start: "09:00:00", end: "10:00:00", label: "9:00 - 10:00" },
-        { start: "10:00:00", end: "11:00:00", label: "10:00 - 11:00" },
-        { start: "11:00:00", end: "12:00:00", label: "11:00 - 12:00" },
-        { start: "12:00:00", end: "13:00:00", label: "12:00 - 13:00" },
-        { start: "13:00:00", end: "14:00:00", label: "13:00 - 14:00" },
-        { start: "14:00:00", end: "15:00:00", label: "14:00 - 15:00" },
-        { start: "16:00:00", end: "17:00:00", label: "16:00 - 17:00" },
-        { start: "18:00:00", end: "19:00:00", label: "18:00 - 19:00" },
-    ];
+        // --- 1. Render Calendar Grid ---
+        function renderCalendar(month, year) {
+            calendarGrid.innerHTML = "";
+            monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
 
-    let today = new Date();
-    let currentMonth = today.getMonth();
-    let currentYear = today.getFullYear();
-    let selectedDate = null;
-    let selectedStartTime = null; 
-    let bookedSlots = []; 
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    function updateSubmitButton() {
-        submitBookingBtn.disabled = !(selectedDate && selectedStartTime);
-    }
+            // Empty cells for previous month
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
 
-    function renderCalendar(month, year) {
-        calendar.innerHTML = '';
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateDiv = document.createElement('div');
+                dateDiv.innerText = day;
+                dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
 
-        const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        weekdays.forEach(day => {
-            const dayHeader = document.createElement('div');
-            dayHeader.classList.add('calendar-weekday');
-            dayHeader.textContent = day;
-            calendar.appendChild(dayHeader);
-        });
+                const checkDate = new Date(year, month, day);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                
+                // Disable past dates
+                if (checkDate < today) {
+                    dateDiv.classList.add('disabled');
+                } else {
+                    dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
+                }
 
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                // Highlight Today
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dateDiv.classList.add('today');
+                }
 
-        for (let i = 0; i < firstDay; i++) {
-            calendar.appendChild(document.createElement('div'));
+                calendarGrid.appendChild(dateDiv);
+            }
         }
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dayDiv = document.createElement('div');
-            dayDiv.classList.add('calendar-day');
-            dayDiv.textContent = day;
+        // --- 2. Handle Date Selection ---
+        function selectDate(day, month, year, element) {
+            // UI Updates
+            document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            // Format YYYY-MM-DD
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            document.getElementById('selectedDateDisplay').innerText = new Date(year, month, day).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
 
-            const currentDayDate = new Date(year, month, day);
-            currentDayDate.setHours(0,0,0,0); 
-            const todayReset = new Date();
-            todayReset.setHours(0,0,0,0);
+            // Show sections
+            legend.classList.remove('hidden');
+            slotsSection.classList.remove('hidden');
+            bookingForm.classList.add('hidden'); // Hide form until time selected
+            
+            // Scroll to slots to make it obvious
+            slotsSection.scrollIntoView({ behavior: 'smooth' });
 
-            const isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
-            if (isToday) {
-                dayDiv.classList.add('today');
-            }
+            fetchSlots(dateStr);
+        }
 
-            if (currentDayDate < todayReset) {
-                 dayDiv.classList.add('past-day');
-            }
+        // --- 3. Fetch Booked Slots ---
+        function fetchSlots(dateStr) {
+            slotsContainer.innerHTML = '';
+            slotsLoader.classList.remove('hidden');
 
-            dayDiv.addEventListener('click', () => {
-                if (dayDiv.classList.contains('past-day')) return;
+            fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
+                .then(res => res.json())
+                .then(data => {
+                    slotsLoader.classList.add('hidden');
+                    if (!data.success) {
+                        slotsContainer.innerHTML = `<div class="col-span-full text-red-500 text-center text-sm">${data.message}</div>`;
+                        return;
+                    }
 
-                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected-day'));
-                dayDiv.classList.add('selected-day');
-                
-                selectedStartTime = null;
-                hiddenStartTime.value = '';
-                hiddenEndTime.value = '';
-                updateSubmitButton();
+                    // data.booked_slots contains e.g. ["09:00:00", "14:00:00"]
+                    const bookedTimes = data.booked_slots || [];
+                    
+                    TIME_SLOTS.forEach(slot => {
+                        const btn = document.createElement('button');
+                        
+                        // Check if time is in booked array
+                        const isBooked = bookedTimes.includes(slot.start);
 
-                selectedDate = new Date(year, month, day);
-                timeSlotsDiv.style.display = 'block';
-                
-                const yearStr = selectedDate.getFullYear();
-                const monthStr = String(selectedDate.getMonth() + 1).padStart(2, '0');
-                const dayStr = String(selectedDate.getDate()).padStart(2, '0');
-                const selectedDateStr = `${yearStr}-${monthStr}-${dayStr}`;
+                        btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                            isBooked 
+                            ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                            : 'bg-white text-green-700 border-green-200 hover:border-green-500 hover:shadow-md hover:-translate-y-0.5'
+                        }`;
+                        
+                        btn.innerHTML = `
+                            ${slot.label}
+                            ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}
+                        `;
+                        
+                        if(isBooked) {
+                            btn.disabled = true;
+                        } else {
+                            btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
+                        }
+                        slotsContainer.appendChild(btn);
+                    });
+                })
+                .catch(err => {
+                    slotsLoader.classList.add('hidden');
+                    slotsContainer.innerHTML = '<div class="col-span-full text-red-400 text-center text-sm">Connection Error</div>';
+                });
+        }
 
-                fetchBookedSlots(selectedDateStr);
+        // --- 4. Handle Slot Click ---
+        function selectSlot(startTime, label, dateStr, btnElement) {
+            // Reset styles
+            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => {
+                b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all';
             });
+            // Highlight active
+            btnElement.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#8a0d19] border-[#8a0d19] text-white shadow-md transform scale-105';
 
-            calendar.appendChild(dayDiv);
+            // Calculate Times for DB (YYYY-MM-DD HH:MM:SS)
+            const fullStart = `${dateStr} ${startTime}`;
+            
+            // Calculate End Time (Start + 1 Hour)
+            let [h, m, s] = startTime.split(':');
+            let endH = parseInt(h) + 1;
+            const fullEnd = `${dateStr} ${String(endH).padStart(2, '0')}:${m}:${s}`;
+
+            // Populate Hidden Form
+            document.getElementById('hiddenStartTime').value = fullStart;
+            document.getElementById('hiddenEndTime').value = fullEnd;
+            document.getElementById('summaryTime').innerText = label;
+
+            bookingForm.classList.remove('hidden');
+            setTimeout(() => {
+                bookingForm.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
         }
 
-        monthYear.textContent = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date(year, month));
-    }
-    
-    // Function to fetch booked slots via AJAX/Fetch
-    async function fetchBookedSlots(date) {
-        timeSlotButtonsDiv.innerHTML = '<p class="text-info" id="timeSlotMessage">Checking availability...</p>';
-        try {
-            const response = await fetch(`book_fetch.php?get_slots=true&date=${date}&facility_id=${hiddenFacilityID.value}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                bookedSlots = data.booked_slots;
-                renderTimeSlots(date);
-            } else {
-                timeSlotButtonsDiv.innerHTML = `<p class="text-danger">Error fetching slots: ${data.message}</p>`;
-            }
-
-        } catch (error) {
-            console.error('Fetch error:', error);
-            timeSlotButtonsDiv.innerHTML = '<p class="text-danger">Failed to connect to server to check slots.</p>';
-        }
-    }
-
-    // Function to render time slots
-    function renderTimeSlots(dateStr) {
-        timeSlotButtonsDiv.innerHTML = '';
-        let availableCount = 0;
-
-        ALL_TIME_SLOTS.forEach(slot => {
-            const slotStartDateTime = `${dateStr} ${slot.start}`;
-            
-            // Check if this slot is in the bookedSlots array
-            const isBooked = bookedSlots.includes(slotStartDateTime);
-            
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'btn m-1 time-slot-btn';
-            button.textContent = slot.label;
-            button.dataset.start = slot.start;
-            button.dataset.end = slot.end;
-
-            if (isBooked) {
-                button.classList.add('btn-danger');
-                button.disabled = true;
-                button.textContent += ' (Booked)';
-            } else {
-                button.classList.add('btn-outline-primary');
-                availableCount++;
-                button.addEventListener('click', handleTimeSlotClick);
-            }
-            timeSlotButtonsDiv.appendChild(button);
-        });
-
-        if (availableCount === 0) {
-            timeSlotButtonsDiv.innerHTML = '<p class="text-warning">No time slots available for this day.</p>';
-        }
-    }
-    
-    function handleTimeSlotClick(e) {
-        const btn = e.target.closest('.time-slot-btn');
-        if (!btn || !selectedDate) return;
-
-        document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected-day'));
-        btn.classList.add('selected-day');
-
-        selectedStartTime = btn.dataset.start;
-        const selectedEndTime = btn.dataset.end;
+        // Initialize Calendar
+        document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
+        document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
         
-        const year = selectedDate.getFullYear();
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-        const day = String(selectedDate.getDate()).padStart(2, '0');
-        const datePart = `${year}-${month}-${day}`;
-
-        hiddenStartTime.value = `${datePart} ${selectedStartTime}`;
-        hiddenEndTime.value = `${datePart} ${selectedEndTime}`;
-        
-        updateSubmitButton();
-    }
-
-    // Event Listeners for Month Navigation
-    prevMonthBtn.addEventListener('click', () => {
-        currentMonth--;
-        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-        renderCalendar(currentMonth, currentYear);
-    });
-
-    nextMonthBtn.addEventListener('click', () => {
-        currentMonth++;
-        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-        renderCalendar(currentMonth, currentYear);
-    });
-
-    renderCalendar(currentMonth, currentYear);
-});
-</script>
+        renderCalendar(currMonth, currYear);
+    </script>
 </body>
 </html>

@@ -1,137 +1,102 @@
 <?php
 session_start();
+require_once '../includes/db_connect.php';
 
-require_once '../includes/db_connect.php'; 
-
-header('Content-Type: application/json');
-
-if ($conn->connect_error) {
-    if ($_SERVER["REQUEST_METHOD"] === "GET" || strpos($_SERVER['REQUEST_URI'], '?') !== false) {
-        echo json_encode(['success' => false, 'message' => 'Database connection failed.']);
-    } else {
-        die("Database connection failed.");
-    }
-    exit;
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    header('Content-Type: text/html');
-
-    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
-        die("Access denied. Please log in as a Student.");
-    }
+// 1. GET REQUEST: Fetch Slots (Called via AJAX by book.php)
+if (isset($_GET['get_slots'])) {
+    header('Content-Type: application/json');
     
-    $userIdentifier = $_SESSION['user_id'] ?? null; 
-    $facilityID = $_POST['facility_id'] ?? null;
-    $startTimeStr = $_POST['start_time'] ?? null; 
-    $endTimeStr = $_POST['end_time'] ?? null; 
-    $status = 'Pending';
-    $userID = null; 
+    $date = $_GET['date'] ?? '';
+    $facilityID = $_GET['facility_id'] ?? '';
 
-    if (!$userIdentifier || !$facilityID || !$startTimeStr || !$endTimeStr) {
-        $missing_field = 'booking data';
-        if (!$userIdentifier) $missing_field = 'User Identifier (Session)';
-        
-        echo "<script>alert('Error: Required data missing: {$missing_field}.'); window.parent.closeCalendar();</script>";
-        $conn->close();
+    if (!$date || !$facilityID) {
+        echo json_encode(['success' => false, 'message' => 'Missing date or ID']);
         exit;
     }
 
-    $sql_lookup = "SELECT UserID FROM users WHERE UserIdentifier = ?";
-    if ($stmt_lookup = $conn->prepare($sql_lookup)) {
-        $stmt_lookup->bind_param("s", $userIdentifier);
-        $stmt_lookup->execute();
-        $result_lookup = $stmt_lookup->get_result();
-        
-        if ($row_lookup = $result_lookup->fetch_assoc()) {
-            $userID = $row_lookup['UserID']; 
-        }
-        $stmt_lookup->close();
-    } else {
-        $error_message = "Booking failed! Lookup SQL error: " . $conn->error;
-        echo "<script>alert('{$error_message}'); window.parent.closeCalendar();</script>";
-        $conn->close();
-        exit;
-    }
-
-    if (!$userID) {
-        $error_message = "Booking failed! User Identifier ('{$userIdentifier}') not found in users table. Foreign key constraint will fail.";
-        echo "<script>alert('{$error_message}'); window.parent.closeCalendar();</script>";
-        $conn->close();
-        exit;
-    }
-
-    $sql = "INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status) 
-            VALUES (?, ?, ?, ?, ?)";
-
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("issss", $userID, $facilityID, $startTimeStr, $endTimeStr, $status);
-
-        if ($stmt->execute()) {
-            $new_booking_id = $stmt->insert_id;
+    // Fetch time portions (HH:MM:SS) of booked slots
+    // We filter for Confirmed OR Pending to prevent double booking
+    // Using TIME() function to extract just the time part for easy JS comparison
+    $sql = "SELECT TIME(StartTime) as booked_time 
+            FROM bookings 
+            WHERE FacilityID = ? 
+            AND DATE(StartTime) = ? 
+            AND Status IN ('Approved', 'Pending')";
             
-            $display_booking_id = str_pad($new_booking_id, 1, '0', STR_PAD_LEFT); 
-
-            $message = 'Booking for ' . $userIdentifier . ' successful! Your Booking ID is "' . $display_booking_id . '".';
-
-            echo "<script>
-                if (window.parent) {
-                    alert('{$message}');
-                    window.parent.closeCalendar(); 
-                    window.parent.location.reload(); 
-                }
-            </script>";
-            
-        } else {
-            $error_message = "Booking failed! Database error: " . $stmt->error;
-            if (strpos($stmt->error, 'foreign key constraint fails') !== false) {
-                 $error_message .= " (Foreign Key Error: UserID ({$userID}) lookup failed.)";
-            }
-            echo "<script>alert('{$error_message}'); window.parent.closeCalendar();</script>";
-        }
-
-        $stmt->close();
-    } else {
-        $error_message = "Booking failed! Failed to prepare SQL statement: " . $conn->error;
-        echo "<script>alert('{$error_message}'); window.parent.closeCalendar();</script>";
-    }
-
-    $conn->close();
-    exit;
-}
-
-if (isset($_GET['get_slots']) && isset($_GET['date']) && isset($_GET['facility_id'])) {
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $facilityID, $date);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
-    $date = $_GET['date'];
-    $facilityID = $_GET['facility_id'];
-
-    $sql_slots = "SELECT TIME_FORMAT(StartTime, '%H:%i:%s') as booked_time 
-                  FROM bookings 
-                  WHERE FacilityID = ? 
-                  AND DATE(StartTime) = ? 
-                  AND (Status = 'Pending' OR Status = 'Confirmed')";
-
     $booked_slots = [];
-    if ($stmt_s = $conn->prepare($sql_slots)) {
-        $stmt_s->bind_param("ss", $facilityID, $date);
-        $stmt_s->execute();
-        $result_s = $stmt_s->get_result();
-        
-        while ($row = $result_s->fetch_assoc()) {
-            $booked_slots[] = $row['booked_time'];
-        }
-        $stmt_s->close();
-
-        echo json_encode(['success' => true, 'booked_slots' => $booked_slots]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to prepare slot query.']);
+    while ($row = $result->fetch_assoc()) {
+        $booked_slots[] = $row['booked_time'];
     }
 
+    echo json_encode(['success' => true, 'booked_slots' => $booked_slots]);
+    $stmt->close();
     $conn->close();
     exit;
 }
 
-echo json_encode(['success' => false, 'message' => 'Invalid request to fetch slots. Check URL parameters.']);
-exit;
+// 2. POST REQUEST: Submit Booking (Called by Form Submit)
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    
+    // Auth Check
+    if (!isset($_SESSION['user_id'])) {
+        die("<script>alert('Session expired. Please log in.'); window.parent.location.reload();</script>");
+    }
+
+    $userIdentifier = $_SESSION['user_id']; // This is usually the Metric Number/Username
+    $facilityID = $_POST['facility_id'];
+    $startTime = $_POST['start_time'];
+    $endTime = $_POST['end_time'];
+
+    // Retrieve User's Numeric ID (Foreign Key)
+    // NOTE: Adjust 'UserIdentifier' to match your actual column name (e.g., 'username', 'metric_id')
+    $u_stmt = $conn->prepare("SELECT UserID FROM users WHERE UserIdentifier = ?");
+    $u_stmt->bind_param("s", $userIdentifier);
+    $u_stmt->execute();
+    $res = $u_stmt->get_result();
+    
+    if ($row = $res->fetch_assoc()) {
+        $userID = $row['UserID'];
+    } else {
+        // Fallback: If session user_id IS the numeric ID, use it directly
+        // Remove this else block if your session definitely stores a string username
+        $userID = $userIdentifier; 
+    }
+    $u_stmt->close();
+
+    // Final Double Booking Check (Race Condition Prevention)
+    $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID = ? AND StartTime = ? AND Status IN ('Approved', 'Pending')");
+    $check->bind_param("ss", $facilityID, $startTime);
+    $check->execute();
+    if ($check->get_result()->num_rows > 0) {
+        die("<script>alert('Sorry! This slot was just taken by someone else.'); window.location.href='book.php?facility_id=$facilityID';</script>");
+    }
+    $check->close();
+
+    // Insert Booking
+    $status = 'Pending';
+    $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status) VALUES (?, ?, ?, ?, ?)");
+    $ins->bind_param("issss", $userID, $facilityID, $startTime, $endTime, $status);
+
+    if ($ins->execute()) {
+        // Success: Alert and reload parent page (Dashboard)
+        echo "<script>
+            alert('Booking Submitted Successfully! Status: Pending.');
+            window.parent.location.reload(); 
+        </script>";
+    } else {
+        echo "<script>
+            alert('Database Error: " . addslashes($conn->error) . "');
+            window.parent.closeCalendar();
+        </script>";
+    }
+
+    $ins->close();
+    $conn->close();
+    exit;
+}
 ?>

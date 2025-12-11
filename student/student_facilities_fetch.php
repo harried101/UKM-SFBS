@@ -5,108 +5,116 @@ require_once '../includes/db_connect.php';
 // SECURITY CHECK
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     http_response_code(403);
-    exit('Unauthorized');
+    exit('<div class="col-span-full text-center text-red-600">Session expired. Please refresh the page.</div>');
 }
 
 $search = $_GET['search'] ?? '';
 $typeFilter = $_GET['type'] ?? '';
-$limit = 6;
-$page = 1;
-$offset = ($page - 1) * $limit;
 
-// --- SQL BASE QUERY: Include 'Active' AND 'Maintenance' statuses ---
+// --- SQL QUERY CONSTRUCTION ---
+// We use prepared statements for everything to prevent SQL injection
 $sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
-
 $params = [];
 $types_str = "";
 
-// Apply Search Filter (using prepared statements for safety)
+// 1. Search Filter
 if (!empty($search)) {
-    $search_param = "%" . $search . "%"; 
-    // Removed Description search as the original logic didn't account for it with real_escape_string fully
     $sql .= " AND (Name LIKE ? OR Location LIKE ?)";
+    $search_param = "%" . $search . "%";
     $params[] = $search_param;
     $params[] = $search_param;
     $types_str .= "ss";
 }
 
-// Apply Type Filter
+// 2. Type Filter
 if (!empty($typeFilter)) {
     $sql .= " AND Type = ?";
     $params[] = $typeFilter;
     $types_str .= "s";
 }
 
-// Final Ordering and Pagination (using prepared statements)
-$sql .= " ORDER BY CreatedAt DESC LIMIT ?, ?"; 
-$params[] = $offset;
-$params[] = $limit;
-$types_str .= "ii";
+// 3. Sorting
+$sql .= " ORDER BY Name ASC";
 
-// --- Execute the Query ---
+// --- EXECUTE ---
 $stmt = $conn->prepare($sql);
-
-if (!$stmt) {
-    // Handle prepare error
-    exit('<p class="text-danger">SQL Prepare Error: ' . $conn->error . '</p>');
-}
-
 if (!empty($params)) {
-    // Dynamically bind parameters
     $stmt->bind_param($types_str, ...$params);
 }
-
 $stmt->execute();
 $result = $stmt->get_result();
 
+// --- OUTPUT HTML ---
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        
+        // Image Handling
         $photo = $row['PhotoURL'];
         $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
-                 ? "../admin/uploads/".$photo
-                 : "https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image";
+                  ? "../admin/uploads/".$photo
+                  : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
 
-        // Determine status badge color and text
-        $statusBadgeText = htmlspecialchars($row['Status']);
-        $statusBadgeClass = ($row['Status'] === 'Maintenance') 
-                          ? 'bg-orange-500 text-white' 
-                          : 'bg-green-500 text-white'; // Active
+        // Status Logic
+        $isMaintenance = ($row['Status'] === 'Maintenance');
+        $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
+        $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
+        
+        // Button Logic (Disable if maintenance)
+        $btnAttr = $isMaintenance ? 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed"' : 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#8a0d19] text-white py-2.5 rounded-lg font-bold hover:bg-[#6d0a13] transition shadow-md hover:shadow-lg transform active:scale-95"';
+        $btnText = $isMaintenance ? 'Under Maintenance' : 'Check Availability';
 
         echo '
-        <div class="facility-card group">
-            <div class="card-img-container">
-                <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'">
-                <span class="facility-type-badge">'.htmlspecialchars($row['Type']).'</span>
+        <div class="facility-card group bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+            
+            <!-- Image Area -->
+            <div class="relative h-56 overflow-hidden">
+                <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#8a0d19] shadow-sm uppercase tracking-wide border border-gray-100">
+                    '.htmlspecialchars($row['Type']).'
+                </div>
             </div>
-            <div class="p-6 flex flex-col flex-grow relative">
-                <div class="mb-2">
-                    <h3 class="text-xl font-bold text-gray-800 leading-tight mb-1">'.htmlspecialchars($row['Name']).'</h3>
-                    <div class="flex items-center text-sm text-gray-500">
-                        <i class="fa-solid fa-map-pin text-[#8a0d19] mr-2"></i> '.htmlspecialchars($row['Location']).'
+            
+            <!-- Content Area -->
+            <div class="p-5 flex flex-col flex-grow">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#8a0d19] transition-colors">
+                        '.htmlspecialchars($row['Name']).'
+                    </h3>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 flex items-center mb-2">
+                        <i class="fa-solid fa-location-dot text-[#8a0d19] w-5 text-center mr-1"></i> 
+                        '.htmlspecialchars($row['Location']).'
+                    </p>
+                    <div class="inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-semibold '.$statusClass.'">
+                        '.$statusIcon.' '.htmlspecialchars($row['Status']).'
                     </div>
                 </div>
-                <p class="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed flex-grow">'.htmlspecialchars($row['Description']).'</p>
-                <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                    
-                    <div class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-100 '.$statusBadgeClass.'">
-                        '. $statusBadgeText .'
-                    </div>
-                    
-                    <button 
-                        onclick="openCalendar(\''.$row['FacilityID'].'\')" 
-                        class="text-white bg-[#8a0d19] hover:bg-[#6d0a14] px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm hover:shadow">
-                        Check Availability
+                
+                <p class="text-gray-600 text-sm line-clamp-2 mb-6 h-10 leading-relaxed">
+                    '.htmlspecialchars($row['Description']).'
+                </p>
+                
+                <!-- Action Area -->
+                <div class="mt-auto pt-4 border-t border-gray-50">
+                    <button '.$btnAttr.'>
+                        '.$btnText.'
                     </button>
                 </div>
             </div>
-        </div>
-        ';
+        </div>';
     }
 } else {
-    echo '<div class="col-span-3 text-center py-24 bg-white rounded-2xl border border-dashed border-gray-300">
-            <h3 class="text-xl font-bold text-gray-700 mb-2">No facilities found</h3>
-            <p class="text-gray-500">Try searching again or remove filters. (Only Active or Maintenance facilities are shown.)</p>
-          </div>';
+    // Empty State
+    echo '
+    <div class="col-span-full py-16 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <i class="fa-solid fa-magnifying-glass text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">No facilities found</h3>
+        <p class="text-gray-500 text-sm">Try adjusting your search or filters.</p>
+    </div>';
 }
 
 $stmt->close();
