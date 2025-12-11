@@ -11,13 +11,22 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 $search = $_GET['search'] ?? '';
 $typeFilter = $_GET['type'] ?? '';
 
-// SQL: Fetch facilities based on Name/Location/Type
-$sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
-$params = [];
-$types_str = "";
+$now = date('Y-m-d H:i:s'); // current date and time
+
+// SQL: Fetch facilities based on Name/Location/Type and exclude currently closed ones
+$sql = "SELECT * FROM facilities f 
+        WHERE f.Status IN ('Active', 'Maintenance') 
+        AND NOT EXISTS (
+            SELECT 1 FROM `Override` o
+            WHERE o.FacilityID = f.FacilityID
+            AND o.StartTime <= ? AND o.EndTime >= ?
+        )";
+
+$params = [$now, $now];
+$types_str = "ss";
 
 if (!empty($search)) {
-    $sql .= " AND (Name LIKE ? OR Location LIKE ?)";
+    $sql .= " AND (f.Name LIKE ? OR f.Location LIKE ?)";
     $search_param = "%" . $search . "%";
     $params[] = $search_param;
     $params[] = $search_param;
@@ -25,12 +34,12 @@ if (!empty($search)) {
 }
 
 if (!empty($typeFilter)) {
-    $sql .= " AND Type = ?";
+    $sql .= " AND f.Type = ?";
     $params[] = $typeFilter;
     $types_str .= "s";
 }
 
-$sql .= " ORDER BY Name ASC";
+$sql .= " ORDER BY f.Name ASC";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
