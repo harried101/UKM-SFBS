@@ -35,6 +35,12 @@
         letter-spacing: 1px;
     }
 
+    /* Make the UKM part bold italic */
+    .subline .ukm {
+        font-weight: bold;
+        font-style: italic;
+    }
+
     /* ===== NAVIGATION BAR ===== */
     .nav-bar {
         width: 100%;
@@ -166,7 +172,7 @@
 
 <!-- BLUE SUBLINE -->
 <div class="subline">
-    PUSAT SUKAN / UNIVERSITI KEBANGSAAN MALAYSIA
+    PUSAT SUKAN / <span class="ukm">UNIVERSITI KEBANGSAAN MALAYSIA</span>
 </div>
 
 <!-- NAV BAR -->
