@@ -18,20 +18,20 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 30px;
-        padding: 10px 0;
+        gap: 20px; /* slightly smaller gap */
+        padding: 5px 0; /* less vertical padding */
     }
 
     .top-header img {
-        height: 90px;
+        height: 60px; /* make both logos smaller */
     }
 
     .logo-ukm {
-        height: 90px;
+        height: 60px;
     }
 
     .logo-sukan {
-        height: 80px;
+        height: 60px;
     }
 
     /* ===== BLUE SUBLINE ===== */
