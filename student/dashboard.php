@@ -249,22 +249,24 @@
 </div>
 
 <!-- MAIN BUTTON: Browse Facilities -->
-<div style="display: flex; justify-content: center; margin: 40px 0;">
+<div style="display: flex; justify-content: center; margin: 50px 0;">
     <a href="student_facilities.php" class="browse-btn">
-        Browse Facilities
+        BROWSE FACILITIES
     </a>
 </div>
 
 <style>
 .browse-btn {
     display: inline-block;
-    background: linear-gradient(135deg, #8a0d19, #b30f25);
+    background: linear-gradient(135deg, #1e3c72, #2a5298); /* Nice blue gradient */
     color: white;
-    font-weight: 700;
-    font-size: 1.2rem;
-    padding: 16px 40px;
-    border-radius: 12px;
-    box-shadow: 0 6px 15px rgba(138,13,25,0.4);
+    font-family: 'Times New Roman', serif;
+    font-weight: bold;
+    font-size: 2rem; /* Bigger size */
+    text-transform: uppercase; /* Caps lock */
+    padding: 20px 60px; /* Bigger padding */
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(30,60,114,0.5);
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -279,7 +281,7 @@
     width: 100%;
     height: 0%;
     background: rgba(255,255,255,0.15);
-    border-radius: 12px;
+    border-radius: 15px;
     transition: all 0.3s ease;
 }
 
@@ -288,8 +290,8 @@
 }
 
 .browse-btn:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 25px rgba(138,13,25,0.5);
+    transform: translateY(-5px) scale(1.08);
+    box-shadow: 0 12px 30px rgba(30,60,114,0.6);
 }
 </style>
 
