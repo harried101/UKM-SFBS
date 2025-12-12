@@ -323,12 +323,47 @@
     </div>
 </div>
 
+<!-- FOOTER -->
+<div class="footer">
+    <!-- Top part: logos and contact info -->
+    <div class="footer-container">
+        <!-- Left: Pusat Sukan Logo -->
+        <div class="footer-logo">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
+        </div>
+
+        <!-- Center: Contact Info -->
+        <div class="footer-info">
+            <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
+            Stadium Universiti<br>
+            Universiti Kebangsaan Malaysia<br>
+            43600 Bangi, Selangor Darul Ehsan<br>
+            No. Telefon Tempahan: 03-8921-5306
+        </div>
+
+        <!-- Right: SDG Logo -->
+        <div class="footer-sdg">
+            <img src="../assets/img/sdglogo.png" alt="SDG Logo">
+        </div>
+    </div>
+
+    <!-- Bottom part: copyright / links -->
+    <div class="footer-links">
+        Hakcipta © 2022 Universiti Kebangsaan Malaysia |
+        Penafian |
+        Hakcipta |
+        Dasar Privasi |
+        Dasar Keselamatan |
+        Hubungi Kami
+    </div>
+</div>
+
 <style>
     /* ===== FOOTER ===== */
     .footer {
         background: #0b4d9d;
         color: white;
-        padding: 30px 15px;
+        padding: 40px 15px 20px; /* More padding for bigger logos */
         font-size: 16px;
     }
 
@@ -339,10 +374,11 @@
         gap: 50px;
         flex-wrap: wrap;
         text-align: center;
+        margin-bottom: 20px; /* Space before bottom links */
     }
 
     .footer-logo img, .footer-sdg img {
-        height: 80px;
+        height: 120px; /* Bigger logos */
         display: block;
     }
 
@@ -350,15 +386,21 @@
         line-height: 1.6;
     }
 
+    .footer-links {
+        text-align: center;
+        font-size: 16px;
+    }
+
     @media screen and (max-width: 768px) {
         .footer-container {
             flex-direction: column;
         }
         .footer-logo img, .footer-sdg img {
-            height: 60px;
+            height: 90px;
         }
     }
 </style>
+
 
 
 </body>
