@@ -301,20 +301,65 @@
 
 <!-- FOOTER -->
 <div class="footer">
-    <span class="contact">PEJABAT PENGARAH PUSAT SUKAN</span>
-    Stadium Universiti<br>
-    Universiti Kebangsaan Malaysia<br>
-    43600 Bangi<br>
-    Selangor Darul Ehsan<br>
-    <br>
-    No. Telefon Tempahan: 03-8921-5306
-    <br><br>
-    Hakcipta © 2022 Universiti Kebangsaan Malaysia | 
-    <a href="#">Penafian</a> | 
-    <a href="#">Hakcipta</a> | 
-    <a href="#">Dasar Privasi</a> | 
-    <a href="#">Dasar Keselamatan</a>
+    <div class="footer-container">
+        <!-- Left: Pusat Sukan Logo -->
+        <div class="footer-logo">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
+        </div>
+
+        <!-- Center: Contact Info -->
+        <div class="footer-info">
+            <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
+            Stadium Universiti<br>
+            Universiti Kebangsaan Malaysia<br>
+            43600 Bangi, Selangor Darul Ehsan<br>
+            No. Telefon Tempahan: 03-8921-5306
+        </div>
+
+        <!-- Right: SDG Logo -->
+        <div class="footer-sdg">
+            <img src="../assets/img/sdglogo.png" alt="SDG Logo">
+        </div>
+    </div>
 </div>
+
+<style>
+    /* ===== FOOTER ===== */
+    .footer {
+        background: #0b4d9d;
+        color: white;
+        padding: 30px 15px;
+        font-size: 16px;
+    }
+
+    .footer-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 50px;
+        flex-wrap: wrap;
+        text-align: center;
+    }
+
+    .footer-logo img, .footer-sdg img {
+        height: 80px;
+        display: block;
+    }
+
+    .footer-info {
+        line-height: 1.6;
+    }
+
+    @media screen and (max-width: 768px) {
+        .footer-container {
+            flex-direction: column;
+        }
+        .footer-logo img, .footer-sdg img {
+            height: 60px;
+        }
+    }
+</style>
+
 
 </body>
 </html>
