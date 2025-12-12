@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// SECURITY CHECK: Redirect if not logged in or role is not Student
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
@@ -10,208 +9,180 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - UKM SFBS</title>
-    
-    <!-- Fonts from index.php (Playfair Display & Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --primary-color: #8a0d19; /* UKM Red/Maroon */
-            --accent-color: #f4f4f4;
-            --text-dark: #333;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard - UKM SFBS</title>
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            /* Using the same background aesthetic as login page */
-            background: url('../court.jpg') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-        /* Dark overlay for better contrast */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.65); /* Darken the background image */
-            z-index: -1;
-        }
+<style>
+    body {
+        margin: 0;
+        background-color: #f5f6fa;
+        font-family: 'Poppins', sans-serif;
+    }
 
-        .dashboard-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            width: 90%;
-            max-width: 900px;
-            border-radius: 20px;
-            padding: 50px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
+    /* ======= TOP BAR NAVIGATION ======= */
+    .top-nav {
+        background: #003b75;
+        color: white;
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        padding: 18px 0;
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
 
-        /* Decorative top bar */
-        .dashboard-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 8px;
-            background: linear-gradient(90deg, var(--primary-color), #b30e22);
-        }
+    .top-nav a {
+        color: white;
+        text-decoration: none;
+        transition: 0.3s;
+    }
 
-        h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 3.5rem;
-            color: var(--primary-color);
-            margin: 0 0 10px 0;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
+    .top-nav a:hover {
+        text-decoration: underline;
+    }
 
-        .welcome-sub {
-            font-size: 1.2rem;
-            color: #555;
-            margin-bottom: 40px;
-            font-weight: 400;
-        }
+    /* ======= HERO BANNER ======= */
+    .hero {
+        width: 100%;
+        height: 260px;
+        background: url('../court.jpg') center/cover;
+        position: relative;
+    }
 
-        .user-badge {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 6px 18px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(138, 13, 25, 0.3);
-        }
+    .hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+    }
 
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 40px;
-        }
+    .hero-text {
+        position: absolute;
+        bottom: 20px;
+        right: 30px;
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+    }
 
-        .action-card {
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 16px;
-            padding: 35px 25px;
-            text-decoration: none;
-            color: var(--text-dark);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            position: relative;
-            overflow: hidden;
-        }
+    /* ======= DASHBOARD CONTENT ======= */
+    .container {
+        max-width: 1100px;
+        margin: 30px auto;
+        background: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
-        .action-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-            border-color: var(--primary-color);
-        }
+    h2 {
+        text-align: center;
+        font-size: 2.3rem;
+        color: #003b75;
+        margin-top: 0;
+        letter-spacing: 1px;
+        font-weight: 700;
+    }
 
-        .action-card i {
-            font-size: 3rem;
-            color: var(--primary-color);
-            transition: transform 0.3s ease;
-        }
+    .welcome {
+        text-align: center;
+        margin-top: -10px;
+        color: #777;
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
 
-        .action-card:hover i {
-            transform: scale(1.1) rotate(-5deg);
-        }
+    /* ======= ACTION CARDS LIKE PUSAT SUKAN UI ======= */
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
 
-        .action-card h3 {
-            margin: 0;
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
+    .dashboard-card {
+        background: #e8f4ff;
+        border: 2px solid #003b75;
+        border-radius: 10px;
+        text-align: center;
+        padding: 25px;
+        transition: 0.3s;
+        color: #003b75;
+        text-decoration: none;
+        font-weight: 600;
+    }
 
-        .action-card p {
-            font-size: 0.95rem;
-            color: #777;
-            margin: 0;
-            line-height: 1.5;
-        }
+    .dashboard-card:hover {
+        background: #d4eaff;
+        transform: translateY(-5px);
+    }
 
-        .logout-link {
-            margin-top: 50px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #777;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-            font-size: 1rem;
-        }
+    .dashboard-card i {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        color: #003b75;
+    }
 
-        .logout-link:hover {
-            color: var(--primary-color);
-        }
+    /* ======= LOGOUT ======= */
+    .logout-wrap {
+        text-align: center;
+        margin-top: 40px;
+    }
+    .logout-btn {
+        color: #cc0000;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    .logout-btn:hover {
+        text-decoration: underline;
+    }
 
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .dashboard-container { padding: 30px 20px; width: 95%; }
-            .action-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+</style>
 </head>
 <body>
 
-    <div class="dashboard-container">
-        <h1>Welcome Back</h1>
-        
-        <div class="welcome-sub">
-            Logged in as <span class="user-badge"><?php echo htmlspecialchars($_SESSION['userIdentifier'] ?? 'Student'); ?></span>
-        </div>
+<!-- NAV BAR -->
+<div class="top-nav">
+    <a href="#">HOME</a>
+    <a href="student_facilities.php">BOOK FACILITY</a>
+    <a href="#">MY BOOKINGS</a>
+    <a href="../logout.php">LOGOUT</a>
+</div>
 
-        <p style="color: #666; max-width: 600px; margin: 0 auto 40px auto; line-height: 1.6;">
-            Access the UKM Sports Facilities Booking System to manage your activities. Select an option below to get started.
-        </p>
+<!-- HERO IMAGE -->
+<div class="hero">
+    <div class="hero-text">STUDENT DASHBOARD</div>
+</div>
 
-        <div class="action-grid">
-            <!-- Browse Facilities Card -->
-            <a href="student_facilities.php" class="action-card">
-                <i class="fa-solid fa-dumbbell"></i>
-                <h3>Browse Facilities</h3>
-                <p>Explore available courts, fields, and halls. Check availability and make new bookings.</p>
-            </a>
+<!-- MAIN CONTENT -->
+<div class="container">
+    <h2>Welcome, Student</h2>
+    <p class="welcome">Logged in as <strong><?php echo htmlspecialchars($_SESSION['userIdentifier']); ?></strong></p>
 
-            <!-- My Bookings Card (Placeholder) -->
-            <a href="#" class="action-card" onclick="alert('My Bookings feature is coming soon!'); return false;">
-                <i class="fa-solid fa-calendar-check"></i>
-                <h3>My Bookings</h3>
-                <p>View your active reservations, check status, and manage past booking history.</p>
-            </a>
-        </div>
+    <div class="card-grid">
 
-        <a href="../logout.php" class="logout-link">
-            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        <a href="student_facilities.php" class="dashboard-card">
+            <i class="fa-solid fa-dumbbell"></i>
+            <div>Browse Facilities</div>
         </a>
+
+        <a href="#" class="dashboard-card" onclick="alert('My Bookings page coming soon!'); return false;">
+            <i class="fa-solid fa-calendar-check"></i>
+            <div>My Bookings</div>
+        </a>
+
     </div>
+
+    <div class="logout-wrap">
+        <a href="../logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+</div>
 
 </body>
 </html>
