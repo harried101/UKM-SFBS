@@ -11,45 +11,92 @@
         background: #ffffff;
     }
 
-    /* ===== TOP HEADER ===== */
+    /* ===== TOP HEADER (LOGO AREA) ===== */
     .top-header {
         width: 100%;
-        background: #0c4da2;
+        background: #0b4d9d; /* SAME DARK BLUE AS UI */
         text-align: center;
         padding: 5px 0;
     }
 
     .top-header img {
-        height: 80px;
+        height: 90px;
+    }
+
+    /* ===== BLUE SUBLINE UNDER LOGO ===== */
+    .subline {
+        width: 100%;
+        background: #0b4d9d; /* Same dark blue */
+        color: white;
+        text-align: center;
+        padding: 6px 0;
+        font-weight: bold;
+        font-size: 17px;
+        letter-spacing: 1px;
     }
 
     /* ===== NAVIGATION BAR ===== */
     .nav-bar {
         width: 100%;
-        background: #3aa1e0;
+        background: #3aa1e0; /* SAME LIGHT BLUE */
         display: flex;
         justify-content: center;
-        gap: 60px;
+        align-items: center;
+        gap: 50px;
         padding: 14px 0;
         font-size: 18px;
         font-weight: bold;
+        position: relative;
     }
 
     .nav-bar a {
         color: white;
         text-decoration: none;
+        cursor: pointer;
     }
 
     .nav-bar a:hover {
         text-decoration: underline;
     }
 
-    /* ===== BANNER SECTION (YOU WILL INSERT IMAGE HERE) ===== */
+    /* ===== INFO DROPDOWN ===== */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background: #3aa1e0;
+        min-width: 180px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 10;
+        top: 40px;
+        border-radius: 0 0 6px 6px;
+    }
+
+    .dropdown-content a {
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+        display: block;
+        font-size: 16px;
+    }
+
+    .dropdown-content a:hover {
+        background: #2d8ac3;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    /* ===== BANNER/IMAGE INSERT SPACE ===== */
     .banner {
         width: 100%;
-        height: 270px;
-        background: #ddd; /* Placeholder — you will replace */
-        position: relative;
+        height: 260px;
+        background: #ddd; /* Placeholder */
         display: flex;
         justify-content: center;
         align-items: center;
@@ -57,7 +104,7 @@
         color: #555;
     }
 
-    /* ===== BOOKING HISTORY HEADER ===== */
+    /* ===== BOOKING HISTORY TITLE ===== */
     .section-title {
         text-align: center;
         font-size: 30px;
@@ -88,7 +135,7 @@
         border-bottom: 2px solid white;
     }
 
-    /* CANCEL & REVIEW BUTTONS */
+    /* ===== CANCEL & REVIEW BUTTONS ===== */
     .cancel-btn {
         background: #c91818;
         padding: 10px 25px;
@@ -111,28 +158,44 @@
 
 <body>
 
-<!-- TOP LOGO -->
+<!-- LOGO HEADER -->
 <div class="top-header">
     <img src="your-logo-here.png" alt="Pusat Sukan Logo">
 </div>
 
-<!-- NAVIGATION BAR -->
-<div class="nav-bar">
-    <a href="#">HOME</a>
-    <a href="#">INFO</a>
-    <a href="#">BOOK FACILITY</a>
-    <a href="#">CANCEL BOOKING</a>
+<!-- BLUE SUBLINE -->
+<div class="subline">
+    PUSAT SUKAN / UNIVERSITI KEBANGSAAN MALAYSIA
 </div>
 
-<!-- INSERT YOUR BANNER IMAGE HERE -->
+<!-- NAV BAR -->
+<div class="nav-bar">
+
+    <a href="#">HOME</a>
+
+    <div class="dropdown">
+        <a>INFO ▼</a>
+        <div class="dropdown-content">
+            <a href="#">About</a>
+            <a href="#">Rules & Regulations</a>
+            <a href="#">Operating Hours</a>
+        </div>
+    </div>
+
+    <a href="#">BOOK FACILITY</a>
+    <a href="#">CANCEL BOOKING</a>
+    <a href="#">FEEDBACK/REVIEW</a>
+
+</div>
+
+<!-- IMAGE INSERT SECTION -->
 <div class="banner">
     INSERT YOUR PUSAT SUKAN IMAGE HERE
 </div>
 
-<!-- BOOKING HISTORY TITLE -->
+<!-- BOOKING HISTORY -->
 <div class="section-title">BOOKING HISTORY</div>
 
-<!-- BOOKING TABLE -->
 <table>
     <tr>
         <th>FACILITIES</th>
@@ -142,7 +205,7 @@
 
     <tr>
         <td>PADANG D</td>
-        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
         <td>
             <span class="cancel-btn">CANCEL</span>
             &nbsp;&nbsp;
@@ -152,7 +215,7 @@
 
     <tr>
         <td>GELANGGANG SKUASY</td>
-        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
         <td>
             <span class="cancel-btn">CANCEL</span>
             &nbsp;&nbsp;
@@ -162,7 +225,7 @@
 
     <tr>
         <td>GELANGGANG BOLA JARING</td>
-        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
         <td>
             <span class="cancel-btn">CANCEL</span>
             &nbsp;&nbsp;
@@ -172,13 +235,14 @@
 
     <tr>
         <td>GELANGGANG BOLA SEPAK</td>
-        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
         <td>
             <span class="cancel-btn">CANCEL</span>
             &nbsp;&nbsp;
             <span class="review-btn">REVIEW</span>
         </td>
     </tr>
+
 </table>
 
 </body>
