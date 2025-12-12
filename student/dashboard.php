@@ -11,100 +11,76 @@
         background: #ffffff;
     }
 
-    /* ===== LOGO HEADER ===== */
+    /* ===== TOP HEADER (LOGO AREA) ===== */
     .top-header {
         width: 100%;
-        background: #0b4d9d; /* DARK BLUE */
+        background: #0b4d9d; /* SAME DARK BLUE AS UI */
         text-align: center;
-        padding: 10px 0;
-        border-bottom: 6px solid #6badce; /* LIGHT BLUE STRIPE */
+        padding: 5px 0;
     }
 
     .top-header img {
         height: 90px;
     }
 
-    /* ===== TEXT BELOW LOGO ===== */
-    .branding-text {
-        text-align: center;
-        font-size: 18px;
-        margin-top: 10px;
-        color: #003b75;
-        font-weight: bold;
-    }
-
-    /* Only UKM italic */
-    .branding-text span.ukm {
-        font-style: italic;
-        font-weight: normal;
-    }
-
-    /* LIGHT BLUE LINE UNDER TEXT */
-    .blue-line {
+    /* ===== BLUE SUBLINE UNDER LOGO ===== */
+    .subline {
         width: 100%;
-        height: 6px;
-        background: #6badce;
-        margin-top: 6px;
+        background: #0b4d9d; /* Same dark blue */
+        color: white;
+        text-align: center;
+        padding: 6px 0;
+        font-weight: bold;
+        font-size: 17px;
+        letter-spacing: 1px;
     }
 
-    /* ===== NAV BAR FULL WIDTH ===== */
+    /* ===== NAVIGATION BAR ===== */
     .nav-bar {
         width: 100%;
-        background: #3aa1e0; 
+        background: #3aa1e0; /* SAME LIGHT BLUE */
         display: flex;
-        padding: 0;
-    }
-
-    .nav-item {
-        flex: 1;
-        text-align: center;
-        padding: 16px 0;
-        font-weight: bold;
+        justify-content: center;
+        align-items: center;
+        gap: 50px;
+        padding: 14px 0;
         font-size: 18px;
+        font-weight: bold;
+        position: relative;
+    }
+
+    .nav-bar a {
         color: white;
-        cursor: pointer;
         text-decoration: none;
-        border-right: 1px solid rgba(255,255,255,0.3);
+        cursor: pointer;
     }
 
-    .nav-item:last-child {
-        border-right: none;
+    .nav-bar a:hover {
+        text-decoration: underline;
     }
 
-    .nav-item:hover {
-        background: #2d8ac3;
-    }
-
-    /* DROPDOWN */
+    /* ===== INFO DROPDOWN ===== */
     .dropdown {
         position: relative;
-        flex: 1;
-    }
-
-    .dropdown-btn {
-        padding: 16px 0;
-        font-weight: bold;
-        font-size: 18px;
-        color: white;
-        cursor: pointer;
-        text-align: center;
-        border-right: 1px solid rgba(255,255,255,0.3);
+        display: inline-block;
     }
 
     .dropdown-content {
         display: none;
         position: absolute;
         background: #3aa1e0;
-        width: 100%;
-        top: 52px;
-        z-index: 1000;
+        min-width: 180px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 10;
+        top: 40px;
+        border-radius: 0 0 6px 6px;
     }
 
     .dropdown-content a {
-        display: block;
-        padding: 12px;
         color: white;
+        padding: 10px 15px;
         text-decoration: none;
+        display: block;
         font-size: 16px;
     }
 
@@ -116,20 +92,19 @@
         display: block;
     }
 
-    /* ===== IMAGE AREA ===== */
+    /* ===== BANNER/IMAGE INSERT SPACE ===== */
     .banner {
         width: 100%;
         height: 260px;
-        background: #ddd;
+        background: #ddd; /* Placeholder */
         display: flex;
         justify-content: center;
         align-items: center;
-        color: #555;
         font-size: 22px;
-        margin-top: 10px;
+        color: #555;
     }
 
-    /* ===== BOOKING HISTORY ===== */
+    /* ===== BOOKING HISTORY TITLE ===== */
     .section-title {
         text-align: center;
         font-size: 30px;
@@ -138,6 +113,7 @@
         margin-top: 35px;
     }
 
+    /* ===== BOOKING HISTORY TABLE ===== */
     table {
         width: 85%;
         margin: 25px auto;
@@ -159,22 +135,23 @@
         border-bottom: 2px solid white;
     }
 
+    /* ===== CANCEL & REVIEW BUTTONS ===== */
     .cancel-btn {
         background: #c91818;
         padding: 10px 25px;
-        color: white;
         border-radius: 5px;
+        color: white;
         font-weight: bold;
-        cursor: pointer;
+        display: inline-block;
     }
 
     .review-btn {
         background: #21b32d;
         padding: 10px 25px;
-        color: white;
         border-radius: 5px;
+        color: white;
         font-weight: bold;
-        cursor: pointer;
+        display: inline-block;
     }
 </style>
 </head>
@@ -186,20 +163,18 @@
     <img src="your-logo-here.png" alt="Pusat Sukan Logo">
 </div>
 
-<!-- TEXT BELOW LOGO: ONLY UKM ITALIC -->
-<div class="branding-text">
-    Pusat Sukan / <span class="ukm">Universiti Kebangsaan Malaysia</span>
+<!-- BLUE SUBLINE -->
+<div class="subline">
+    PUSAT SUKAN / UNIVERSITI KEBANGSAAN MALAYSIA
 </div>
 
-<!-- BLUE LINE -->
-<div class="blue-line"></div>
-
-<!-- NAVIGATION -->
+<!-- NAV BAR -->
 <div class="nav-bar">
-    <a class="nav-item" href="#">HOME</a>
+
+    <a href="#">HOME</a>
 
     <div class="dropdown">
-        <div class="dropdown-btn">INFO ▼</div>
+        <a>INFO ▼</a>
         <div class="dropdown-content">
             <a href="#">About</a>
             <a href="#">Rules & Regulations</a>
@@ -207,12 +182,13 @@
         </div>
     </div>
 
-    <a class="nav-item" href="#">BOOK FACILITY</a>
-    <a class="nav-item" href="#">CANCEL BOOKING</a>
-    <a class="nav-item" href="#">FEEDBACK / REVIEW</a>
+    <a href="#">BOOK FACILITY</a>
+    <a href="#">CANCEL BOOKING</a>
+    <a href="#">FEEDBACK/REVIEW</a>
+
 </div>
 
-<!-- IMAGE PLACEHOLDER -->
+<!-- IMAGE INSERT SECTION -->
 <div class="banner">
     INSERT YOUR PUSAT SUKAN IMAGE HERE
 </div>
@@ -223,12 +199,12 @@
 <table>
     <tr>
         <th>FACILITIES</th>
-        <th>DATE / TIME</th>
+        <th>DATE/TIME</th>
         <th>STATUS</th>
     </tr>
 
     <tr>
-        <td>Padang D</td>
+        <td>PADANG D</td>
         <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
         <td>
             <span class="cancel-btn">CANCEL</span>
@@ -238,7 +214,7 @@
     </tr>
 
     <tr>
-        <td>Gelanggang Skuasy</td>
+        <td>GELANGGANG SKUASY</td>
         <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
         <td>
             <span class="cancel-btn">CANCEL</span>
@@ -246,6 +222,27 @@
             <span class="review-btn">REVIEW</span>
         </td>
     </tr>
+
+    <tr>
+        <td>GELANGGANG BOLA JARING</td>
+        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
+        <td>
+            <span class="cancel-btn">CANCEL</span>
+            &nbsp;&nbsp;
+            <span class="review-btn">REVIEW</span>
+        </td>
+    </tr>
+
+    <tr>
+        <td>GELANGGANG BOLA SEPAK</td>
+        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
+        <td>
+            <span class="cancel-btn">CANCEL</span>
+            &nbsp;&nbsp;
+            <span class="review-btn">REVIEW</span>
+        </td>
+    </tr>
+
 </table>
 
 </body>
