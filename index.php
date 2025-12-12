@@ -60,7 +60,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
         <div class="left-panel">
             <div class="logos">
                 <img src="../assets/img/logo.png" width="120" onerror="this.src='https://placehold.co/120x120/8a0d19/FFFFFF?text=UKM'">
-                <img src="../assets/img/pisatsukanlogo.png" width="120" onerror="this.src='https://placehold.co/120x120/004c99/FFFFFF?text=Pusat+Sukan'">
+                <img src="../assets/img/pusatsukanlogo.png" width="120" onerror="this.src='https://placehold.co/120x120/004c99/FFFFFF?text=Pusat+Sukan'">
             </div>
             <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
         </div>
