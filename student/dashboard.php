@@ -10,179 +10,196 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Dashboard - UKM SFBS</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>Student Dashboard - UKM Pusat Sukan</title>
 
 <style>
     body {
         margin: 0;
-        background-color: #f5f6fa;
-        font-family: 'Poppins', sans-serif;
+        font-family: Arial, sans-serif;
+        background-color: #ffffff;
     }
 
-    /* ======= TOP BAR NAVIGATION ======= */
-    .top-nav {
-        background: #003b75;
-        color: white;
+    /* ===== TOP BAR ===== */
+    .top-header {
+        width: 100%;
+        background: #0c4da2; /* SAME BLUE BAR */
+        padding: 5px 0;
+        text-align: center;
+    }
+
+    .top-header img {
+        height: 70px;
+    }
+
+    /* ===== NAVIGATION ===== */
+    .nav-bar {
+        background: #3b9ae1;   /* SAME LIGHT BLUE */
         display: flex;
         justify-content: center;
-        gap: 40px;
-        padding: 18px 0;
-        font-weight: 500;
-        font-size: 1.1rem;
+        gap: 60px;
+        padding: 14px 0;
+        font-weight: bold;
     }
 
-    .top-nav a {
+    .nav-bar a {
         color: white;
         text-decoration: none;
-        transition: 0.3s;
+        font-size: 18px;
     }
 
-    .top-nav a:hover {
+    .nav-bar a:hover {
         text-decoration: underline;
     }
 
-    /* ======= HERO BANNER ======= */
+    /* ===== HERO IMAGE ===== */
     .hero {
         width: 100%;
-        height: 260px;
-        background: url('../court.jpg') center/cover;
+        height: 250px;
+        background: url('../img/header-sports.jpg') center/cover no-repeat;
         position: relative;
     }
 
-    .hero::after {
-        content: '';
+    .hero-overlay {
         position: absolute;
         inset: 0;
-        background: rgba(0,0,0,0.55);
+        background: rgba(0,0,0,0.3);
     }
 
     .hero-text {
         position: absolute;
-        bottom: 20px;
-        right: 30px;
+        bottom: 25px;
+        left: 40px;
         color: white;
-        font-size: 2rem;
-        font-weight: 700;
-        text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+        font-size: 36px;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px black;
     }
 
-    /* ======= DASHBOARD CONTENT ======= */
-    .container {
-        max-width: 1100px;
-        margin: 30px auto;
-        background: white;
-        padding: 30px 40px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    h2 {
+    /* ===== SECTION TITLE ===== */
+    .section-title {
         text-align: center;
-        font-size: 2.3rem;
-        color: #003b75;
-        margin-top: 0;
-        letter-spacing: 1px;
-        font-weight: 700;
-    }
-
-    .welcome {
-        text-align: center;
-        margin-top: -10px;
-        color: #777;
-        font-size: 1rem;
-        margin-bottom: 30px;
-    }
-
-    /* ======= ACTION CARDS LIKE PUSAT SUKAN UI ======= */
-    .card-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 20px;
-    }
-
-    .dashboard-card {
-        background: #e8f4ff;
-        border: 2px solid #003b75;
-        border-radius: 10px;
-        text-align: center;
-        padding: 25px;
-        transition: 0.3s;
-        color: #003b75;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .dashboard-card:hover {
-        background: #d4eaff;
-        transform: translateY(-5px);
-    }
-
-    .dashboard-card i {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-        color: #003b75;
-    }
-
-    /* ======= LOGOUT ======= */
-    .logout-wrap {
-        text-align: center;
+        font-size: 32px;
+        font-weight: bold;
+        color: #003366;
         margin-top: 40px;
     }
-    .logout-btn {
-        color: #cc0000;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 1.1rem;
+
+    /* ===== TABLE ===== */
+    .history-table {
+        width: 85%;
+        margin: 25px auto;
+        border-collapse: collapse;
+        font-size: 18px;
     }
-    .logout-btn:hover {
-        text-decoration: underline;
+
+    .history-table th {
+        background: #003366;
+        color: white;
+        padding: 15px;
+        font-size: 20px;
+    }
+
+    .history-table td {
+        background: #e5f3ff;
+        padding: 18px;
+        text-align: center;
+        border-bottom: 2px solid white;
+    }
+
+    /* ===== BUTTONS ===== */
+    .cancel-btn {
+        background: #c11a1a;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .review-btn {
+        background: #2bb33c;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 5px;
+        font-weight: bold;
     }
 
 </style>
 </head>
+
 <body>
 
+<!-- TOP HEADER IMAGE -->
+<div class="top-header">
+    <img src="../img/ukm-pusat-sukan-logo.png">
+</div>
+
 <!-- NAV BAR -->
-<div class="top-nav">
+<div class="nav-bar">
     <a href="#">HOME</a>
+    <a href="#">INFO</a>
     <a href="student_facilities.php">BOOK FACILITY</a>
-    <a href="#">MY BOOKINGS</a>
-    <a href="../logout.php">LOGOUT</a>
+    <a href="#">FEEDBACK/REVIEW</a>
+    <a href="#">CANCEL BOOKING</a>
 </div>
 
 <!-- HERO IMAGE -->
 <div class="hero">
-    <div class="hero-text">STUDENT DASHBOARD</div>
+    <div class="hero-overlay"></div>
+    <div class="hero-text">PUSAT SUKAN UNIVERSITI</div>
 </div>
 
-<!-- MAIN CONTENT -->
-<div class="container">
-    <h2>Welcome, Student</h2>
-    <p class="welcome">Logged in as <strong><?php echo htmlspecialchars($_SESSION['userIdentifier']); ?></strong></p>
+<!-- SECTION TITLE -->
+<div class="section-title">BOOKING HISTORY</div>
 
-    <div class="card-grid">
+<!-- BOOKING TABLE -->
+<table class="history-table">
+    <tr>
+        <th>FACILITIES</th>
+        <th>DATE/TIME</th>
+        <th>STATUS</th>
+    </tr>
 
-        <a href="student_facilities.php" class="dashboard-card">
-            <i class="fa-solid fa-dumbbell"></i>
-            <div>Browse Facilities</div>
-        </a>
+    <tr>
+        <td>PADANG D</td>
+        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>
+            <span class="cancel-btn">CANCEL</span>
+            &nbsp;&nbsp;
+            <span class="review-btn">REVIEW</span>
+        </td>
+    </tr>
 
-        <a href="#" class="dashboard-card" onclick="alert('My Bookings page coming soon!'); return false;">
-            <i class="fa-solid fa-calendar-check"></i>
-            <div>My Bookings</div>
-        </a>
+    <tr>
+        <td>GELANGGANG SKUASY</td>
+        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>
+            <span class="cancel-btn">CANCEL</span>
+            &nbsp;&nbsp;
+            <span class="review-btn">REVIEW</span>
+        </td>
+    </tr>
 
-    </div>
+    <tr>
+        <td>GELANGGANG BOLA JARING</td>
+        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>
+            <span class="cancel-btn">CANCEL</span>
+            &nbsp;&nbsp;
+            <span class="review-btn">REVIEW</span>
+        </td>
+    </tr>
 
-    <div class="logout-wrap">
-        <a href="../logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-    </div>
-</div>
+    <tr>
+        <td>GELANGGANG BOLA SEPAK</td>
+        <td>9:00AM - 11:00AM<br>23/11/2025</td>
+        <td>
+            <span class="cancel-btn">CANCEL</span>
+            &nbsp;&nbsp;
+            <span class="review-btn">REVIEW</span>
+        </td>
+    </tr>
+
+</table>
 
 </body>
 </html>
