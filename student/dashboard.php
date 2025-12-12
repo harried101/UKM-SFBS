@@ -1,158 +1,139 @@
-<?php
-session_start();
-
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
-    header("Location: ../index.php");
-    exit();
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student Dashboard - UKM Pusat Sukan</title>
+<title>Student Dashboard - Pusat Sukan</title>
 
 <style>
     body {
         margin: 0;
         font-family: Arial, sans-serif;
-        background-color: #ffffff;
+        background: #ffffff;
     }
 
-    /* ===== TOP BAR ===== */
+    /* ===== TOP HEADER ===== */
     .top-header {
         width: 100%;
-        background: #0c4da2; /* SAME BLUE BAR */
-        padding: 5px 0;
+        background: #0c4da2;
         text-align: center;
+        padding: 5px 0;
     }
 
     .top-header img {
-        height: 70px;
+        height: 80px;
     }
 
-    /* ===== NAVIGATION ===== */
+    /* ===== NAVIGATION BAR ===== */
     .nav-bar {
-        background: #3b9ae1;   /* SAME LIGHT BLUE */
+        width: 100%;
+        background: #3aa1e0;
         display: flex;
         justify-content: center;
         gap: 60px;
         padding: 14px 0;
+        font-size: 18px;
         font-weight: bold;
     }
 
     .nav-bar a {
         color: white;
         text-decoration: none;
-        font-size: 18px;
     }
 
     .nav-bar a:hover {
         text-decoration: underline;
     }
 
-    /* ===== HERO IMAGE ===== */
-    .hero {
+    /* ===== BANNER SECTION (YOU WILL INSERT IMAGE HERE) ===== */
+    .banner {
         width: 100%;
-        height: 250px;
-        background: url('../img/header-sports.jpg') center/cover no-repeat;
+        height: 270px;
+        background: #ddd; /* Placeholder — you will replace */
         position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 22px;
+        color: #555;
     }
 
-    .hero-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.3);
-    }
-
-    .hero-text {
-        position: absolute;
-        bottom: 25px;
-        left: 40px;
-        color: white;
-        font-size: 36px;
-        font-weight: bold;
-        text-shadow: 2px 2px 4px black;
-    }
-
-    /* ===== SECTION TITLE ===== */
+    /* ===== BOOKING HISTORY HEADER ===== */
     .section-title {
         text-align: center;
-        font-size: 32px;
+        font-size: 30px;
         font-weight: bold;
-        color: #003366;
-        margin-top: 40px;
+        color: #003b75;
+        margin-top: 35px;
     }
 
-    /* ===== TABLE ===== */
-    .history-table {
+    /* ===== BOOKING HISTORY TABLE ===== */
+    table {
         width: 85%;
         margin: 25px auto;
         border-collapse: collapse;
         font-size: 18px;
     }
 
-    .history-table th {
-        background: #003366;
+    th {
+        background: #003b75;
         color: white;
         padding: 15px;
         font-size: 20px;
     }
 
-    .history-table td {
-        background: #e5f3ff;
+    td {
+        background: #d7ecff;
         padding: 18px;
         text-align: center;
         border-bottom: 2px solid white;
     }
 
-    /* ===== BUTTONS ===== */
+    /* CANCEL & REVIEW BUTTONS */
     .cancel-btn {
-        background: #c11a1a;
-        color: white;
+        background: #c91818;
         padding: 10px 25px;
         border-radius: 5px;
+        color: white;
         font-weight: bold;
+        display: inline-block;
     }
 
     .review-btn {
-        background: #2bb33c;
-        color: white;
+        background: #21b32d;
         padding: 10px 25px;
         border-radius: 5px;
+        color: white;
         font-weight: bold;
+        display: inline-block;
     }
-
 </style>
 </head>
 
 <body>
 
-<!-- TOP HEADER IMAGE -->
+<!-- TOP LOGO -->
 <div class="top-header">
-    <img src="../img/ukm-pusat-sukan-logo.png">
+    <img src="your-logo-here.png" alt="Pusat Sukan Logo">
 </div>
 
-<!-- NAV BAR -->
+<!-- NAVIGATION BAR -->
 <div class="nav-bar">
     <a href="#">HOME</a>
     <a href="#">INFO</a>
-    <a href="student_facilities.php">BOOK FACILITY</a>
-    <a href="#">FEEDBACK/REVIEW</a>
+    <a href="#">BOOK FACILITY</a>
     <a href="#">CANCEL BOOKING</a>
 </div>
 
-<!-- HERO IMAGE -->
-<div class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-text">PUSAT SUKAN UNIVERSITI</div>
+<!-- INSERT YOUR BANNER IMAGE HERE -->
+<div class="banner">
+    INSERT YOUR PUSAT SUKAN IMAGE HERE
 </div>
 
-<!-- SECTION TITLE -->
+<!-- BOOKING HISTORY TITLE -->
 <div class="section-title">BOOKING HISTORY</div>
 
 <!-- BOOKING TABLE -->
-<table class="history-table">
+<table>
     <tr>
         <th>FACILITIES</th>
         <th>DATE/TIME</th>
@@ -198,7 +179,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
             <span class="review-btn">REVIEW</span>
         </td>
     </tr>
-
 </table>
 
 </body>
