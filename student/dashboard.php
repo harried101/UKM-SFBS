@@ -222,7 +222,7 @@
 
 <!-- LONG BANNER ABOVE BOOKING HISTORY -->
 <div class="long-banner">
-    <img src="../assets/img/pusatsukan.jpg" alt="Pusat Sukan">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan">
 </div>
 
 <!-- BOOKING HISTORY -->
