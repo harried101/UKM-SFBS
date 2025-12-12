@@ -248,6 +248,51 @@
     <img src="../assets/img/psukan.jpg" alt="Pusat Sukan">
 </div>
 
+<!-- MAIN BUTTON: Browse Facilities -->
+<div style="display: flex; justify-content: center; margin: 40px 0;">
+    <a href="student_facilities.php" class="browse-btn">
+        Browse Facilities
+    </a>
+</div>
+
+<style>
+.browse-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #8a0d19, #b30f25);
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 16px 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(138,13,25,0.4);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.browse-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 0%;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.browse-btn:hover::after {
+    height: 100%;
+}
+
+.browse-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(138,13,25,0.5);
+}
+</style>
+
 <!-- BOOKING HISTORY -->
 <div class="section-title">BOOKING HISTORY</div>
 

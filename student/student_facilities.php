@@ -126,7 +126,7 @@ while($t = $typesResult->fetch_assoc()) {
             <div class="flex items-center gap-4">
                 <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-14 w-auto">
                 <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-                <img src="../assets/img/pusatsukan.png" alt="Pusat Sukan Logo" class="h-14 w-auto hidden sm:block">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-14 w-auto hidden sm:block">
             </div>
             <div class="flex items-center gap-6">
                 <a href="dashboard.php" class="text-gray-600 hover:text-[#8a0d19] font-medium transition flex items-center gap-2 group">
