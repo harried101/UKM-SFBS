@@ -11,22 +11,33 @@
         background: #ffffff;
     }
 
-    /* ===== TOP HEADER (LOGO AREA) ===== */
+    /* ===== TOP HEADER WITH TWO LOGOS ===== */
     .top-header {
         width: 100%;
-        background: #0b4d9d; /* DARK BLUE */
-        text-align: center;
-        padding: 5px 0;
+        background: #0b4d9d;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+        padding: 10px 0;
     }
 
     .top-header img {
         height: 90px;
     }
 
-    /* ===== BLUE SUBLINE UNDER LOGO ===== */
+    .logo-ukm {
+        height: 90px;
+    }
+
+    .logo-sukan {
+        height: 80px;
+    }
+
+    /* ===== BLUE SUBLINE ===== */
     .subline {
         width: 100%;
-        background: #0b4d9d; /* Same dark blue */
+        background: #0b4d9d;
         color: white;
         text-align: center;
         padding: 6px 0;
@@ -35,58 +46,63 @@
         letter-spacing: 1px;
     }
 
-    /* Make the UKM part bold italic */
     .subline .ukm {
         font-weight: bold;
         font-style: italic;
     }
 
-    /* ===== NAVIGATION BAR ===== */
+    /* ===== FULL WIDTH NAVIGATION BAR ===== */
     .nav-bar {
         width: 100%;
-        background: #3aa1e0; /* Light blue */
         display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 50px;
-        padding: 14px 0;
-        font-size: 18px;
-        font-weight: bold;
-        position: relative;
+        padding: 0;
+        margin: 0;
     }
 
-    .nav-bar a {
+    .nav-item, .dropdown {
+        flex: 1;
+        text-align: center;
+        background: #3aa1e0;
         color: white;
-        text-decoration: none;
+        padding: 16px 0;
+        font-weight: bold;
+        font-size: 18px;
         cursor: pointer;
-    }
-
-    .nav-bar a:hover {
-        text-decoration: underline;
-    }
-
-    /* ===== INFO DROPDOWN ===== */
-    .dropdown {
+        text-decoration: none;
+        border-right: 1px solid rgba(255,255,255,0.3);
         position: relative;
-        display: inline-block;
+        transition: 0.3s;
+    }
+
+    .nav-item:last-child, .dropdown:last-child {
+        border-right: none;
+    }
+
+    .nav-item:hover, .dropdown:hover .dropdown-btn {
+        background: #2d8ac3;
+        color: white;
+    }
+
+    .dropdown-btn {
+        display: block;
+        width: 100%;
     }
 
     .dropdown-content {
         display: none;
         position: absolute;
+        top: 52px;
+        left: 0;
+        width: 100%;
         background: #3aa1e0;
-        min-width: 180px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         z-index: 10;
-        top: 40px;
-        border-radius: 0 0 6px 6px;
     }
 
     .dropdown-content a {
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
         display: block;
+        padding: 12px 0;
+        text-decoration: none;
+        color: white;
         font-size: 16px;
     }
 
@@ -98,17 +114,25 @@
         display: block;
     }
 
-    /* ===== BANNER/IMAGE INSERT SPACE ===== */
+    /* ===== BANNER ===== */
     .banner {
         width: 100%;
         height: 260px;
-        background: url('assets/img/pusatsukan.jpg') no-repeat center center;
+        background: url('assets/img/pusatsukan.jpeg') no-repeat center center;
         background-size: cover;
         display: flex;
         justify-content: center;
         align-items: center;
         font-size: 22px;
         color: #555;
+    }
+
+    /* ===== LONG BANNER IMAGE ABOVE BOOKING HISTORY ===== */
+    .long-banner img {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        display: block;
     }
 
     /* ===== BOOKING HISTORY TITLE ===== */
@@ -150,6 +174,7 @@
         color: white;
         font-weight: bold;
         display: inline-block;
+        cursor: pointer;
     }
 
     .review-btn {
@@ -159,15 +184,17 @@
         color: white;
         font-weight: bold;
         display: inline-block;
+        cursor: pointer;
     }
 </style>
 </head>
 
 <body>
 
-<!-- LOGO HEADER -->
+<!-- TOP HEADER WITH TWO LOGOS -->
 <div class="top-header">
-    <img src="assets/img/pusatsukan.jpg" alt="Pusat Sukan Logo">
+    <img src="../assets/img/logo.png" alt="UKM Logo" class="logo-ukm">
+    <img src="assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="logo-sukan">
 </div>
 
 <!-- BLUE SUBLINE -->
@@ -175,13 +202,12 @@
     PUSAT SUKAN / <span class="ukm">UNIVERSITI KEBANGSAAN MALAYSIA</span>
 </div>
 
-<!-- NAV BAR -->
+<!-- FULL WIDTH NAVIGATION BAR -->
 <div class="nav-bar">
-
-    <a href="#">HOME</a>
+    <a class="nav-item" href="#">HOME</a>
 
     <div class="dropdown">
-        <a>INFO ▼</a>
+        <div class="dropdown-btn">INFO ▼</div>
         <div class="dropdown-content">
             <a href="#">About</a>
             <a href="#">Rules & Regulations</a>
@@ -189,14 +215,15 @@
         </div>
     </div>
 
-    <a href="#">BOOK FACILITY</a>
-    <a href="#">CANCEL BOOKING</a>
-    <a href="#">FEEDBACK/REVIEW</a>
-
+    <a class="nav-item" href="#">BOOK FACILITY</a>
+    <a class="nav-item" href="#">CANCEL BOOKING</a>
+    <a class="nav-item" href="#">FEEDBACK / REVIEW</a>
 </div>
 
-<!-- IMAGE INSERT SECTION -->
-<div class="banner"></div>
+<!-- LONG BANNER ABOVE BOOKING HISTORY -->
+<div class="long-banner">
+    <img src="assets/img/pusatsukan.jpeg" alt="Pusat Sukan Banner">
+</div>
 
 <!-- BOOKING HISTORY -->
 <div class="section-title">BOOKING HISTORY</div>
@@ -247,7 +274,6 @@
             <span class="review-btn">REVIEW</span>
         </td>
     </tr>
-
 </table>
 
 </body>
