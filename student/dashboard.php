@@ -142,6 +142,8 @@
         font-weight: bold;
         color: #003b75;
         margin-top: 35px;
+        font-family: 'Times New Roman', serif; /* Times New Roman */
+        text-transform: uppercase;             /* Caps lock */
     }
 
     /* ===== BOOKING HISTORY TABLE ===== */
@@ -187,6 +189,45 @@
         cursor: pointer;
     }
 
+    /* ===== MAIN BUTTON: Browse Facilities ===== */
+    .browse-btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        font-family: 'Times New Roman', serif;
+        font-weight: bold;
+        font-size: 2rem;
+        text-transform: uppercase;
+        padding: 20px 60px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(30,60,114,0.5);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .browse-btn::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 0%;
+        background: rgba(255,255,255,0.15);
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .browse-btn:hover::after {
+        height: 100%;
+    }
+
+    .browse-btn:hover {
+        transform: translateY(-5px) scale(1.08);
+        box-shadow: 0 12px 30px rgba(30,60,114,0.6);
+    }
+
     /* ===== FOOTER ===== */
     .footer {
         background: #0b4d9d;
@@ -208,6 +249,64 @@
         font-weight: bold;
         margin-bottom: 10px;
         display: block;
+    }
+
+    /* Footer Top & Bottom */
+    .footer-top {
+        background: #6badce;
+        color: white;
+        padding: 40px 15px 20px;
+    }
+
+    .footer-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 50px;
+        flex-wrap: wrap;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .footer-logo img {
+        height: 120px;
+        display: block;
+    }
+
+    .footer-sdg img {
+        height: 150px;
+        display: block;
+    }
+
+    .footer-info {
+        line-height: 1.6;
+    }
+
+    .footer-bottom {
+        background: #0b4d9d;
+        color: white;
+        text-align: center;
+        padding: 20px 10px;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .footer-bottom a {
+        color: #ffffff;
+        text-decoration: underline;
+        margin: 0 5px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .footer-container {
+            flex-direction: column;
+        }
+        .footer-logo img {
+            height: 90px;
+        }
+        .footer-sdg img {
+            height: 120px;
+        }
     }
 </style>
 </head>
@@ -254,46 +353,6 @@
         BROWSE FACILITIES
     </a>
 </div>
-
-<style>
-.browse-btn {
-    display: inline-block;
-    background: linear-gradient(135deg, #1e3c72, #2a5298); /* Nice blue gradient */
-    color: white;
-    font-family: 'Times New Roman', serif;
-    font-weight: bold;
-    font-size: 2rem; /* Bigger size */
-    text-transform: uppercase; /* Caps lock */
-    padding: 20px 60px; /* Bigger padding */
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(30,60,114,0.5);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-}
-
-.browse-btn::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 0%;
-    background: rgba(255,255,255,0.15);
-    border-radius: 15px;
-    transition: all 0.3s ease;
-}
-
-.browse-btn:hover::after {
-    height: 100%;
-}
-
-.browse-btn:hover {
-    transform: translateY(-5px) scale(1.08);
-    box-shadow: 0 12px 30px rgba(30,60,114,0.6);
-}
-</style>
 
 <!-- BOOKING HISTORY -->
 <div class="section-title">BOOKING HISTORY</div>
@@ -348,15 +407,12 @@
 
 <!-- FOOTER -->
 <div class="footer">
-    <!-- Top part: logos + contact info -->
     <div class="footer-top">
         <div class="footer-container">
-            <!-- Left: Pusat Sukan Logo -->
             <div class="footer-logo">
                 <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
             </div>
 
-            <!-- Center: Contact Info -->
             <div class="footer-info">
                 <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
                 Stadium Universiti<br>
@@ -365,82 +421,17 @@
                 No. Telefon Tempahan: 03-8921-5306
             </div>
 
-            <!-- Right: SDG Logo -->
             <div class="footer-sdg">
                 <img src="../assets/img/sdg.png" alt="SDG Logo">
             </div>
         </div>
     </div>
 
-    <!-- Bottom part: copyright / links -->
     <div class="footer-bottom">
         Hakcipta © 2022 Universiti Kebangsaan Malaysia<br>
         Penafian | Hakcipta | Dasar Privasi | Dasar Keselamatan | Hubungi Kami
     </div>
 </div>
-
-<style>
-/* ===== FOOTER ===== */
-
-/* Top part: logos + contact info */
-.footer-top {
-    background: #6badce; /* Top blue shade */
-    color: white;
-    padding: 40px 15px 20px;
-}
-
-.footer-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 50px;
-    flex-wrap: wrap;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.footer-logo img {
-    height: 120px;
-    display: block;
-}
-
-.footer-sdg img {
-    height: 150px;
-    display: block;
-}
-
-.footer-info {
-    line-height: 1.6;
-}
-
-/* Bottom part: copyright / links */
-.footer-bottom {
-    background: #0b4d9d; /* Different blue shade */
-    color: white;
-    text-align: center;
-    padding: 20px 10px;
-    font-size: 16px;
-    line-height: 1.6;
-}
-
-.footer-bottom a {
-    color: #ffffff;
-    text-decoration: underline;
-    margin: 0 5px;
-}
-
-@media screen and (max-width: 768px) {
-    .footer-container {
-        flex-direction: column;
-    }
-    .footer-logo img {
-        height: 90px;
-    }
-    .footer-sdg img {
-        height: 120px;
-    }
-}
-</style>
 
 </body>
 </html>
