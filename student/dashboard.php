@@ -18,12 +18,12 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 20px; /* slightly smaller gap */
-        padding: 5px 0; /* less vertical padding */
+        gap: 20px;
+        padding: 5px 0;
     }
 
     .top-header img {
-        height: 60px; /* make both logos smaller */
+        height: 60px;
     }
 
     .logo-ukm {
@@ -186,6 +186,29 @@
         display: inline-block;
         cursor: pointer;
     }
+
+    /* ===== FOOTER ===== */
+    .footer {
+        background: #0b4d9d;
+        color: white;
+        text-align: center;
+        padding: 25px 15px;
+        font-size: 16px;
+        line-height: 1.6;
+        margin-top: 50px;
+    }
+
+    .footer a {
+        color: #ffffff;
+        text-decoration: underline;
+        margin: 0 5px;
+    }
+
+    .footer .contact {
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+    }
 </style>
 </head>
 
@@ -275,6 +298,23 @@
         </td>
     </tr>
 </table>
+
+<!-- FOOTER -->
+<div class="footer">
+    <span class="contact">PEJABAT PENGARAH PUSAT SUKAN</span>
+    Stadium Universiti<br>
+    Universiti Kebangsaan Malaysia<br>
+    43600 Bangi<br>
+    Selangor Darul Ehsan<br>
+    <br>
+    No. Telefon Tempahan: 03-8921-5306
+    <br><br>
+    Hakcipta © 2022 Universiti Kebangsaan Malaysia | 
+    <a href="#">Penafian</a> | 
+    <a href="#">Hakcipta</a> | 
+    <a href="#">Dasar Privasi</a> | 
+    <a href="#">Dasar Keselamatan</a>
+</div>
 
 </body>
 </html>
