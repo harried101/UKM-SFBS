@@ -2,16 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student Dashboard - Pusat Sukan</title>
+<title>Student Dashboard – Pusat Sukan</title>
 
 <style>
     body {
         margin: 0;
-        font-family: Arial, sans-serif;
-        background: #ffffff;
+        font-family: "Inter", sans-serif;
+        background: #f5f7fa;
+        color: #333;
     }
 
-    /* ===== TOP HEADER WITH TWO LOGOS ===== */
+    /* ===== HEADER ===== */
     .top-header {
         width: 100%;
         background: #0b4d9d;
@@ -19,115 +20,39 @@
         justify-content: center;
         align-items: center;
         gap: 20px;
-        padding: 5px 0;
+        padding: 8px 0;
     }
 
     .top-header img {
-        height: 60px;
+        height: 48px;
     }
 
-    .logo-ukm {
-        height: 60px;
-    }
-
-    .logo-sukan {
-        height: 60px;
-    }
-
-    /* ===== BLUE SUBLINE ===== */
-    .subline {
-        width: 100%;
-        background: #0b4d9d;
-        color: white;
-        text-align: center;
-        padding: 6px 0;
-        font-weight: bold;
-        font-size: 17px;
-        letter-spacing: 1px;
-    }
-
-    .subline .ukm {
-        font-weight: bold;
-        font-style: italic;
-    }
-
-    /* ===== FULL WIDTH NAVIGATION BAR ===== */
+    /* ===== NAVIGATION ===== */
     .nav-bar {
         width: 100%;
         display: flex;
-        padding: 0;
-        margin: 0;
+        background: #6badce;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
     }
 
-    .nav-item, .dropdown {
+    .nav-bar a {
         flex: 1;
+        font-size: 14px;
+        padding: 10px 0;
         text-align: center;
-        background: #3aa1e0;
-        color: white;
-        padding: 16px 0;
-        font-weight: bold;
-        font-size: 18px;
-        cursor: pointer;
         text-decoration: none;
-        border-right: 1px solid rgba(255,255,255,0.3);
-        position: relative;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         transition: 0.3s;
     }
 
-    .nav-item:last-child, .dropdown:last-child {
-        border-right: none;
+    .nav-bar a:hover {
+        background: #559fc4;
     }
 
-    .nav-item:hover, .dropdown:hover .dropdown-btn {
-        background: #2d8ac3;
-        color: white;
-    }
-
-    .dropdown-btn {
-        display: block;
-        width: 100%;
-    }
-
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        top: 52px;
-        left: 0;
-        width: 100%;
-        background: #3aa1e0;
-        z-index: 10;
-    }
-
-    .dropdown-content a {
-        display: block;
-        padding: 12px 0;
-        text-decoration: none;
-        color: white;
-        font-size: 16px;
-    }
-
-    .dropdown-content a:hover {
-        background: #2d8ac3;
-    }
-
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
-
-    /* ===== BANNER ===== */
-    .banner {
-        width: 100%;
-        height: 260px;
-        background: url('assets/img/pusatsukan.jpeg') no-repeat center center;
-        background-size: cover;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 22px;
-        color: #555;
-    }
-
-    /* ===== LONG BANNER IMAGE ABOVE BOOKING HISTORY ===== */
+    /* ===== BANNER IMAGE ===== */
     .long-banner img {
         width: 100%;
         max-height: 400px;
@@ -135,272 +60,257 @@
         display: block;
     }
 
-    /* ===== BOOKING HISTORY TITLE ===== */
-    .section-title {
+    /* ===== INFO TEXT ===== */
+    .info-text {
+        width: 80%;
+        margin: 40px auto;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #004d7a;
         text-align: center;
-        font-size: 30px;
+    }
+
+    .info-text h2 {
+        font-size: 32px;
         font-weight: bold;
+        margin-bottom: 20px;
         color: #003b75;
-        margin-top: 35px;
-        font-family: 'Times New Roman', serif; /* Times New Roman */
-        text-transform: uppercase;             /* Caps lock */
     }
 
-    /* ===== BOOKING HISTORY TABLE ===== */
-    table {
-        width: 85%;
-        margin: 25px auto;
-        border-collapse: collapse;
-        font-size: 18px;
-    }
-
-    th {
-        background: #003b75;
-        color: white;
-        padding: 15px;
-        font-size: 20px;
-    }
-
-    td {
-        background: #d7ecff;
-        padding: 18px;
+    /* ===== COUNTERS ===== */
+    .counters {
+        display: flex;
+        justify-content: center;
+        gap: 100px;
+        margin: 20px auto 30px auto;
         text-align: center;
-        border-bottom: 2px solid white;
     }
 
-    /* ===== CANCEL & REVIEW BUTTONS ===== */
-    .cancel-btn {
-        background: #c91818;
-        padding: 10px 25px;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        display: inline-block;
-        cursor: pointer;
+    .counter {
+        font-size: 24px;
+        color: #004d7a;
     }
 
-    .review-btn {
-        background: #21b32d;
-        padding: 10px 25px;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        display: inline-block;
-        cursor: pointer;
+    .counter-number {
+        font-size: 48px;
+        font-weight: 700;
+        color: #0b4d9d;
     }
 
-    /* ===== MAIN BUTTON: Browse Facilities ===== */
+    .counter-label {
+        font-size: 18px;
+        margin-top: 5px;
+    }
+
+    /* ===== BROWSE FACILITIES BUTTON ===== */
     .browse-btn {
         display: inline-block;
         background: linear-gradient(135deg, #1e3c72, #2a5298);
         color: white;
-        font-family: 'Times New Roman', serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         font-weight: bold;
         font-size: 2rem;
         text-transform: uppercase;
         padding: 20px 60px;
         border-radius: 15px;
-        box-shadow: 0 8px 20px rgba(30,60,114,0.5);
         text-decoration: none;
         transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-    }
-
-    .browse-btn::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        height: 0%;
-        background: rgba(255,255,255,0.15);
-        border-radius: 15px;
-        transition: all 0.3s ease;
-    }
-
-    .browse-btn:hover::after {
-        height: 100%;
+        margin: 20px auto 50px auto;
+        display: block;
+        width: max-content;
+        text-align: center;
     }
 
     .browse-btn:hover {
-        transform: translateY(-5px) scale(1.08);
-        box-shadow: 0 12px 30px rgba(30,60,114,0.6);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 20px rgba(30,60,114,0.5);
+    }
+
+    /* ===== BOOKING HISTORY ===== */
+    .section-title {
+        text-align: center;
+        font-size: 40px;
+        color: #0b4d9d;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-top: 35px;
+    }
+
+    table {
+        width: 70%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background: white;
+        font-size: 14px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    th {
+        background: #003b75;
+        color: white;
+        padding: 12px;
+    }
+
+    td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+    }
+
+    .cancel-btn {
+        background: #c91818;
+        padding: 6px 14px;
+        font-size: 12px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .review-btn {
+        background: #21b32d;
+        padding: 6px 14px;
+        font-size: 12px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
     }
 
     /* ===== FOOTER ===== */
     .footer {
         background: #0b4d9d;
         color: white;
-        text-align: center;
-        padding: 25px 15px;
-        font-size: 16px;
+        font-size: 14px;
         line-height: 1.6;
-        margin-top: 50px;
     }
 
-    .footer a {
-        color: #ffffff;
-        text-decoration: underline;
-        margin: 0 5px;
-    }
-
-    .footer .contact {
-        font-weight: bold;
-        margin-bottom: 10px;
-        display: block;
-    }
-
-    /* Footer Top & Bottom */
     .footer-top {
-        background: #6badce;
-        color: white;
-        padding: 40px 15px 20px;
-    }
-
-    .footer-container {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        gap: 50px;
-        flex-wrap: wrap;
-        text-align: center;
-        margin-bottom: 20px;
+        padding: 30px 15px;
     }
 
     .footer-logo img {
-        height: 120px;
-        display: block;
-    }
-
-    .footer-sdg img {
-        height: 150px;
-        display: block;
+        height: 100px; /* slightly bigger left logo */
     }
 
     .footer-info {
+        text-align: center;
+        flex: 1;
         line-height: 1.6;
+    }
+
+    .footer-title {
+        font-size: 22px;
+        display: block;
+        margin-bottom: 10px; /* space after title */
+    }
+
+    .footer-sdg img {
+        height: 180px;
     }
 
     .footer-bottom {
-        background: #0b4d9d;
-        color: white;
+        background: #003b75;
+        padding: 12px 15px;
+        font-size: 13px;
         text-align: center;
-        padding: 20px 10px;
-        font-size: 16px;
-        line-height: 1.6;
-    }
-
-    .footer-bottom a {
-        color: #ffffff;
-        text-decoration: underline;
-        margin: 0 5px;
     }
 
     @media screen and (max-width: 768px) {
-        .footer-container {
+        .footer-top {
             flex-direction: column;
+            gap: 20px;
         }
-        .footer-logo img {
-            height: 90px;
-        }
+
+        .footer-logo img,
         .footer-sdg img {
-            height: 120px;
+            height: 100px;
         }
     }
 </style>
 </head>
-
 <body>
 
-<!-- TOP HEADER WITH TWO LOGOS -->
+<!-- HEADER -->
 <div class="top-header">
-    <img src="../assets/img/logo.png" alt="UKM Logo" class="logo-ukm">
-    <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="logo-sukan">
+    <img src="../assets/img/logo.png" alt="UKM Logo">
+    <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
 </div>
 
-<!-- BLUE SUBLINE -->
-<div class="subline">
-    PUSAT SUKAN / <span class="ukm">UNIVERSITI KEBANGSAAN MALAYSIA</span>
-</div>
-
-<!-- FULL WIDTH NAVIGATION BAR -->
+<!-- NAVIGATION -->
 <div class="nav-bar">
-    <a class="nav-item" href="#">HOME</a>
-
-    <div class="dropdown">
-        <div class="dropdown-btn">INFO ▼</div>
-        <div class="dropdown-content">
-            <a href="#">About</a>
-            <a href="#">Rules & Regulations</a>
-            <a href="#">Operating Hours</a>
-        </div>
-    </div>
-
-    <a class="nav-item" href="#">BOOK FACILITY</a>
-    <a class="nav-item" href="#">CANCEL BOOKING</a>
-    <a class="nav-item" href="#">FEEDBACK / REVIEW</a>
+    <a href="#">Home</a>
+    <a href="#">Info</a>
+    <a href="#">Book Facility</a>
+    <a href="#">Cancel Booking</a>
+    <a href="#">Review</a>
 </div>
 
-<!-- LONG BANNER ABOVE BOOKING HISTORY -->
+<!-- BANNER IMAGE -->
 <div class="long-banner">
     <img src="../assets/img/psukan.jpg" alt="Pusat Sukan">
 </div>
 
-<!-- MAIN BUTTON: Browse Facilities -->
-<div style="display: flex; justify-content: center; margin: 50px 0;">
-    <a href="student_facilities.php" class="browse-btn">
-        BROWSE FACILITIES
-    </a>
+<!-- INFO TEXT -->
+<div class="info-text">
+    <h2>Let’s Get to Know UKM Sports Center</h2>
+    <p>The UKM Sports Center started on 1 November 1974 with a Sports Officer from the Ministry of Education who managed sports activities for students and staff. In 1981 and 1982, UKM participated in the ASEAN University Games. In 2008, the Sports Unit was upgraded to the Sports Center, and in 2010, a director was appointed. Today, the center has 47 staff members.</p>
 </div>
+
+<!-- COUNTERS -->
+<div class="counters">
+    <div class="counter">
+        <div class="counter-number" id="facility-counter">0</div>
+        <div class="counter-label">Facilities</div>
+    </div>
+    <div class="counter">
+        <div class="counter-number" id="staff-counter">0</div>
+        <div class="counter-label">Staffs</div>
+    </div>
+</div>
+
+<!-- BROWSE FACILITIES BUTTON -->
+<a href="student_facilities.php" class="browse-btn">BROWSE FACILITIES</a>
 
 <!-- BOOKING HISTORY -->
 <div class="section-title">BOOKING HISTORY</div>
 
 <table>
     <tr>
-        <th>FACILITIES</th>
-        <th>DATE/TIME</th>
-        <th>STATUS</th>
+        <th>FACILITY</th>
+        <th>DATE / TIME</th>
+        <th>ACTION</th>
     </tr>
-
     <tr>
-        <td>PADANG D</td>
-        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
+        <td>Field D</td>
+        <td>23 Nov 2025<br>09:00 – 11:00</td>
         <td>
-            <span class="cancel-btn">CANCEL</span>
-            &nbsp;&nbsp;
-            <span class="review-btn">REVIEW</span>
+            <span class="cancel-btn">Cancel</span>
+            &nbsp;
+            <span class="review-btn">Review</span>
         </td>
     </tr>
-
     <tr>
-        <td>GELANGGANG SKUASY</td>
-        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
+        <td>Squash Court</td>
+        <td>23 Nov 2025<br>09:00 – 11:00</td>
         <td>
-            <span class="cancel-btn">CANCEL</span>
-            &nbsp;&nbsp;
-            <span class="review-btn">REVIEW</span>
+            <span class="cancel-btn">Cancel</span>
+            &nbsp;
+            <span class="review-btn">Review</span>
         </td>
     </tr>
-
     <tr>
-        <td>GELANGGANG BOLA JARING</td>
-        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
+        <td>Netball Court</td>
+        <td>23 Nov 2025<br>09:00 – 11:00</td>
         <td>
-            <span class="cancel-btn">CANCEL</span>
-            &nbsp;&nbsp;
-            <span class="review-btn">REVIEW</span>
-        </td>
-    </tr>
-
-    <tr>
-        <td>GELANGGANG BOLA SEPAK</td>
-        <td>9:00 AM – 11:00 AM<br>23/11/2025</td>
-        <td>
-            <span class="cancel-btn">CANCEL</span>
-            &nbsp;&nbsp;
-            <span class="review-btn">REVIEW</span>
+            <span class="cancel-btn">Cancel</span>
+            &nbsp;
+            <span class="review-btn">Review</span>
         </td>
     </tr>
 </table>
@@ -408,30 +318,52 @@
 <!-- FOOTER -->
 <div class="footer">
     <div class="footer-top">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
-            </div>
+        <div class="footer-logo">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
+        </div>
 
-            <div class="footer-info">
-                <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
-                Stadium Universiti<br>
-                Universiti Kebangsaan Malaysia<br>
-                43600 Bangi, Selangor Darul Ehsan<br>
-                No. Telefon Tempahan: 03-8921-5306
-            </div>
+        <div class="footer-info">
+            <strong class="footer-title">PEJABAT PENGARAH PUSAT SUKAN</strong>
+            Stadium Universiti<br>
+            Universiti Kebangsaan Malaysia<br>
+            43600 Bangi, Selangor Darul Ehsan<br>
+            No. Telefon : 03-8921-5306
+        </div>
 
-            <div class="footer-sdg">
-                <img src="../assets/img/sdg.png" alt="SDG Logo">
-            </div>
+        <div class="footer-sdg">
+            <img src="../assets/img/sdg.png" alt="SDG Logo">
         </div>
     </div>
 
     <div class="footer-bottom">
-        Hakcipta © 2022 Universiti Kebangsaan Malaysia<br>
-        Penafian | Hakcipta | Dasar Privasi | Dasar Keselamatan | Hubungi Kami
+        Hakcipta © 2022 Universiti Kebangsaan Malaysia
     </div>
 </div>
+
+<script>
+    // Animate counters
+    let facilityCount = 0;
+    let staffCount = 0;
+    const facilityTarget = 15;
+    const staffTarget = 47;
+    const facilityElem = document.getElementById('facility-counter');
+    const staffElem = document.getElementById('staff-counter');
+
+    const increment = () => {
+        if(facilityCount <= facilityTarget){
+            facilityElem.textContent = facilityCount;
+            facilityCount++;
+        }
+        if(staffCount <= staffTarget){
+            staffElem.textContent = staffCount;
+            staffCount++;
+        }
+        if(facilityCount <= facilityTarget || staffCount <= staffTarget){
+            setTimeout(increment, 50);
+        }
+    };
+    increment();
+</script>
 
 </body>
 </html>
