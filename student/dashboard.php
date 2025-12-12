@@ -29,14 +29,19 @@
         text-align: center;
         font-size: 18px;
         margin-top: 10px;
-        color: #003b75;
         font-weight: bold;
     }
 
-    /* Only UKM italic */
-    .branding-text span.ukm {
+    .branding-text .pusat-sukan {
+        color: #6badce; /* Only this word is blue */
+        font-weight: bold;
+        background: none;
+    }
+
+    .branding-text .ukm {
         font-style: italic;
         font-weight: normal;
+        color: #003b75; /* dark blue for UKM */
     }
 
     /* LIGHT BLUE LINE UNDER TEXT */
@@ -50,9 +55,10 @@
     /* ===== NAV BAR FULL WIDTH ===== */
     .nav-bar {
         width: 100%;
-        background: #3aa1e0; 
+        background: white; /* White nav bar */
         display: flex;
         padding: 0;
+        border-bottom: 2px solid #6badce; /* optional bottom border */
     }
 
     .nav-item {
@@ -61,10 +67,12 @@
         padding: 16px 0;
         font-weight: bold;
         font-size: 18px;
-        color: white;
+        color: #003b75; /* Dark blue text */
         cursor: pointer;
         text-decoration: none;
-        border-right: 1px solid rgba(255,255,255,0.3);
+        border-right: 1px solid rgba(0,0,0,0.1);
+        background: white;
+        transition: 0.3s;
     }
 
     .nav-item:last-child {
@@ -72,7 +80,8 @@
     }
 
     .nav-item:hover {
-        background: #2d8ac3;
+        background: #6badce; /* Hover blue */
+        color: white;
     }
 
     /* DROPDOWN */
@@ -85,31 +94,41 @@
         padding: 16px 0;
         font-weight: bold;
         font-size: 18px;
-        color: white;
+        color: #003b75;
         cursor: pointer;
         text-align: center;
-        border-right: 1px solid rgba(255,255,255,0.3);
+        border-right: 1px solid rgba(0,0,0,0.1);
+        background: white;
+        transition: 0.3s;
+    }
+
+    .dropdown:hover .dropdown-btn {
+        background: #6badce;
+        color: white;
     }
 
     .dropdown-content {
         display: none;
         position: absolute;
-        background: #3aa1e0;
+        background: white;
         width: 100%;
         top: 52px;
         z-index: 1000;
+        border: 1px solid #6badce;
     }
 
     .dropdown-content a {
         display: block;
         padding: 12px;
-        color: white;
+        color: #003b75;
         text-decoration: none;
         font-size: 16px;
+        transition: 0.3s;
     }
 
     .dropdown-content a:hover {
-        background: #2d8ac3;
+        background: #6badce;
+        color: white;
     }
 
     .dropdown:hover .dropdown-content {
@@ -120,7 +139,8 @@
     .banner {
         width: 100%;
         height: 260px;
-        background: #ddd;
+        background: url('pusatsukan.jpg') no-repeat center center;
+        background-size: cover;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -183,12 +203,12 @@
 
 <!-- LOGO HEADER -->
 <div class="top-header">
-    <img src="your-logo-here.png" alt="Pusat Sukan Logo">
+    <img src="pusatsukan.jpg" alt="Pusat Sukan Logo">
 </div>
 
-<!-- TEXT BELOW LOGO: ONLY UKM ITALIC -->
+<!-- TEXT BELOW LOGO -->
 <div class="branding-text">
-    Pusat Sukan / <span class="ukm">Universiti Kebangsaan Malaysia</span>
+    <span class="pusat-sukan">Pusat Sukan</span> / <span class="ukm">Universiti Kebangsaan Malaysia</span>
 </div>
 
 <!-- BLUE LINE -->
@@ -214,7 +234,7 @@
 
 <!-- IMAGE PLACEHOLDER -->
 <div class="banner">
-    INSERT YOUR PUSAT SUKAN IMAGE HERE
+    <!-- Optional text overlay -->
 </div>
 
 <!-- BOOKING HISTORY -->
