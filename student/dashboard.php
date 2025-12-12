@@ -358,12 +358,47 @@
     </div>
 </div>
 
+<!-- FOOTER -->
+<div class="footer">
+    <!-- Top part: logos and contact info -->
+    <div class="footer-container">
+        <!-- Left: Pusat Sukan Logo -->
+        <div class="footer-logo">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
+        </div>
+
+        <!-- Center: Contact Info -->
+        <div class="footer-info">
+            <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
+            Stadium Universiti<br>
+            Universiti Kebangsaan Malaysia<br>
+            43600 Bangi, Selangor Darul Ehsan<br>
+            No. Telefon Tempahan: 03-8921-5306
+        </div>
+
+        <!-- Right: SDG Logo -->
+        <div class="footer-sdg">
+            <img src="../assets/img/sdglogo.png" alt="SDG Logo">
+        </div>
+    </div>
+
+    <!-- Bottom part: copyright / links stacked -->
+    <div class="footer-links">
+        <div>Hakcipta © 2022 Universiti Kebangsaan Malaysia</div>
+        <div>Penafian</div>
+        <div>Hakcipta</div>
+        <div>Dasar Privasi</div>
+        <div>Dasar Keselamatan</div>
+        <div>Hubungi Kami</div>
+    </div>
+</div>
+
 <style>
     /* ===== FOOTER ===== */
     .footer {
         background: #0b4d9d;
         color: white;
-        padding: 40px 15px 20px; /* More padding for bigger logos */
+        padding: 40px 15px 20px; 
         font-size: 16px;
     }
 
@@ -374,11 +409,16 @@
         gap: 50px;
         flex-wrap: wrap;
         text-align: center;
-        margin-bottom: 20px; /* Space before bottom links */
+        margin-bottom: 20px;
     }
 
-    .footer-logo img, .footer-sdg img {
-        height: 120px; /* Bigger logos */
+    .footer-logo img {
+        height: 120px;
+        display: block;
+    }
+
+    .footer-sdg img {
+        height: 150px; /* Bigger SDG logo */
         display: block;
     }
 
@@ -388,19 +428,22 @@
 
     .footer-links {
         text-align: center;
-        font-size: 16px;
+        margin-top: 20px;
+        line-height: 1.8;
     }
 
     @media screen and (max-width: 768px) {
         .footer-container {
             flex-direction: column;
         }
-        .footer-logo img, .footer-sdg img {
+        .footer-logo img {
             height: 90px;
+        }
+        .footer-sdg img {
+            height: 120px;
         }
     }
 </style>
-
 
 
 </body>
