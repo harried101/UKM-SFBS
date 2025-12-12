@@ -14,7 +14,7 @@
     /* ===== TOP HEADER (LOGO AREA) ===== */
     .top-header {
         width: 100%;
-        background: #0b4d9d; /* SAME DARK BLUE AS UI */
+        background: #0b4d9d; /* DARK BLUE */
         text-align: center;
         padding: 5px 0;
     }
@@ -38,7 +38,7 @@
     /* ===== NAVIGATION BAR ===== */
     .nav-bar {
         width: 100%;
-        background: #3aa1e0; /* SAME LIGHT BLUE */
+        background: #3aa1e0; /* Light blue */
         display: flex;
         justify-content: center;
         align-items: center;
@@ -96,7 +96,8 @@
     .banner {
         width: 100%;
         height: 260px;
-        background: #ddd; /* Placeholder */
+        background: url('assets/img/pusatsukan.jpg') no-repeat center center;
+        background-size: cover;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -160,7 +161,7 @@
 
 <!-- LOGO HEADER -->
 <div class="top-header">
-    <img src="your-logo-here.png" alt="Pusat Sukan Logo">
+    <img src="assets/img/pusatsukan.jpg" alt="Pusat Sukan Logo">
 </div>
 
 <!-- BLUE SUBLINE -->
@@ -189,9 +190,7 @@
 </div>
 
 <!-- IMAGE INSERT SECTION -->
-<div class="banner">
-    INSERT YOUR PUSAT SUKAN IMAGE HERE
-</div>
+<div class="banner"></div>
 
 <!-- BOOKING HISTORY -->
 <div class="section-title">BOOKING HISTORY</div>
