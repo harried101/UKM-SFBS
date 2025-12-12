@@ -318,7 +318,7 @@
 
         <!-- Right: SDG Logo -->
         <div class="footer-sdg">
-            <img src="../assets/img/sdglogo.png" alt="SDG Logo">
+            <img src="../assets/img/sdg.png" alt="SDG Logo">
         </div>
     </div>
 </div>
