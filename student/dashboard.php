@@ -301,150 +301,99 @@
 
 <!-- FOOTER -->
 <div class="footer">
-    <div class="footer-container">
-        <!-- Left: Pusat Sukan Logo -->
-        <div class="footer-logo">
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
-        </div>
+    <!-- Top part: logos + contact info -->
+    <div class="footer-top">
+        <div class="footer-container">
+            <!-- Left: Pusat Sukan Logo -->
+            <div class="footer-logo">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
+            </div>
 
-        <!-- Center: Contact Info -->
-        <div class="footer-info">
-            <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
-            Stadium Universiti<br>
-            Universiti Kebangsaan Malaysia<br>
-            43600 Bangi, Selangor Darul Ehsan<br>
-            No. Telefon Tempahan: 03-8921-5306
-        </div>
+            <!-- Center: Contact Info -->
+            <div class="footer-info">
+                <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
+                Stadium Universiti<br>
+                Universiti Kebangsaan Malaysia<br>
+                43600 Bangi, Selangor Darul Ehsan<br>
+                No. Telefon Tempahan: 03-8921-5306
+            </div>
 
-        <!-- Right: SDG Logo -->
-        <div class="footer-sdg">
-            <img src="../assets/img/sdg.png" alt="SDG Logo">
-        </div>
-    </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-    <!-- Top part: logos and contact info -->
-    <div class="footer-container">
-        <!-- Left: Pusat Sukan Logo -->
-        <div class="footer-logo">
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
-        </div>
-
-        <!-- Center: Contact Info -->
-        <div class="footer-info">
-            <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
-            Stadium Universiti<br>
-            Universiti Kebangsaan Malaysia<br>
-            43600 Bangi, Selangor Darul Ehsan<br>
-            No. Telefon Tempahan: 03-8921-5306
-        </div>
-
-        <!-- Right: SDG Logo -->
-        <div class="footer-sdg">
-            <img src="../assets/img/sdglogo.png" alt="SDG Logo">
+            <!-- Right: SDG Logo -->
+            <div class="footer-sdg">
+                <img src="../assets/img/sdg.png" alt="SDG Logo">
+            </div>
         </div>
     </div>
 
     <!-- Bottom part: copyright / links -->
-    <div class="footer-links">
-        Hakcipta © 2022 Universiti Kebangsaan Malaysia |
-        Penafian |
-        Hakcipta |
-        Dasar Privasi |
-        Dasar Keselamatan |
-        Hubungi Kami
-    </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-    <!-- Top part: logos and contact info -->
-    <div class="footer-container">
-        <!-- Left: Pusat Sukan Logo -->
-        <div class="footer-logo">
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
-        </div>
-
-        <!-- Center: Contact Info -->
-        <div class="footer-info">
-            <strong>PEJABAT PENGARAH PUSAT SUKAN</strong><br>
-            Stadium Universiti<br>
-            Universiti Kebangsaan Malaysia<br>
-            43600 Bangi, Selangor Darul Ehsan<br>
-            No. Telefon Tempahan: 03-8921-5306
-        </div>
-
-        <!-- Right: SDG Logo -->
-        <div class="footer-sdg">
-            <img src="../assets/img/sdglogo.png" alt="SDG Logo">
-        </div>
-    </div>
-
-    <!-- Bottom part: copyright / links stacked -->
-    <div class="footer-links">
-        <div>Hakcipta © 2022 Universiti Kebangsaan Malaysia</div>
-        <div>Penafian</div>
-        <div>Hakcipta</div>
-        <div>Dasar Privasi</div>
-        <div>Dasar Keselamatan</div>
-        <div>Hubungi Kami</div>
+    <div class="footer-bottom">
+        Hakcipta © 2022 Universiti Kebangsaan Malaysia<br>
+        Penafian | Hakcipta | Dasar Privasi | Dasar Keselamatan | Hubungi Kami
     </div>
 </div>
 
 <style>
-    /* ===== FOOTER ===== */
-    .footer {
-        background: #0b4d9d;
-        color: white;
-        padding: 40px 15px 20px; 
-        font-size: 16px;
-    }
+/* ===== FOOTER ===== */
 
+/* Top part: logos + contact info */
+.footer-top {
+    background: #6badce; /* Top blue shade */
+    color: white;
+    padding: 40px 15px 20px;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    flex-wrap: wrap;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.footer-logo img {
+    height: 120px;
+    display: block;
+}
+
+.footer-sdg img {
+    height: 150px;
+    display: block;
+}
+
+.footer-info {
+    line-height: 1.6;
+}
+
+/* Bottom part: copyright / links */
+.footer-bottom {
+    background: #0b4d9d; /* Different blue shade */
+    color: white;
+    text-align: center;
+    padding: 20px 10px;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.footer-bottom a {
+    color: #ffffff;
+    text-decoration: underline;
+    margin: 0 5px;
+}
+
+@media screen and (max-width: 768px) {
     .footer-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 50px;
-        flex-wrap: wrap;
-        text-align: center;
-        margin-bottom: 20px;
+        flex-direction: column;
     }
-
     .footer-logo img {
-        height: 120px;
-        display: block;
+        height: 90px;
     }
-
     .footer-sdg img {
-        height: 150px; /* Bigger SDG logo */
-        display: block;
+        height: 120px;
     }
-
-    .footer-info {
-        line-height: 1.6;
-    }
-
-    .footer-links {
-        text-align: center;
-        margin-top: 20px;
-        line-height: 1.8;
-    }
-
-    @media screen and (max-width: 768px) {
-        .footer-container {
-            flex-direction: column;
-        }
-        .footer-logo img {
-            height: 90px;
-        }
-        .footer-sdg img {
-            height: 120px;
-        }
-    }
+}
 </style>
-
 
 </body>
 </html>
