@@ -194,7 +194,7 @@
 <!-- TOP HEADER WITH TWO LOGOS -->
 <div class="top-header">
     <img src="../assets/img/logo.png" alt="UKM Logo" class="logo-ukm">
-    <img src="assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="logo-sukan">
+    <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="logo-sukan">
 </div>
 
 <!-- BLUE SUBLINE -->
@@ -222,7 +222,7 @@
 
 <!-- LONG BANNER ABOVE BOOKING HISTORY -->
 <div class="long-banner">
-    <img src="assets/img/pusatsukan.jpg" alt="Pusat Sukan">
+    <img src="../assets/img/pusatsukan.jpg" alt="Pusat Sukan">
 </div>
 //dummy
 <!-- BOOKING HISTORY -->
