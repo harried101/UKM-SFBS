@@ -59,25 +59,33 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     <div class="container">
         <div class="left-panel">
             <div class="logos">
-                <img src="../assets/img/logo.png" width="120" onerror="this.src='https://placehold.co/120x120/8a0d19/FFFFFF?text=UKM'">
-                <img src="../assets/img/pusatsukanlogo.png" width="120" onerror="this.src='https://placehold.co/120x120/004c99/FFFFFF?text=Pusat+Sukan'">
+                <img src="assets/img/logo.png" width="120" 
+                     onerror="this.src='https://placehold.co/120x120/8a0d19/FFFFFF?text=UKM'">
+
+                <img src="assets/img/pusatsukanlogo.png" width="120" 
+                     onerror="this.src='https://placehold.co/120x120/004c99/FFFFFF?text=Pusat+Sukan'">
             </div>
+
             <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
         </div>
+
         <div class="right-panel">
             <div class="login-box">
                 <div class="login-title">LOG IN</div>
                 <div id="messageBox" class="message-box"></div>
+
                 <form id="loginForm"> 
                     <div class="input-group">
                         <i>👤</i>
                         <input type="text" id="userIdentifier" name="userIdentifier" placeholder="Matric/Staff Number" required>
                     </div>
+
                     <div class="input-group">
                         <i>🔒</i>
                         <input type="password" id="password" name="password" placeholder="Password" required>
                         <i id="togglePassword" style="margin-left:10px; cursor: pointer;">👁️</i>
                     </div>
+
                     <button type="submit" id="loginBtn" class="login-btn">
                         <span id="loginText">Log in</span>
                         <div id="spinner" class="loading-spinner"></div>
@@ -155,13 +163,10 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
             });
             
             togglePassword.addEventListener('click', () => {
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    togglePassword.textContent = '🙈';
-                } else {
-                    passwordInput.type = 'password';
-                    togglePassword.textContent = '👁️';
-                }
+                passwordInput.type =
+                    passwordInput.type === 'password' ? 'text' : 'password';
+                togglePassword.textContent =
+                    passwordInput.type === 'password' ? '👁️' : '🙈';
             });
         });
     </script>
