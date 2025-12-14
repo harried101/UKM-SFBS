@@ -415,13 +415,25 @@ h1 {
 <nav class="d-flex justify-content-between align-items-center px-4 py-2">
     <div class="nav-logo d-flex align-items-center gap-3">
         <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
-        <img src="../assets/img/pusatsukan.png" alt="Pusat Sukan Logo" height="45">
+        <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" height="45">
     </div>
 
     <div class="d-flex align-items-center gap-4">
-        <a class="nav-link active" href="#">Facility</a>
-        <a class="nav-link" href="#">Booking</a>
-        <a class="nav-link" href="#">Report</a>
+        
+        <div class="dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Facility
+            </a>
+
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="addfacilities.php">Add Facility</a></li>
+                <li><a class="dropdown-item" href="manage_closures.php">Facility Closures</a></li>
+            </ul>
+        </div>
+        
+        <a class="nav-link active" href="bookinglist.php">Booking</a>
+        
+        <a class="nav-link" href="report.php">Report</a>
 
         <div class="d-flex align-items-center gap-1">
             <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
@@ -429,7 +441,6 @@ h1 {
         </div>
     </div>
 </nav>
-
 <div class="container">
     <div class="main-box position-relative">
         <h1><?php echo $formTitle; ?></h1>
