@@ -9,6 +9,23 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
+// Fetch Admin Details
+$adminIdentifier = $_SESSION['user_id'] ?? '';
+$adminName = 'Admin';
+$adminID = $adminIdentifier;
+
+if ($adminIdentifier) {
+    $stmtAdmin = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
+    $stmtAdmin->bind_param("s", $adminIdentifier);
+    $stmtAdmin->execute();
+    $resAdmin = $stmtAdmin->get_result();
+    if ($rowAdmin = $resAdmin->fetch_assoc()) {
+        $adminName = $rowAdmin['FirstName'];
+        $adminID = $rowAdmin['UserIdentifier'];
+    }
+    $stmtAdmin->close();
+}
+
 /* ---------------------- FETCH FACILITIES ---------------------- */
 $facilities = [];
 $facilityResult = $conn->query("SELECT FacilityID, Name FROM facilities ORDER BY FacilityID");
@@ -133,6 +150,44 @@ if (isset($_GET["delete_id"])) {
 </head>
 
 <body>
+
+<nav class="d-flex justify-content-between align-items-center px-4 py-2" style="background: #bfd9dc; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px;">
+    <div class="nav-logo d-flex align-items-center gap-3">
+        <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
+        <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" height="45">
+    </div>
+
+    <div class="d-flex align-items-center gap-4">
+        
+        <div class="dropdown">
+            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 12px; text-decoration: none;">
+                Facility
+            </a>
+
+            <ul class="dropdown-menu" style="border-radius: 12px; background: #bfd9dc; box-shadow: 0 4px 8px rgba(0,0,0,0.2); padding: 5px;">
+                <li><a class="dropdown-item" href="addfacilities.php" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 10px;">Add Facility</a></li>
+                <li><a class="dropdown-item" href="manage_closures.php" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 10px;">Facility Closures</a></li>
+            </ul>
+        </div>
+        
+        <a class="nav-link" href="bookinglist.php" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 12px; text-decoration: none;">Booking</a>
+        
+        <a class="nav-link" href="report.php" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 12px; text-decoration: none;">Report</a>
+
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
+                <div style="line-height:1.2; text-align: left;">
+                    <div class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($adminName); ?></div>
+                    <small class="text-muted" style="font-size: 0.8rem;"><?php echo htmlspecialchars($adminID); ?></small>
+                </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" style="border-radius: 12px; background: #bfd9dc; box-shadow: 0 4px 8px rgba(0,0,0,0.2); padding: 5px;">
+                <li><a class="dropdown-item text-danger" href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" style="font-weight: 600; padding: 8px 18px; border-radius: 10px;">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
 <div class="main-box">
 

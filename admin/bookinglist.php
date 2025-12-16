@@ -14,10 +14,17 @@ if ($adminIdentifier) {
     $stmtAdmin->execute();
     $resAdmin = $stmtAdmin->get_result();
     if ($rowAdmin = $resAdmin->fetch_assoc()) {
-        $adminName = $rowAdmin['FirstName'] . ' ' . $rowAdmin['LastName'];
+        $adminName = $rowAdmin['FirstName'];
         $adminID = $rowAdmin['UserIdentifier'];
     }
     $stmtAdmin->close();
+}
+
+// Fetch Facilities for Dropdown
+$facilitiesResult = $conn->query("SELECT FacilityID, Name FROM facilities WHERE Status IN ('Active', 'Maintenance')");
+$facilitiesList = [];
+while($f = $facilitiesResult->fetch_assoc()) {
+    $facilitiesList[] = $f;
 }
 
 // Initialize filter variables
@@ -297,16 +304,18 @@ function getStatusClass($status) {
             <button type="submit" class="btn btn-search btn-sm">Filter</button>
         </form>
 
-        <form method="GET" class="d-flex gap-3 align-items-center">
-            <input type="hidden" name="status" value="<?php echo htmlspecialchars($statusFilter); ?>">
-            <input type="hidden" name="date" value="<?php echo htmlspecialchars($dateFilter); ?>">
-            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search ID, User, or Facility" value="<?php echo htmlspecialchars($searchQuery); ?>">
-            <button type="submit" class="btn btn-search btn-sm">Search</button>
+        <div class="d-flex gap-3 align-items-center">
+            <form method="GET" class="d-flex gap-2 align-items-center">
+                <input type="hidden" name="status" value="<?php echo htmlspecialchars($statusFilter); ?>">
+                <input type="hidden" name="date" value="<?php echo htmlspecialchars($dateFilter); ?>">
+                <input type="search" name="search" class="form-control form-control-sm" placeholder="Search ID, User, or Facility" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                <button type="submit" class="btn btn-search btn-sm">Search</button>
+            </form>
             
-            <button type="button" class="btn btn-submit btn-sm" data-bs-toggle="modal" data-bs-target="#newBookingModal">
-                <i class="fas fa-plus me-1"></i> Add New Booking
+            <button type="button" class="btn btn-submit btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal" style="white-space: nowrap;">
+                <i class="fas fa-plus"></i> Add New Booking
             </button>
-        </form>
+        </div>
     </div>
 
     <div class="table-responsive">
@@ -453,6 +462,49 @@ function getStatusClass($status) {
             </div>
         </div>
     </div>
+    </div>
+</div>
+
+<!-- NEW BOOKING MODAL -->
+<div class="modal fade" id="newBookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border-radius:15px; height: 85vh;">
+            <div class="modal-header" style="background:#071239ff; color:white;">
+                <h5 class="modal-title">Add New Walk-in Booking</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 d-flex flex-column">
+                
+                <!-- Step 1: Select Facility -->
+                <div id="facilitySelector" class="p-4 text-center" style="background:#f8f9fa; border-bottom:1px solid #dee2e6;">
+                    <label class="fw-bold mb-2" style="color:#071239ff;">Select Facility to Book:</label>
+                    <div class="d-flex justify-content-center gap-2">
+                        <select id="newBookingFacility" class="form-select" style="max-width:300px;">
+                            <option value="">-- Choose Facility --</option>
+                            <?php foreach($facilitiesList as $fac): ?>
+                                <option value="<?php echo $fac['FacilityID']; ?>"><?php echo htmlspecialchars($fac['Name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="btn btn-submit" onclick="loadBookingFrame()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Booking Frame -->
+                <div class="flex-grow-1 position-relative" style="background:#fff;">
+                    <div id="frameLoader" class="position-absolute top-50 start-50 translate-middle text-center d-none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Loading calendar...</p>
+                    </div>
+                    <iframe id="bookingFrame" src="" style="width:100%; height:100%; border:none;" class="d-none"></iframe>
+                    
+                    <div id="framePlaceholder" class="d-flex align-items-center justify-content-center h-100 text-muted">
+                        <p>Please select a facility above to start booking.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -529,6 +581,51 @@ function submitAction(action) {
         form.submit();
     }
 }
+
+// --- NEW BOOKING MODAL LOGIC ---
+function loadBookingFrame() {
+    const facilityID = document.getElementById('newBookingFacility').value;
+    const frame = document.getElementById('bookingFrame');
+    const loader = document.getElementById('frameLoader');
+    const placeholder = document.getElementById('framePlaceholder');
+
+    if (!facilityID) {
+        alert("Please select a facility first.");
+        return;
+    }
+
+    placeholder.classList.add('d-none');
+    loader.classList.remove('d-none');
+    frame.classList.add('d-none');
+    
+    frame.src = "book_walkin.php?facility_id=" + facilityID;
+    
+    frame.onload = function() {
+        loader.classList.add('d-none');
+        frame.classList.remove('d-none');
+    };
+}
+
+// Listen for messages from iframe (success booking)
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'booking_success') {
+        // Close modal
+        const modalEl = document.getElementById('newBookingModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if(modal) modal.hide();
+        
+        // Reload page to show new booking
+        window.location.href = "bookinglist.php?msg=" + encodeURIComponent(event.data.message);
+    }
+});
+
+// Reset modal when closed
+document.getElementById('newBookingModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('bookingFrame').src = "";
+    document.getElementById('bookingFrame').classList.add('d-none');
+    document.getElementById('framePlaceholder').classList.remove('d-none');
+    document.getElementById('newBookingFacility').value = "";
+});
 </script>
 </body>
 </html>
