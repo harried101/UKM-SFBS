@@ -297,6 +297,24 @@ nav {
 }
 .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.5); }
 
+        .dropdown-menu {
+            border-radius: 12px;
+            background: #bfd9dc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            padding: 5px;
+        }
+        .dropdown-item {
+            color: #071239ff;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 10px;
+            transition: 0.3s ease;
+        }
+        .dropdown-item:hover {
+            background: rgba(255,255,255,0.5);
+            color: #071239ff;
+        }
+
 .main-box {
     background: #bfd9dc;
     border-radius: 25px;
