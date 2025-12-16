@@ -9,6 +9,23 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
+// Fetch Admin Details
+$adminIdentifier = $_SESSION['user_id'] ?? '';
+$adminName = 'Admin';
+$adminID = $adminIdentifier;
+
+if ($adminIdentifier) {
+    $stmtAdmin = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
+    $stmtAdmin->bind_param("s", $adminIdentifier);
+    $stmtAdmin->execute();
+    $resAdmin = $stmtAdmin->get_result();
+    if ($rowAdmin = $resAdmin->fetch_assoc()) {
+        $adminName = $rowAdmin['FirstName'];
+        $adminID = $rowAdmin['UserIdentifier'];
+    }
+    $stmtAdmin->close();
+}
+
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
@@ -439,7 +456,7 @@ h1 {
     <div class="d-flex align-items-center gap-4">
         
         <div class="dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Facility
             </a>
 
@@ -449,13 +466,21 @@ h1 {
             </ul>
         </div>
         
-        <a class="nav-link active" href="bookinglist.php">Booking</a>
+        <a class="nav-link" href="bookinglist.php">Booking</a>
         
         <a class="nav-link" href="report.php">Report</a>
 
-        <div class="d-flex align-items-center gap-1">
-            <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
-            <span class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($_SESSION['user_id'] ?? 'User'); ?></span>
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
+                <div style="line-height:1.2; text-align: left;">
+                    <div class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($adminName); ?></div>
+                    <small class="text-muted" style="font-size: 0.8rem;"><?php echo htmlspecialchars($adminID); ?></small>
+                </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item text-danger" href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+            </ul>
         </div>
     </div>
 </nav>

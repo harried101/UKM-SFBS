@@ -249,6 +249,7 @@
     <a href="#">Book Facility</a>
     <a href="#">Cancel Booking</a>
     <a href="#">Review</a>
+    <a href="../logout.php">Logout</a>
 </div>
 
 <!-- BANNER IMAGE -->
