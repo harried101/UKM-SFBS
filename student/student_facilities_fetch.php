@@ -11,7 +11,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 $search = $_GET['search'] ?? '';
 $typeFilter = $_GET['type'] ?? '';
 
-// SQL: Fetch facilities based on Name/Location/Type
+// SQL: Fetch based on Name/Location/Type
 $sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
 $params = [];
 $types_str = "";
@@ -41,24 +41,24 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        
         $photo = $row['PhotoURL'];
-
-        // Correct path for your folder structure
-        $imgSrc = (!empty($photo) && file_exists("../uploads/facilities/".$photo))
-                  ? "../uploads/facilities/".$photo
+        $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
+                  ? "../admin/uploads/".$photo
                   : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
 
         // --- STATUS LOGIC ---
         $isMaintenance = ($row['Status'] === 'Maintenance');
         $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
         $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
-
+        
         // Button Logic
         if ($isMaintenance) {
             $btnAttr = 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
             $btnText = 'Under Maintenance';
         } else {
-            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#8a0d19] text-white py-2.5 rounded-lg font-bold hover:bg-[#6d0a13] transition shadow-md hover:shadow-lg transform active:scale-95"';
+            // UPDATED TO BLUE (#0b4d9d)
+            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#0b4d9d] text-white py-2.5 rounded-lg font-bold hover:bg-[#083a75] transition shadow-md hover:shadow-lg transform active:scale-95"';
             $btnText = 'Check Availability';
         }
 
@@ -66,21 +66,21 @@ if ($result->num_rows > 0) {
         <div class="facility-card group bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
             <div class="relative h-56 overflow-hidden">
                 <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#8a0d19] shadow-sm uppercase tracking-wide border border-gray-100">
+                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#0b4d9d] shadow-sm uppercase tracking-wide border border-gray-100">
                     '.htmlspecialchars($row['Type']).'
                 </div>
             </div>
             
             <div class="p-5 flex flex-col flex-grow">
                 <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#8a0d19] transition-colors">
+                    <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#0b4d9d] transition-colors">
                         '.htmlspecialchars($row['Name']).'
                     </h3>
                 </div>
 
                 <div class="mb-4">
                     <p class="text-sm text-gray-500 flex items-center mb-2">
-                        <i class="fa-solid fa-location-dot text-[#8a0d19] w-5 text-center mr-1"></i> 
+                        <i class="fa-solid fa-location-dot text-[#0b4d9d] w-5 text-center mr-1"></i> 
                         '.htmlspecialchars($row['Location']).'
                     </p>
                     <div class="inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-semibold '.$statusClass.'">
