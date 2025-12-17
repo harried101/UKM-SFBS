@@ -187,7 +187,7 @@ function getStatusClass($status) {
                 Bookings
             </a>
             
-            <a href="manage_closures.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Closures</a>
+            <!-- Closures removed from here as requested -->
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
@@ -293,10 +293,10 @@ function getStatusClass($status) {
                         <tr><td colspan="6" class="text-center py-8 text-muted">No bookings found matching your criteria.</td></tr>
                     <?php else: ?>
                         <?php foreach ($bookings as $booking): 
-                            // User Display Logic
-                            $userDisplay = htmlspecialchars($booking['FirstName'] . ' ' . $booking['LastName']);
-                            if (empty(trim($userDisplay))) $userDisplay = htmlspecialchars($booking['UserIdentifier']);
-
+                            // User Display Logic - Prioritizes displaying the ID if name is missing or displaying both clearly
+                            $fullName = trim($booking['FirstName'] . ' ' . $booking['LastName']);
+                            $userId = $booking['UserIdentifier'];
+                            
                             // Created By Logic
                             $createdBy = !empty($booking['CreatedByAdminID']) ? '<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] border border-gray-200 ml-1">STAFF</span>' : '';
                             
@@ -308,8 +308,13 @@ function getStatusClass($status) {
                             <td class="px-4 py-3 fw-bold text-gray-700">#<?php echo $booking['BookingID']; ?></td>
                             <td class="px-4 py-3 text-[#0b4d9d] fw-bold"><?php echo htmlspecialchars($booking['FacilityName']); ?></td>
                             <td class="px-4 py-3">
-                                <div class="fw-bold text-gray-800"><?php echo $userDisplay; ?></div>
-                                <div class="text-xs text-gray-500 flex items-center"><?php echo htmlspecialchars($booking['UserIdentifier']); ?> <?php echo $createdBy; ?></div>
+                                <?php if (!empty($fullName)): ?>
+                                    <div class="fw-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
+                                <?php endif; ?>
+                                <div class="text-xs text-gray-500 flex items-center">
+                                    <span class="font-mono bg-gray-100 px-1 rounded"><?php echo htmlspecialchars($userId); ?></span> 
+                                    <?php echo $createdBy; ?>
+                                </div>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="fw-bold text-gray-700"><?php echo $start->format('d M Y'); ?></div>
@@ -325,7 +330,7 @@ function getStatusClass($status) {
                                         data-bs-toggle="modal" data-bs-target="#viewEditModal"
                                         data-id="<?php echo $booking['BookingID']; ?>"
                                         data-facility="<?php echo htmlspecialchars($booking['FacilityName']); ?>"
-                                        data-user="<?php echo $userDisplay; ?>"
+                                        data-user="<?php echo htmlspecialchars($fullName ?: $userId); ?>"
                                         data-start="<?php echo $booking['StartTime']; ?>"
                                         data-end="<?php echo $booking['EndTime']; ?>"
                                         data-status="<?php echo $booking['Status']; ?>"
