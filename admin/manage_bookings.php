@@ -294,8 +294,8 @@ function getStatusClass($status) {
                     <?php else: ?>
                         <?php foreach ($bookings as $booking): 
                             // User Display Logic - Prioritizes displaying the ID if name is missing or displaying both clearly
-                            $fullName = trim($booking['FirstName'] . ' ' . $booking['LastName']);
-                            $userId = $booking['UserIdentifier'];
+                            $fullName = trim(($booking['FirstName'] ?? '') . ' ' . ($booking['LastName'] ?? ''));
+                            $userId = $booking['UserIdentifier'] ?? 'Unknown';
                             
                             // Created By Logic
                             $createdBy = !empty($booking['CreatedByAdminID']) ? '<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] border border-gray-200 ml-1">STAFF</span>' : '';
@@ -306,7 +306,7 @@ function getStatusClass($status) {
                         ?>
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-4 py-3 fw-bold text-gray-700">#<?php echo $booking['BookingID']; ?></td>
-                            <td class="px-4 py-3 text-[#0b4d9d] fw-bold"><?php echo htmlspecialchars($booking['FacilityName']); ?></td>
+                            <td class="px-4 py-3 text-[#0b4d9d] fw-bold"><?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown Facility'); ?></td>
                             <td class="px-4 py-3">
                                 <?php if (!empty($fullName)): ?>
                                     <div class="fw-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
@@ -329,7 +329,7 @@ function getStatusClass($status) {
                                 <button class="btn btn-sm btn-outline-primary rounded-lg px-3" 
                                         data-bs-toggle="modal" data-bs-target="#viewEditModal"
                                         data-id="<?php echo $booking['BookingID']; ?>"
-                                        data-facility="<?php echo htmlspecialchars($booking['FacilityName']); ?>"
+                                        data-facility="<?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown'); ?>"
                                         data-user="<?php echo htmlspecialchars($fullName ?: $userId); ?>"
                                         data-start="<?php echo $booking['StartTime']; ?>"
                                         data-end="<?php echo $booking['EndTime']; ?>"
