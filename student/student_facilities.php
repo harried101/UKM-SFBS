@@ -1,285 +1,194 @@
 <?php
 session_start();
-
-// SECURITY CHECK: Redirect if not logged in or role is not Student
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
-    header("Location: ../index.php");
-    exit();
-}
-
 require_once '../includes/db_connect.php';
 
-// 1. Fetch Student Details (For Navbar consistency)
-$studentIdentifier = $_SESSION['user_id'] ?? '';
-$studentName = 'Student';
-$studentID = $studentIdentifier;
+$facility_id = $_GET['facility_id'] ?? '';
+$facility_name = "Facility";
 
-if ($studentIdentifier) {
-    $stmtStudent = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
-    $stmtStudent->bind_param("s", $studentIdentifier);
-    $stmtStudent->execute();
-    $resStudent = $stmtStudent->get_result();
-    if ($rowStudent = $resStudent->fetch_assoc()) {
-        $studentName = $rowStudent['FirstName'] . ' ' . $rowStudent['LastName'];
-        $studentID = $rowStudent['UserIdentifier'];
+if ($facility_id) {
+    $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
+    $stmt->bind_param("s", $facility_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $facility_name = $row['Name'];
     }
-    $stmtStudent->close();
-}
-
-// 2. Fetch Filter Options
-$typesResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status IN ('Active', 'Maintenance')");
-$types = [];
-while($t = $typesResult->fetch_assoc()) {
-    $types[] = $t['Type'];
-}
-
-if ($conn->connect_error) {
-    die("DB Connection failed: " . $conn->connect_error);
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Browse Facilities - UKM Sports Center</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<style>
-:root {
-    --primary: #0b4d9d; /* UKM Blue */
-    --bg-light: #f8f9fa;
-}
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-light);
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-h1, h2, h3 {
-    font-family: 'Playfair Display', serif;
-}
-
-/* Custom Scrollbar */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-
-/* Filter Bar */
-.filter-bar {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px -1px rgba(0,0,0,0.08);
-    margin-top: -60px;
-    margin-bottom: 40px;
-    border: 1px solid #eee;
-    position: relative;
-    z-index: 10;
-}
-
-/* Fade Animation */
-.fade-in { animation: fadeIn 0.4s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        .calendar-day:hover:not(.disabled):not(.selected) { background-color: #e0f2fe; color: #0b4d9d; cursor: pointer; transform: scale(1.05); }
+        .calendar-day.selected { background-color: #0b4d9d; color: white; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(11, 77, 157, 0.3); }
+        .calendar-day.today { border: 2px solid #0b4d9d; font-weight: bold; color: #0b4d9d; }
+        .calendar-day.disabled { color: #d1d5db; cursor: default; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-<body>
+<body class="bg-white p-4 font-sans select-none">
 
-<!-- NAVBAR -->
-<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
-            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
-        </div>
-        <div class="flex items-center gap-6">
-            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2 group">
-                <span class="p-2 rounded-full bg-gray-100 group-hover:bg-[#0b4d9d] group-hover:text-white transition shadow-sm">
-                    <i class="fa-solid fa-house"></i>
-                </span>
-                <span class="hidden md:inline">Home</span>
-            </a>
-            
-            <!-- Active State for Facilities -->
-            <a href="student_facilities.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2">
-                <span class="p-2 rounded-full bg-[#0b4d9d] text-white shadow-sm">
-                    <i class="fa-solid fa-dumbbell"></i>
-                </span>
-                Facilities
-            </a>
-            
-            <!-- Direct Link to History Tab -->
-            <a href="dashboard.php?tab=history" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">History</a>
-
-            <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($studentName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($studentID); ?></p>
-                </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
-                    <!-- Dropdown -->
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-[#0b4d9d]"><?php echo htmlspecialchars($facility_name); ?></h2>
+        <p class="text-gray-500 text-sm mt-1">Select a date to check availability</p>
     </div>
-</nav>
 
-<!-- HERO BANNER -->
-<div class="w-full h-64 md:h-80 overflow-hidden relative shadow-md group">
-    <img src="../court.jpg" alt="Sports Court" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
-        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg font-serif">Browse Facilities</h1>
-        <p class="text-lg md:text-xl opacity-90 max-w-2xl font-light leading-relaxed">
-            Find and book world-class sports facilities at UKM.
-        </p>
-    </div>
-</div>
+    <div class="max-w-xl mx-auto bg-white rounded-xl">
+        <!-- Month Navigation -->
+        <div class="flex justify-between items-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
+            <button id="prevMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#0b4d9d] transition"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+            <h3 id="monthYear" class="text-lg font-bold text-gray-800"></h3>
+            <button id="nextMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#0b4d9d] transition"><i class="fa-solid fa-chevron-right text-sm"></i></button>
+        </div>
 
-<main class="container mx-auto px-6 pb-20 flex-grow relative z-20">
-    
-    <!-- Filter Section -->
-    <div class="filter-bar max-w-5xl mx-auto">
-        <form id="searchForm" class="flex flex-col md:flex-row gap-4 items-center" onsubmit="return false;">
-            <div class="flex-grow w-full relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="searchInput" name="search" placeholder="Search facilities..." 
-                        class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] transition">
+        <!-- Calendar -->
+        <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm mb-8"></div>
+
+        <!-- Legend -->
+        <div id="legend" class="hidden flex justify-center gap-4 text-xs text-gray-500 mb-4 border-t border-gray-100 pt-4">
+            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-white border border-green-500 mr-1.5"></span> Available</div>
+            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 mr-1.5"></span> Booked</div>
+            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-[#0b4d9d] mr-1.5"></span> Selected</div>
+        </div>
+
+        <!-- Slots -->
+        <div id="timeSlotsSection" class="hidden fade-in">
+            <h4 class="font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span><i class="fa-regular fa-clock mr-2 text-[#0b4d9d]"></i> Available Slots</span>
+                <span id="selectedDateDisplay" class="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded"></span>
+            </h4>
+            <div id="slotsLoader" class="flex flex-col items-center justify-center py-8 text-gray-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-[#0b4d9d]"></i> Checking schedule...
             </div>
-            <div class="w-full md:w-56 relative">
-                <i class="fa-solid fa-layer-group absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <select id="typeSelect" name="type" class="w-full pl-10 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-[#0b4d9d] cursor-pointer">
-                    <option value="">All Categories</option>
-                    <?php foreach($types as $t): ?>
-                        <option value="<?= $t ?>"><?= $t ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+            <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
+        </div>
+
+        <!-- Form -->
+        <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
+            <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
+            <input type="hidden" name="start_time" id="hiddenStartTime">
+            <div class="flex justify-between items-center mb-4 text-sm">
+                <span class="text-gray-500">Selected Time:</span>
+                <span id="summaryTime" class="font-bold text-[#0b4d9d] text-lg">--:--</span>
             </div>
+            <button type="submit" class="w-full bg-[#0b4d9d] text-white py-3.5 rounded-xl font-bold hover:bg-[#083a75] transition shadow-lg">Confirm Booking</button>
         </form>
     </div>
 
-    <!-- Facilities Grid -->
-    <div id="facilitiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 fade-in">
-        <!-- Facilities will be loaded here via AJAX -->
-        <div class="col-span-full text-center py-12 text-gray-400">
-            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[#0b4d9d] mb-3"></i>
-            <p>Loading facilities...</p>
-        </div>
-    </div>
+    <script>
+        const facilityId = "<?php echo $facility_id; ?>";
+        let currDate = new Date();
+        let currMonth = currDate.getMonth();
+        let currYear = currDate.getFullYear();
 
-</main>
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthYear = document.getElementById('monthYear');
+        const slotsSection = document.getElementById('timeSlotsSection');
+        const slotsContainer = document.getElementById('slotsContainer');
+        const slotsLoader = document.getElementById('slotsLoader');
+        const bookingForm = document.getElementById('bookingForm');
+        const legend = document.getElementById('legend');
 
-<!-- FOOTER (More Compact & Blue) -->
-<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <!-- Logo & Address -->
-            <div class="flex items-center gap-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
-                <div class="text-xs text-gray-600 leading-snug">
-                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
-                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
-                    43600 Bangi, Selangor Darul Ehsan<br>
-                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
-                </div>
-            </div>
+        function renderCalendar(month, year) {
+            calendarGrid.innerHTML = "";
+            monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+            let firstDay = new Date(year, month, 1).getDay();
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateDiv = document.createElement('div');
+                dateDiv.innerText = day;
+                dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
+                
+                const checkDate = new Date(year, month, day);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                if (checkDate < today) {
+                    dateDiv.classList.add('disabled');
+                } else {
+                    dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
+                }
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateDiv.classList.add('today');
+                calendarGrid.appendChild(dateDiv);
+            }
+        }
+
+        function selectDate(day, month, year, element) {
+            document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            document.getElementById('selectedDateDisplay').innerText = new Date(year, month, day).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
             
-            <!-- SDG Logo & Copyright -->
-            <div class="flex items-center gap-6">
-                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
-                <p class="text-[10px] text-gray-400 text-right">
-                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
-                </p>
-            </div>
-        </div>
-    </div>
-</footer>
-
-<!-- MODAL (POPUP) CODE -->
-<div id="calendarModal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center backdrop-blur-sm">
-    <div class="bg-white rounded-xl shadow-2xl w-[95%] max-w-4xl h-[90vh] md:h-[600px] relative flex flex-col overflow-hidden animate-fade-in">
-        
-        <button onclick="closeCalendar()" class="absolute top-4 right-4 z-10 bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-
-        <div id="calendarLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-0">
-            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#0b4d9d] mb-3"></i>
-            <p class="text-gray-500 font-medium">Loading booking system...</p>
-        </div>
-
-        <iframe id="calendarFrame" class="w-full h-full border-none opacity-0 transition-opacity duration-300" src=""></iframe>
-    </div>
-</div>
-
-<script>
-    const searchInput = document.getElementById('searchInput');
-    const typeSelect = document.getElementById('typeSelect');
-    const facilitiesContainer = document.getElementById('facilitiesContainer');
-
-    function fetchFacilities() {
-        const search = encodeURIComponent(searchInput.value);
-        const type = encodeURIComponent(typeSelect.value);
-
-        fetch(`student_facilities_fetch.php?search=${search}&type=${type}`)
-            .then(res => res.text())
-            .then(html => facilitiesContainer.innerHTML = html)
-            .catch(err => console.error(err));
-    }
-
-    searchInput.addEventListener('input', () => fetchFacilities());
-    typeSelect.addEventListener('change', () => fetchFacilities());
-
-    // Initial Load
-    fetchFacilities();
-
-    // --- MODAL FUNCTIONS ---
-    function openCalendar(facilityID) {
-        const modal = document.getElementById("calendarModal");
-        const loader = document.getElementById("calendarLoader");
-        const frame = document.getElementById("calendarFrame");
-
-        if(!modal || !frame) return;
-
-        modal.classList.remove("hidden");
-        loader.classList.remove("hidden");
-        frame.classList.add("opacity-0");
-        
-        // Loads book.php
-        frame.src = "book.php?facility_id=" + encodeURIComponent(facilityID);
-
-        frame.onload = () => {
-            loader.classList.add("hidden");
-            frame.classList.remove("opacity-0");
-        };
-    }
-
-    function closeCalendar() {
-        const modal = document.getElementById("calendarModal");
-        const frame = document.getElementById("calendarFrame");
-        if(modal) {
-            modal.classList.add("hidden");
-            if(frame) frame.src = "";
+            legend.classList.remove('hidden');
+            slotsSection.classList.remove('hidden');
+            bookingForm.classList.add('hidden');
+            slotsSection.scrollIntoView({ behavior: 'smooth' });
+            fetchSlots(dateStr);
         }
-    }
 
-    document.getElementById("calendarModal").addEventListener("click", function(e) {
-        if (e.target === this) {
-            closeCalendar();
+        function fetchSlots(dateStr) {
+            slotsContainer.innerHTML = '';
+            slotsLoader.classList.remove('hidden');
+
+            fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
+                .then(res => res.json())
+                .then(data => {
+                    slotsLoader.classList.add('hidden');
+                    
+                    if (!data.success && data.is_closed) {
+                        slotsContainer.innerHTML = `<div class="col-span-full text-red-500 font-medium text-center py-4 bg-red-50 rounded-lg border border-red-100"><i class="fa-solid fa-triangle-exclamation mr-2"></i>${data.message}</div>`;
+                        return;
+                    }
+
+                    data.slots.forEach(slot => {
+                        const btn = document.createElement('button');
+                        const isBooked = slot.status === 'booked';
+                        btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                            isBooked 
+                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-75' 
+                            : 'bg-white text-green-700 border-green-200 hover:border-green-500 hover:shadow-md'
+                        }`;
+                        
+                        btn.innerHTML = `${slot.label} ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}`;
+                        
+                        if(isBooked) {
+                            btn.disabled = true;
+                            btn.setAttribute("aria-disabled", "true");
+                        } else {
+                            btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
+                        }
+                        slotsContainer.appendChild(btn);
+                    });
+                })
+                .catch(err => {
+                    slotsLoader.classList.add('hidden');
+                    slotsContainer.innerHTML = '<div class="col-span-full text-red-400 text-center text-sm">Connection Error</div>';
+                });
         }
-    });
-</script>
 
+        function selectSlot(startTime, label, dateStr, btn) {
+            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
+            btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#0b4d9d] border-[#0b4d9d] text-white shadow-md transform scale-105';
+            
+            document.getElementById('hiddenStartTime').value = `${dateStr} ${startTime}`;
+            document.getElementById('summaryTime').innerText = label;
+            bookingForm.classList.remove('hidden');
+            setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
+
+        document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
+        document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
+        renderCalendar(currMonth, currYear);
+    </script>
 </body>
 </html>
