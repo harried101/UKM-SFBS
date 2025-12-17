@@ -9,7 +9,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
-// Fetch Admin Name
+// Fetch Admin Details
 $adminName = 'Admin';
 if (isset($_SESSION['user_id'])) {
     $stmt = $conn->prepare("SELECT FirstName FROM users WHERE UserIdentifier = ?");
@@ -19,7 +19,7 @@ if (isset($_SESSION['user_id'])) {
     if ($r = $res->fetch_assoc()) $adminName = $r['FirstName'];
 }
 
-// Map Logic
+// Map Logic (Strings <-> Integers)
 $dayMap = ['Sunday'=>0, 'Monday'=>1, 'Tuesday'=>2, 'Wednesday'=>3, 'Thursday'=>4, 'Friday'=>5, 'Saturday'=>6];
 $dayMapRev = array_flip($dayMap);
 
@@ -30,7 +30,7 @@ $currentID = $_GET['id'] ?? '';
 $formTitle = "Add New Facility";
 $existingSchedules = [];
 $existingClosures = [];
-$activeTab = $_GET['tab'] ?? 'details'; // 'details' or 'closures'
+$activeTab = $_GET['tab'] ?? 'details'; 
 
 // --- 2. LOAD DATA ---
 if ($currentID) {
@@ -67,7 +67,6 @@ if ($currentID) {
         $stmtC->close();
 
     } else {
-        // ID invalid
         header("Location: addfacilities.php");
         exit();
     }
@@ -166,129 +165,175 @@ if (isset($_GET['del_closure'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manage Facility</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Facility - UKM Sports Center</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        :root { --primary: #0b4d9d; }
-        body { background: #f3f4f6; font-family: 'Inter', sans-serif; color: #333; }
+        :root {
+            --primary: #0b4d9d; /* UKM Blue */
+            --bg-light: #f8f9fa;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
         
-        .navbar-custom { background: white; border-bottom: 1px solid #e5e7eb; padding: 0.8rem 1rem; }
-        .nav-link.active { color: var(--primary) !important; font-weight: 700; }
-        
-        .main-container { max-width: 1100px; margin: 30px auto; }
-        .card-custom { background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; }
-        
-        .nav-tabs .nav-link { color: #64748b; font-weight: 600; border: none; padding: 1rem 1.5rem; }
-        .nav-tabs .nav-link.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: transparent; }
-        .nav-tabs { border-bottom: 1px solid #e5e7eb; padding-left: 1rem; }
-        
-        .form-label { font-weight: 600; font-size: 0.9rem; color: #374151; }
-        .form-control, .form-select { border-radius: 8px; border-color: #d1d5db; padding: 0.6rem; }
-        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(11, 77, 157, 0.1); }
-        
-        .btn-primary-custom { background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; }
-        .btn-primary-custom:hover { background: #093b7a; color: white; }
-        
-        .schedule-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
-        .img-preview { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-top: 10px; border: 1px solid #e5e7eb; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Form Inputs */
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #0b4d9d;
+            box-shadow: 0 0 0 1px #0b4d9d;
+        }
     </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-    <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-            <img src="../assets/img/ukm.png" height="35">
-            <span class="fw-bold text-primary">Admin Portal</span>
-        </a>
-        <div class="d-flex gap-3 align-items-center">
-            <a class="nav-link active" href="addfacilities.php">Facilities</a>
-            <a class="nav-link" href="manage_bookings.php">Bookings</a>
-            <a class="nav-link" href="book_walkin.php">Walk-in</a>
-            <div class="vr mx-2 text-muted"></div>
-            <span class="fw-bold small text-secondary"><?= htmlspecialchars($adminName) ?></span>
-            <a href="../logout.php" class="btn btn-sm btn-outline-danger ms-2"><i class="fa-solid fa-right-from-bracket"></i></a>
+<!-- NAVBAR -->
+<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
+    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
+            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2">
+                Home
+            </a>
+            
+            <!-- Active State -->
+            <a href="addfacilities.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2">
+                <span class="p-2 rounded-full bg-[#0b4d9d] text-white shadow-sm">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                </span>
+                Facilities
+            </a>
+            
+            <a href="manage_bookings.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
+            <a href="manage_closures.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Closures</a>
+
+            <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider">Administrator</p>
+                </div>
+                <div class="relative group">
+                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
+                        <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
+                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container main-container">
-    
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<!-- MAIN CONTENT -->
+<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl">
+
+    <!-- Header & Actions -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-            <h2 class="fw-bold text-dark mb-1"><?= $isUpdate ? 'Edit Facility' : 'Create Facility' ?></h2>
-            <p class="text-muted small mb-0"><?= $isUpdate ? 'Manage details, schedule, and closures.' : 'Add a new sports facility to the system.' ?></p>
+            <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1"><?php echo $formTitle; ?></h1>
+            <p class="text-gray-500">Manage facility details, operating hours, and closures.</p>
         </div>
+        
         <?php if($isUpdate): ?>
-            <a href="addfacilities.php" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-plus me-1"></i> Add New</a>
+            <a href="addfacilities.php" class="bg-white border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium">
+                <i class="fa-solid fa-plus mr-2"></i> Add New
+            </a>
         <?php endif; ?>
     </div>
 
-    <!-- Search Bar -->
-    <div class="card-custom p-3 mb-4">
-        <form method="POST" class="row g-2 align-items-center">
-            <div class="col-auto fw-bold text-secondary">Find ID:</div>
-            <div class="col-auto"><input type="number" name="search_id" class="form-control form-control-sm" placeholder="e.g. 12" style="width: 100px;"></div>
-            <div class="col-auto"><button type="submit" class="btn btn-dark btn-sm">Go</button></div>
+    <!-- Search Box -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-8 flex items-center gap-4">
+        <span class="font-bold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-2 text-[#0b4d9d]"></i> Edit Facility ID:</span>
+        <form method="POST" class="flex flex-grow gap-2">
+            <input type="number" name="search_id" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. 12" required>
+            <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition text-sm font-bold">Load</button>
         </form>
     </div>
 
-    <!-- Main Card -->
-    <div class="card-custom">
+    <!-- MAIN FORM CARD -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         
         <!-- Tabs -->
-        <ul class="nav nav-tabs" id="myTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link <?= $activeTab === 'details' ? 'active' : '' ?>" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button">Details & Schedule</button>
-            </li>
-            <?php if ($isUpdate): ?>
-            <li class="nav-item">
-                <button class="nav-link <?= $activeTab === 'closures' ? 'active' : '' ?>" id="closures-tab" data-bs-toggle="tab" data-bs-target="#closures" type="button">Closures <span class="badge bg-secondary rounded-pill ms-1"><?= count($existingClosures) ?></span></button>
-            </li>
+        <div class="flex border-b border-gray-200 px-6 pt-4 bg-gray-50">
+            <button onclick="switchTab('details')" id="tab-details" class="pb-4 px-4 text-sm font-bold border-b-2 border-[#0b4d9d] text-[#0b4d9d] transition">
+                Details & Schedule
+            </button>
+            <?php if($isUpdate): ?>
+            <button onclick="switchTab('closures')" id="tab-closures" class="pb-4 px-4 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition">
+                Closures <span class="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs ml-1"><?php echo count($existingClosures); ?></span>
+            </button>
             <?php endif; ?>
-        </ul>
+        </div>
 
-        <div class="tab-content p-4">
+        <div class="p-8">
             
             <!-- TAB 1: DETAILS & SCHEDULE -->
-            <div class="tab-pane fade <?= $activeTab === 'details' ? 'show active' : '' ?>" id="details">
+            <div id="view-details" class="fade-in">
                 <form method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="save_facility" value="1">
-                    <?php if($isUpdate): ?><input type="hidden" name="FacilityIDHidden" value="<?= $facilityData['FacilityID'] ?>"><?php endif; ?>
+                    <?php if($isUpdate): ?><input type="hidden" name="FacilityIDHidden" value="<?php echo $facilityData['FacilityID']; ?>"><?php endif; ?>
 
-                    <div class="row g-5">
-                        <!-- Left: Info -->
-                        <div class="col-md-6">
-                            <h5 class="fw-bold mb-3 text-primary"><i class="fa-regular fa-id-card me-2"></i>General Info</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        
+                        <!-- LEFT: DETAILS -->
+                        <div class="space-y-5">
+                            <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">General Information</h3>
                             
-                            <div class="mb-3">
-                                <label class="form-label">Facility Name</label>
-                                <input type="text" name="Name" class="form-control" value="<?= htmlspecialchars($facilityData['Name'] ?? '') ?>" required>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea name="Description" class="form-control" rows="3"><?= htmlspecialchars($facilityData['Description'] ?? '') ?></textarea>
+                            <?php if($isUpdate): ?>
+                                <div class="bg-blue-50 text-[#0b4d9d] px-4 py-2 rounded text-sm border border-blue-100">
+                                    Editing Facility ID: <strong><?php echo $facilityData['FacilityID']; ?></strong>
+                                </div>
+                            <?php else: ?>
+                                <div class="bg-gray-50 text-gray-500 px-4 py-2 rounded text-sm border border-gray-200">
+                                    Facility ID will be auto-generated.
+                                </div>
+                            <?php endif; ?>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+                                <input type="text" name="Name" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm" value="<?php echo htmlspecialchars($facilityData['Name'] ?? ''); ?>" required>
                             </div>
 
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" name="Location" class="form-control" value="<?= htmlspecialchars($facilityData['Location'] ?? '') ?>">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                                <textarea name="Description" rows="3" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm" required><?php echo htmlspecialchars($facilityData['Description'] ?? ''); ?></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Location</label>
+                                    <input type="text" name="Location" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm" value="<?php echo htmlspecialchars($facilityData['Location'] ?? ''); ?>">
                                 </div>
-                                <div class="col-6 mb-3">
-                                    <label class="form-label">Type</label>
-                                    <input type="text" name="Type" class="form-control" value="<?= htmlspecialchars($facilityData['Type'] ?? '') ?>" placeholder="e.g. Court">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Type</label>
+                                    <input type="text" name="Type" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm" value="<?php echo htmlspecialchars($facilityData['Type'] ?? ''); ?>" placeholder="e.g. Court">
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select name="Status" class="form-select">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                                <select name="Status" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
                                     <?php 
                                     $st = $facilityData['Status'] ?? 'Active';
                                     foreach(['Active','Maintenance','Archived'] as $opt) echo "<option value='$opt' ".($st==$opt?'selected':'').">$opt</option>";
@@ -296,35 +341,48 @@ if (isset($_GET['del_closure'])) {
                                 </select>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Photo</label>
-                                <input type="file" name="PhotoURL" class="form-control" accept="image/*" id="photoInput">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Photo</label>
+                                <input type="file" name="PhotoURL" id="photoInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-[#0b4d9d] hover:file:bg-blue-100">
                                 <?php if(!empty($facilityData['PhotoURL'])): ?>
-                                    <img src="../admin/uploads/<?= htmlspecialchars($facilityData['PhotoURL']) ?>" id="photoPreview" class="img-preview">
+                                    <img src="../admin/uploads/<?php echo $facilityData['PhotoURL']; ?>" id="photoPreview" class="mt-3 rounded-lg border border-gray-200 h-32 w-full object-cover">
+                                <?php else: ?>
+                                    <img id="photoPreview" class="hidden mt-3 rounded-lg border border-gray-200 h-32 w-full object-cover">
                                 <?php endif; ?>
                             </div>
                         </div>
 
-                        <!-- Right: Schedule -->
-                        <div class="col-md-6">
-                            <h5 class="fw-bold mb-3 text-primary"><i class="fa-regular fa-clock me-2"></i>Weekly Schedule</h5>
-                            <div class="vstack gap-2">
+                        <!-- RIGHT: SCHEDULE -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">Weekly Schedule</h3>
+                            <p class="text-xs text-gray-400">Toggle days to set operating hours.</p>
+
+                            <div class="space-y-3">
                                 <?php 
                                 $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
                                 foreach($days as $day):
                                     $dData = $existingSchedules[$day] ?? ['OpenTime'=>'08:00', 'CloseTime'=>'22:00', 'SlotDuration'=>60];
                                     $checked = isset($existingSchedules[$day]) ? 'checked' : '';
-                                    $display = isset($existingSchedules[$day]) ? 'flex' : 'none';
+                                    $display = isset($existingSchedules[$day]) ? 'grid' : 'none';
                                 ?>
-                                <div class="schedule-row">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input sched-toggle" type="checkbox" name="available_days[]" value="<?= $day ?>" id="chk_<?= $day ?>" <?= $checked ?>>
-                                        <label class="form-check-label fw-bold small" for="chk_<?= $day ?>"><?= $day ?></label>
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <input type="checkbox" name="available_days[]" value="<?php echo $day; ?>" id="chk_<?php echo $day; ?>" class="sched-toggle w-4 h-4 text-[#0b4d9d] rounded focus:ring-[#0b4d9d]" <?php echo $checked; ?>>
+                                        <label for="chk_<?php echo $day; ?>" class="text-sm font-bold text-gray-700 cursor-pointer"><?php echo $day; ?></label>
                                     </div>
-                                    <div class="row g-2 mt-1 inputs-<?= $day ?>" style="display:<?= $display ?>">
-                                        <div class="col-4"><input type="time" class="form-control form-control-sm" name="start_time[<?= $day ?>]" value="<?= substr($dData['OpenTime'],0,5) ?>"></div>
-                                        <div class="col-4"><input type="time" class="form-control form-control-sm" name="end_time[<?= $day ?>]" value="<?= substr($dData['CloseTime'],0,5) ?>"></div>
-                                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="slot_duration[<?= $day ?>]" value="<?= $dData['SlotDuration'] ?>" step="15" placeholder="Mins"></div>
+                                    <div class="grid-cols-3 gap-2 inputs-<?php echo $day; ?>" style="display: <?php echo $display; ?>;">
+                                        <div>
+                                            <span class="text-[10px] text-gray-400 uppercase">Open</span>
+                                            <input type="time" name="start_time[<?php echo $day; ?>]" value="<?php echo substr($dData['OpenTime'],0,5); ?>" class="w-full p-1.5 border rounded text-xs">
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] text-gray-400 uppercase">Close</span>
+                                            <input type="time" name="end_time[<?php echo $day; ?>]" value="<?php echo substr($dData['CloseTime'],0,5); ?>" class="w-full p-1.5 border rounded text-xs">
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] text-gray-400 uppercase">Duration</span>
+                                            <input type="number" name="slot_duration[<?php echo $day; ?>]" value="<?php echo $dData['SlotDuration']; ?>" step="15" class="w-full p-1.5 border rounded text-xs">
+                                        </div>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
@@ -332,64 +390,63 @@ if (isset($_GET['del_closure'])) {
                         </div>
                     </div>
 
-                    <div class="text-end mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-primary-custom"><?= $isUpdate ? 'Save Changes' : 'Create Facility' ?></button>
+                    <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                        <button type="submit" class="bg-[#0b4d9d] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#083a75] transition shadow-lg shadow-blue-900/20">
+                            <?php echo $isUpdate ? 'Save Changes' : 'Create Facility'; ?>
+                        </button>
                     </div>
                 </form>
             </div>
 
-            <!-- TAB 2: CLOSURES (Only if Update) -->
+            <!-- TAB 2: CLOSURES -->
             <?php if ($isUpdate): ?>
-            <div class="tab-pane fade <?= $activeTab === 'closures' ? 'show active' : '' ?>" id="closures">
-                
-                <!-- Add Closure Form -->
-                <div class="bg-light p-4 rounded-3 border mb-4">
-                    <h6 class="fw-bold mb-3">Add New Closure</h6>
-                    <form method="POST" class="row g-3">
+            <div id="view-closures" class="hidden fade-in">
+                <!-- Add Closure -->
+                <div class="bg-red-50 border border-red-100 rounded-lg p-5 mb-6">
+                    <h4 class="text-red-800 font-bold text-sm mb-3">Add New Closure Block</h4>
+                    <form method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <input type="hidden" name="add_closure" value="1">
-                        <input type="hidden" name="facility_id" value="<?= $currentID ?>">
+                        <input type="hidden" name="facility_id" value="<?php echo $currentID; ?>">
                         
-                        <div class="col-md-3">
-                            <label class="small text-muted">Start Date</label>
-                            <input type="date" name="start_date" class="form-control form-control-sm" required>
+                        <div>
+                            <label class="block text-xs font-bold text-red-600 mb-1">Start Date</label>
+                            <input type="date" name="start_date" class="w-full p-2 border border-red-200 rounded text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="small text-muted">End Date</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm" required>
+                        <div>
+                            <label class="block text-xs font-bold text-red-600 mb-1">End Date</label>
+                            <input type="date" name="end_date" class="w-full p-2 border border-red-200 rounded text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500" required>
                         </div>
-                        <div class="col-md-4">
-                            <label class="small text-muted">Reason</label>
-                            <input type="text" name="reason" class="form-control form-control-sm" placeholder="e.g. Maintenance" required>
+                        <div>
+                            <label class="block text-xs font-bold text-red-600 mb-1">Reason</label>
+                            <input type="text" name="reason" placeholder="e.g. Maintenance" class="w-full p-2 border border-red-200 rounded text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500" required>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button class="btn btn-dark btn-sm w-100">Add Block</button>
-                        </div>
+                        <button class="bg-red-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-red-700 transition">Block</button>
                     </form>
                 </div>
 
-                <!-- Closure List -->
-                <div class="table-responsive">
-                    <table class="table table-hover border">
-                        <thead class="table-light">
+                <!-- List -->
+                <div class="overflow-hidden border border-gray-200 rounded-lg">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs">
                             <tr>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Reason</th>
-                                <th class="text-end">Action</th>
+                                <th class="p-3">Start Date</th>
+                                <th class="p-3">End Date</th>
+                                <th class="p-3">Reason</th>
+                                <th class="p-3 text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-100">
                             <?php if(empty($existingClosures)): ?>
-                                <tr><td colspan="4" class="text-center text-muted py-4">No closures scheduled.</td></tr>
+                                <tr><td colspan="4" class="p-4 text-center text-gray-400">No active closures.</td></tr>
                             <?php else: ?>
                                 <?php foreach($existingClosures as $c): ?>
                                 <tr>
-                                    <td><?= date('d M Y', strtotime($c['StartTime'])) ?></td>
-                                    <td><?= date('d M Y', strtotime($c['EndTime'])) ?></td>
-                                    <td><?= htmlspecialchars($c['Reason']) ?></td>
-                                    <td class="text-end">
-                                        <a href="?id=<?= $currentID ?>&del_closure=<?= $c['OverrideID'] ?>" 
-                                           class="btn btn-sm btn-outline-danger" 
+                                    <td class="p-3 text-gray-800 font-medium"><?php echo date('d M Y', strtotime($c['StartTime'])); ?></td>
+                                    <td class="p-3 text-gray-800 font-medium"><?php echo date('d M Y', strtotime($c['EndTime'])); ?></td>
+                                    <td class="p-3 text-gray-600"><?php echo htmlspecialchars($c['Reason']); ?></td>
+                                    <td class="p-3 text-right">
+                                        <a href="?id=<?php echo $currentID; ?>&tab=closures&del_closure=<?php echo $c['OverrideID']; ?>" 
+                                           class="text-red-500 hover:text-red-700 font-bold text-xs" 
                                            onclick="return confirm('Remove this closure?')">Remove</a>
                                     </td>
                                 </tr>
@@ -403,23 +460,83 @@ if (isset($_GET['del_closure'])) {
 
         </div>
     </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- FOOTER -->
+<footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-5">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-14 w-auto">
+                <div class="text-sm text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-1 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-16 w-auto opacity-90">
+                <p class="text-xs text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
 <script>
-// Toggle Schedule Inputs
+// --- TAB SWITCHING ---
+<?php if($isUpdate): ?>
+    const tabDetails = document.getElementById('tab-details');
+    const tabClosures = document.getElementById('tab-closures');
+    const viewDetails = document.getElementById('view-details');
+    const viewClosures = document.getElementById('view-closures');
+
+    function showTab(tab) {
+        if(tab === 'details') {
+            tabDetails.classList.add('text-[#0b4d9d]', 'border-[#0b4d9d]');
+            tabDetails.classList.remove('text-gray-500', 'border-transparent');
+            tabClosures.classList.remove('text-[#0b4d9d]', 'border-[#0b4d9d]');
+            tabClosures.classList.add('text-gray-500', 'border-transparent');
+            viewDetails.classList.remove('hidden');
+            viewClosures.classList.add('hidden');
+        } else {
+            tabClosures.classList.add('text-[#0b4d9d]', 'border-[#0b4d9d]');
+            tabClosures.classList.remove('text-gray-500', 'border-transparent');
+            tabDetails.classList.remove('text-[#0b4d9d]', 'border-[#0b4d9d]');
+            tabDetails.classList.add('text-gray-500', 'border-transparent');
+            viewClosures.classList.remove('hidden');
+            viewDetails.classList.add('hidden');
+        }
+    }
+
+    tabDetails.addEventListener('click', () => showTab('details'));
+    tabClosures.addEventListener('click', () => showTab('closures'));
+
+    // Check PHP active tab
+    <?php if($activeTab === 'closures'): ?>
+        showTab('closures');
+    <?php endif; ?>
+<?php endif; ?>
+
+// --- TOGGLE SCHEDULE INPUTS ---
 document.querySelectorAll('.sched-toggle').forEach(t => {
     t.addEventListener('change', function() {
         const row = document.querySelector(`.inputs-${this.value}`);
-        row.style.display = this.checked ? 'flex' : 'none';
+        row.style.display = this.checked ? 'grid' : 'none';
         row.querySelectorAll('input').forEach(i => i.disabled = !this.checked);
     });
     // Init state
     const row = document.querySelector(`.inputs-${t.value}`);
-    row.querySelectorAll('input').forEach(i => i.disabled = !t.checked);
+    if(row) {
+        row.style.display = t.checked ? 'grid' : 'none';
+        row.querySelectorAll('input').forEach(i => i.disabled = !t.checked);
+    }
 });
 
-// Photo Preview
+// --- PHOTO PREVIEW ---
 const pi = document.getElementById('photoInput');
 if(pi) {
     pi.addEventListener('change', function() {
@@ -427,11 +544,15 @@ if(pi) {
         if(f) {
             const r = new FileReader();
             r.onload = (e) => {
-                const img = document.getElementById('photoPreview') || document.createElement('img');
-                img.id = 'photoPreview';
-                img.className = 'img-preview';
+                let img = document.getElementById('photoPreview');
+                if(!img) {
+                    img = document.createElement('img');
+                    img.id = 'photoPreview';
+                    img.className = 'mt-3 rounded-lg border border-gray-200 h-32 w-full object-cover';
+                    pi.parentNode.appendChild(img);
+                }
                 img.src = e.target.result;
-                if(!document.getElementById('photoPreview')) pi.parentNode.appendChild(img);
+                img.classList.remove('hidden');
             }
             r.readAsDataURL(f);
         }
