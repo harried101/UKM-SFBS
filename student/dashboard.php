@@ -115,12 +115,12 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 <body>
 
 <!-- NAVBAR -->
-<nav class="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-14 w-auto">
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
             <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-14 w-auto hidden sm:block">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
             <a href="dashboard.php" class="text-[#8a0d19] font-medium transition flex items-center gap-2 group">
@@ -151,17 +151,28 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     </div>
 </nav>
 
-<!-- HERO BANNER -->
-<div class="w-full h-72 md:h-80 overflow-hidden relative shadow-md">
-    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10 z-10"></div>
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover">
-    <div class="absolute inset-0 z-20 flex flex-col items-center justify-center text-white text-center px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 drop-shadow-lg tracking-tight font-serif">Welcome, <?php echo htmlspecialchars($studentName); ?></h1>
-        <p class="text-lg opacity-90 font-light max-w-2xl">Manage your sports bookings and track your activity history all in one place.</p>
+<!-- HERO BANNER (Image Only) -->
+<div class="w-full h-64 md:h-72 overflow-hidden relative shadow-md group">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+</div>
+
+<!-- WELCOME SECTION (Overlapping Card) -->
+<div class="container mx-auto px-6 -mt-12 relative z-20 mb-10">
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-gray-100">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 font-serif mb-2">
+                Welcome back, <span class="text-[#8a0d19]"><?php echo htmlspecialchars($studentName); ?></span>
+            </h1>
+            <p class="text-gray-500">Ready to stay active? Check your schedule below or book a new facility.</p>
+        </div>
+        <a href="student_facilities.php" class="bg-[#8a0d19] text-white px-8 py-3 rounded-lg shadow-md hover:bg-[#6d0a13] transition font-medium whitespace-nowrap flex items-center gap-2 transform hover:-translate-y-0.5">
+            <i class="fa-solid fa-plus-circle"></i> Book New Facility
+        </a>
     </div>
 </div>
 
-<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl -mt-16 relative z-30">
+<main class="container mx-auto px-6 pb-12 flex-grow max-w-6xl relative z-30">
 
     <!-- DASHBOARD CARD -->
     <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-h-[500px]">
@@ -174,10 +185,6 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
             <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-4 px-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                 History <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-xs"><?php echo count($history); ?></span>
             </button>
-            <div class="flex-grow"></div>
-            <a href="student_facilities.php" class="text-sm font-bold text-[#8a0d19] hover:bg-red-50 px-4 py-2 rounded-lg transition mb-2">
-                <i class="fa-solid fa-plus mr-1"></i> Book Facility
-            </a>
         </div>
 
         <!-- TAB CONTENT: UPCOMING -->
@@ -327,7 +334,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
                 <div class="text-xs text-gray-500 uppercase font-semibold">Staff Members</div>
             </div>
         </div>
-        <!-- Stat 3 (New) -->
+        <!-- Stat 3 -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition">
             <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-700 text-xl">
                 <i class="fa-solid fa-clock-rotate-left"></i>
@@ -359,24 +366,35 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 </main>
 
 <!-- FOOTER -->
-<footer class="bg-white border-t border-gray-200 py-10 mt-auto">
+<footer class="bg-white border-t border-gray-200 py-12 mt-auto">
     <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-            <div class="flex items-start gap-4 max-w-md">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-16 w-auto">
-                <div class="text-sm text-gray-600 leading-relaxed">
-                    <strong class="block text-gray-900 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
-                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
-                    43600 Bangi, Selangor Darul Ehsan<br>
-                    <span class="mt-1 block"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+        <div class="flex flex-col md:flex-row justify-between items-start gap-10">
+            <!-- Left: Logos & Info -->
+            <div class="flex flex-col gap-6 max-w-lg">
+                <div class="flex items-center gap-4">
+                    <img src="../assets/img/ukm.png" alt="UKM" class="h-14 w-auto">
+                    <div class="h-10 w-px bg-gray-200"></div>
+                    <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan" class="h-14 w-auto">
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-gray-900 font-bold tracking-wide text-sm uppercase">Pejabat Pengarah Pusat Sukan</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                        43600 Bangi, Selangor Darul Ehsan
+                    </p>
+                    <p class="text-[#8a0d19] font-medium text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-phone"></i> 03-8921-5306
+                    </p>
                 </div>
             </div>
-            <div>
-                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-20 w-auto opacity-90">
+
+            <!-- Right: SDG & Copyright -->
+            <div class="flex flex-col items-start md:items-end gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-20 w-auto opacity-80 grayscale hover:grayscale-0 transition duration-500">
+                <p class="text-xs text-gray-400">
+                    &copy; 2025 Universiti Kebangsaan Malaysia. All rights reserved.
+                </p>
             </div>
-        </div>
-        <div class="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-500">
-            &copy; 2025 Universiti Kebangsaan Malaysia. All rights reserved.
         </div>
     </div>
 </footer>
