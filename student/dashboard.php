@@ -154,7 +154,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 <!-- HERO BANNER (Image Only) -->
 <div class="w-full h-64 md:h-72 overflow-hidden relative shadow-md group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-100">
     <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 </div>
 
