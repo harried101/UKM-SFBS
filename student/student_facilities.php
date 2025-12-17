@@ -189,7 +189,8 @@ h1, h2, h3 {
                 <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
                 <div class="text-xs text-gray-600 leading-snug">
                     <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
-                    Stadium Universiti, UKM, 43600 Bangi<br>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
                     <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
                 </div>
             </div>
