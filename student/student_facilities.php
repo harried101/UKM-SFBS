@@ -9,7 +9,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
-// 1. Fetch Student Details (For Navbar)
+// 1. Fetch Student Details (For Navbar consistency)
 $studentIdentifier = $_SESSION['user_id'] ?? '';
 $studentName = 'Student';
 $studentID = $studentIdentifier;
@@ -65,60 +65,10 @@ body {
 h1, h2, h3 {
     font-family: 'Playfair Display', serif;
 }
-/* Hero Section */
-.hero-section {
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('../court.jpg');
-    background-size: cover;
-    background-position: center;
-    color: white;
-    padding: 80px 0;
-    margin-bottom: 40px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border-radius: 0 0 30px 30px;
-}
-/* Card Styling */
-.facility-card {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05),0 8px 10px -6px rgba(0,0,0,0.01);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid rgba(0,0,0,0.05);
-}
-.facility-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);
-    border-color: rgba(138,13,25,0.2);
-}
-.card-img-container {
-    position: relative;
-    height: 220px;
-    overflow: hidden;
-}
-.card-img-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-}
-.facility-card:hover .card-img-container img {
-    transform: scale(1.05);
-}
-.facility-type-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255,255,255,0.95);
-    color: var(--primary);
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
+
+/* Custom Scrollbar */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 /* Filter Bar */
 .filter-bar {
     background: white;
@@ -131,6 +81,7 @@ h1, h2, h3 {
     position: relative;
     z-index: 10;
 }
+
 /* Fade Animation */
 .fade-in { animation: fadeIn 0.4s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -153,8 +104,16 @@ h1, h2, h3 {
                 </span>
                 <span class="hidden md:inline">Home</span>
             </a>
+            
             <!-- Active State for Facilities -->
-            <a href="student_facilities.php" class="text-[#8a0d19] font-medium transition">Facilities</a>
+            <a href="student_facilities.php" class="text-[#8a0d19] font-bold transition flex items-center gap-2">
+                <span class="p-2 rounded-full bg-[#8a0d19] text-white shadow-sm">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </span>
+                Facilities
+            </a>
+            
+            <!-- Link triggers history tab on dashboard -->
             <a href="dashboard.php" class="text-gray-600 hover:text-[#8a0d19] font-medium transition">History</a>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
@@ -176,17 +135,21 @@ h1, h2, h3 {
     </div>
 </nav>
 
-<div class="hero-section text-center">
-    <div class="container mx-auto px-6">
-        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg">UKM Sport Facility Booking</h1>
-        <p class="text-lg md:text-xl opacity-90 max-w-2xl mx-auto font-light leading-relaxed">
-            Seamless booking. Active living.
+<!-- HERO BANNER -->
+<div class="w-full h-64 md:h-80 overflow-hidden relative shadow-md group">
+    <img src="../court.jpg" alt="Sports Court" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg font-serif">Browse Facilities</h1>
+        <p class="text-lg md:text-xl opacity-90 max-w-2xl font-light leading-relaxed">
+            Find and book world-class sports facilities at UKM.
         </p>
     </div>
 </div>
 
-<main class="container mx-auto px-6 pb-20 flex-grow">
+<main class="container mx-auto px-6 pb-20 flex-grow relative z-20">
     
+    <!-- Filter Section -->
     <div class="filter-bar max-w-5xl mx-auto">
         <form id="searchForm" class="flex flex-col md:flex-row gap-4 items-center" onsubmit="return false;">
             <div class="flex-grow w-full relative">
@@ -199,4 +162,124 @@ h1, h2, h3 {
                 <select id="typeSelect" name="type" class="w-full pl-10 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-[#8a0d19] cursor-pointer">
                     <option value="">All Categories</option>
                     <?php foreach($types as $t): ?>
-                        <option value="<?= $t ?>"><?= $t ?></
+                        <option value="<?= $t ?>"><?= $t ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+            </div>
+        </form>
+    </div>
+
+    <!-- Facilities Grid -->
+    <div id="facilitiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 fade-in">
+        <!-- Facilities will be loaded here via AJAX -->
+        <div class="col-span-full text-center py-12 text-gray-400">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[#8a0d19] mb-3"></i>
+            <p>Loading facilities...</p>
+        </div>
+    </div>
+
+</main>
+
+<!-- FOOTER (Matches Dashboard Theme) -->
+<footer class="bg-white border-t border-gray-200 py-10 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <!-- Logo & Address -->
+            <div class="flex items-start gap-4 max-w-md">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-16 w-auto">
+                <div class="text-sm text-gray-600 leading-relaxed">
+                    <strong class="block text-gray-900 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-1 block"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            <!-- SDG Logo -->
+            <div>
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-20 w-auto opacity-90">
+            </div>
+        </div>
+        <div class="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-500">
+            &copy; 2025 Universiti Kebangsaan Malaysia. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- MODAL (POPUP) CODE - CRITICAL FOR FUNCTIONALITY -->
+<div id="calendarModal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-[95%] max-w-4xl h-[90vh] md:h-[600px] relative flex flex-col overflow-hidden animate-fade-in">
+        
+        <button onclick="closeCalendar()" class="absolute top-4 right-4 z-10 bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div id="calendarLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-0">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#8a0d19] mb-3"></i>
+            <p class="text-gray-500 font-medium">Loading booking system...</p>
+        </div>
+
+        <iframe id="calendarFrame" class="w-full h-full border-none opacity-0 transition-opacity duration-300" src=""></iframe>
+    </div>
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const typeSelect = document.getElementById('typeSelect');
+    const facilitiesContainer = document.getElementById('facilitiesContainer');
+
+    function fetchFacilities() {
+        const search = encodeURIComponent(searchInput.value);
+        const type = encodeURIComponent(typeSelect.value);
+
+        fetch(`student_facilities_fetch.php?search=${search}&type=${type}`)
+            .then(res => res.text())
+            .then(html => facilitiesContainer.innerHTML = html)
+            .catch(err => console.error(err));
+    }
+
+    searchInput.addEventListener('input', () => fetchFacilities());
+    typeSelect.addEventListener('change', () => fetchFacilities());
+
+    // Initial Load
+    fetchFacilities();
+
+    // --- MODAL FUNCTIONS ---
+    function openCalendar(facilityID) {
+        const modal = document.getElementById("calendarModal");
+        const loader = document.getElementById("calendarLoader");
+        const frame = document.getElementById("calendarFrame");
+
+        if(!modal || !frame) return;
+
+        modal.classList.remove("hidden");
+        loader.classList.remove("hidden");
+        frame.classList.add("opacity-0");
+        
+        // Loads book.php
+        frame.src = "book.php?facility_id=" + encodeURIComponent(facilityID);
+
+        frame.onload = () => {
+            loader.classList.add("hidden");
+            frame.classList.remove("opacity-0");
+        };
+    }
+
+    function closeCalendar() {
+        const modal = document.getElementById("calendarModal");
+        const frame = document.getElementById("calendarFrame");
+        if(modal) {
+            modal.classList.add("hidden");
+            if(frame) frame.src = "";
+        }
+    }
+
+    document.getElementById("calendarModal").addEventListener("click", function(e) {
+        if (e.target === this) {
+            closeCalendar();
+        }
+    });
+</script>
+
+</body>
+</html>
