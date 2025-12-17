@@ -57,7 +57,7 @@ if ($result->num_rows > 0) {
             $btnAttr = 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
             $btnText = 'Under Maintenance';
         } else {
-            // UPDATED TO BLUE (#0b4d9d)
+            // UPDATED TO UKM BLUE (#0b4d9d)
             $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#0b4d9d] text-white py-2.5 rounded-lg font-bold hover:bg-[#083a75] transition shadow-md hover:shadow-lg transform active:scale-95"';
             $btnText = 'Check Availability';
         }
