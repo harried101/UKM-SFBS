@@ -76,11 +76,43 @@ if ($currentID) {
 // --- 3. PROCESS ACTIONS ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // SEARCH
-    if (isset($_POST['search_id'])) {
-        $sid = intval($_POST['search_id']);
-        if ($sid > 0) header("Location: addfacilities.php?id=$sid");
-        exit();
+    // SEARCH (BY ID OR NAME)
+    if (isset($_POST['search_term'])) {
+        $term = trim($_POST['search_term']);
+        $targetID = 0;
+
+        // 1. Try exact ID match if numeric
+        if (is_numeric($term)) {
+            $stmt = $conn->prepare("SELECT FacilityID FROM facilities WHERE FacilityID = ?");
+            $idInt = intval($term);
+            $stmt->bind_param("i", $idInt);
+            $stmt->execute();
+            if ($stmt->get_result()->num_rows > 0) {
+                $targetID = $idInt;
+            }
+            $stmt->close();
+        }
+
+        // 2. If not found, try Name search (Partial match)
+        if ($targetID === 0) {
+            $stmt = $conn->prepare("SELECT FacilityID FROM facilities WHERE Name LIKE ? LIMIT 1");
+            $likeTerm = "%" . $term . "%";
+            $stmt->bind_param("s", $likeTerm);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $targetID = $row['FacilityID'];
+            }
+            $stmt->close();
+        }
+
+        if ($targetID > 0) {
+            header("Location: addfacilities.php?id=$targetID");
+            exit();
+        } else {
+            echo "<script>alert('Facility not found!'); window.location='addfacilities.php';</script>";
+            exit();
+        }
     }
 
     // SAVE FACILITY DETAILS & SCHEDULE
@@ -264,9 +296,9 @@ if (isset($_GET['del_closure'])) {
 
     <!-- Search Box -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-8 flex items-center gap-4">
-        <span class="font-bold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-2 text-[#0b4d9d]"></i> Edit Facility ID:</span>
+        <span class="font-bold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-2 text-[#0b4d9d]"></i> Find Facility:</span>
         <form method="POST" class="flex flex-grow gap-2">
-            <input type="number" name="search_id" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. 12" required>
+            <input type="text" name="search_term" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter Facility ID (e.g. 12) or Name (e.g. Badminton)" required>
             <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition text-sm font-bold">Load</button>
         </form>
     </div>
