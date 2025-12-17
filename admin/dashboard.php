@@ -62,7 +62,7 @@ if ($conn->connect_error) {
 
 <style>
 :root {
-    --primary: #0b4d9d;
+    --primary: #0b4d9d; /* UKM Blue */
     --bg-light: #f8f9fa;
 }
 body {
@@ -80,7 +80,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 </head>
 <body>
 
-<!-- NAVBAR -->
+<!-- NAVBAR (Standard Admin) -->
 <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -89,24 +89,22 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <!-- Active Home -->
+            <!-- Active Home (No Icon) -->
             <a href="dashboard.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2 group">
-                <span class="p-2 rounded-full bg-[#0b4d9d] text-white transition shadow-sm">
-                    <i class="fa-solid fa-house"></i>
-                </span>
-                <span class="hidden md:inline">Dashboard</span>
+                Home
             </a>
             
             <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
-            <a href="manage_bookings.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
+            <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider">Administrator</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
                 </div>
                 <div class="relative group">
                     <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
                         <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
                             <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
@@ -118,38 +116,32 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     </div>
 </nav>
 
-<!-- HERO BANNER -->
-<div class="w-full h-64 md:h-72 overflow-hidden relative shadow-md group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-</div>
-
-<!-- WELCOME CARD -->
-<div class="container mx-auto px-6 -mt-12 relative z-20 mb-10">
-    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-gray-100">
+<!-- WELCOME HEADER (No Banner Image) -->
+<div class="bg-white border-b border-gray-200 py-10 shadow-sm">
+    <div class="container mx-auto px-6 max-w-6xl flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 font-serif mb-2">
-                Hello, <span class="text-[#0b4d9d]"><?php echo htmlspecialchars($adminName); ?></span>
+            <h1 class="text-3xl md:text-4xl font-bold text-[#0b4d9d] font-serif mb-2">
+                Welcome, <?php echo htmlspecialchars($adminName); ?>
             </h1>
-            <p class="text-gray-500">Here's what's happening at the Sports Center today.</p>
+            <p class="text-gray-500">Overview of facility operations and booking status.</p>
         </div>
         <div class="flex gap-3">
-             <a href="book_walkin.php" class="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2">
+             <a href="book_walkin.php" class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2 text-sm">
                 <i class="fa-solid fa-user-pen"></i> Walk-in
             </a>
-            <a href="manage_bookings.php" class="bg-[#0b4d9d] text-white px-6 py-3 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2">
+            <a href="bookinglist.php" class="bg-[#0b4d9d] text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2 text-sm">
                 <i class="fa-solid fa-list-check"></i> Manage Requests
             </a>
         </div>
     </div>
 </div>
 
-<main class="container mx-auto px-6 pb-12 flex-grow max-w-6xl relative z-30 fade-in">
+<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl fade-in">
 
     <!-- STATS GRID -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <!-- Stat 1: Pending -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="window.location.href='manage_bookings.php?status=Pending'">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="window.location.href='bookinglist.php?status=Pending'">
             <div>
                 <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Pending Approvals</div>
                 <div class="text-4xl font-bold text-yellow-600 font-serif"><?php echo $countPending; ?></div>
@@ -182,113 +174,68 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- RECENT ACTIVITY (Takes up 2 cols) -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-gray-800">Recent Bookings</h3>
-                <a href="manage_bookings.php" class="text-xs font-bold text-[#0b4d9d] hover:underline">View All</a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white text-gray-500 border-b border-gray-100">
-                        <tr>
-                            <th class="p-4 font-semibold">Student</th>
-                            <th class="p-4 font-semibold">Facility</th>
-                            <th class="p-4 font-semibold">Date</th>
-                            <th class="p-4 font-semibold text-center">Status</th>
+    <!-- RECENT ACTIVITY TABLE -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <h3 class="font-bold text-gray-800 text-lg">Recent Bookings</h3>
+            <a href="bookinglist.php" class="text-xs font-bold text-[#0b4d9d] hover:underline uppercase tracking-wide">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-white text-gray-500 border-b border-gray-100">
+                    <tr>
+                        <th class="p-5 font-semibold">Student ID</th>
+                        <th class="p-5 font-semibold">Facility</th>
+                        <th class="p-5 font-semibold">Date</th>
+                        <th class="p-5 font-semibold text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-gray-700">
+                    <?php if ($resRecent && $resRecent->num_rows > 0): ?>
+                        <?php while ($row = $resRecent->fetch_assoc()): 
+                            $statusClass = match($row['Status']) {
+                                'Pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                'Approved', 'Confirmed' => 'bg-green-100 text-green-800 border-green-200',
+                                'Cancelled', 'Rejected' => 'bg-red-100 text-red-800 border-red-200',
+                                default => 'bg-gray-100 text-gray-800 border-gray-200'
+                            };
+                        ?>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-5 font-medium text-gray-900"><?php echo htmlspecialchars($row['UserIdentifier']); ?></td>
+                            <td class="p-5 text-gray-600"><?php echo htmlspecialchars($row['FacilityName']); ?></td>
+                            <td class="p-5 text-gray-500"><?php echo date('d M, h:i A', strtotime($row['StartTime'])); ?></td>
+                            <td class="p-5 text-center">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
+                                    <?php echo $row['Status']; ?>
+                                </span>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        <?php if ($resRecent && $resRecent->num_rows > 0): ?>
-                            <?php while ($row = $resRecent->fetch_assoc()): 
-                                $statusClass = match($row['Status']) {
-                                    'Pending' => 'bg-yellow-100 text-yellow-800',
-                                    'Approved', 'Confirmed' => 'bg-green-100 text-green-800',
-                                    'Cancelled', 'Rejected' => 'bg-red-100 text-red-800',
-                                    default => 'bg-gray-100 text-gray-800'
-                                };
-                            ?>
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="p-4 font-medium text-gray-900"><?php echo htmlspecialchars($row['UserIdentifier']); ?></td>
-                                <td class="p-4 text-gray-600"><?php echo htmlspecialchars($row['FacilityName']); ?></td>
-                                <td class="p-4 text-gray-500"><?php echo date('d M, h:i A', strtotime($row['StartTime'])); ?></td>
-                                <td class="p-4 text-center">
-                                    <span class="px-2 py-1 rounded text-xs font-bold <?php echo $statusClass; ?>">
-                                        <?php echo $row['Status']; ?>
-                                    </span>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr><td colspan="4" class="p-6 text-center text-gray-400">No recent activity.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No recent booking activity found.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
-
-        <!-- QUICK LINKS (Takes up 1 col) -->
-        <div class="flex flex-col gap-6">
-            <!-- Card 1 -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition group cursor-pointer" onclick="window.location.href='addfacilities.php'">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0b4d9d] group-hover:bg-[#0b4d9d] group-hover:text-white transition">
-                        <i class="fa-solid fa-plus"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-800">Add Facility</h4>
-                        <p class="text-xs text-gray-500">Create new courts or update details.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition group cursor-pointer" onclick="window.location.href='manage_bookings.php'">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
-                        <i class="fa-solid fa-filter"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-800">Filter Bookings</h4>
-                        <p class="text-xs text-gray-500">View by date, status, or student.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition group cursor-pointer" onclick="window.location.href='addfacilities.php?tab=closures'">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition">
-                        <i class="fa-solid fa-ban"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-800">Block Dates</h4>
-                        <p class="text-xs text-gray-500">Close facilities for maintenance.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
 </main>
 
 <!-- FOOTER -->
-<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+<footer class="bg-white border-t border-gray-200 py-8 mt-auto">
     <div class="container mx-auto px-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Logo" class="h-12 w-auto">
-                <div class="text-xs text-gray-600 leading-snug">
-                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
-                    Stadium Universiti, UKM, 43600 Bangi<br>
-                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+            <div class="flex items-center gap-5">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Logo" class="h-14 w-auto">
+                <div class="text-sm text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-1 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
                 </div>
             </div>
             <div class="flex items-center gap-6">
-                <img src="../assets/img/sdg.png" alt="SDG" class="h-14 w-auto opacity-90">
+                <img src="../assets/img/sdg.png" alt="SDG" class="h-16 w-auto opacity-90">
                 <p class="text-[10px] text-gray-400 text-right">&copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.</p>
             </div>
         </div>
