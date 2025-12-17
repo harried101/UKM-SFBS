@@ -154,7 +154,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 <!-- HERO BANNER (Image Only) -->
 <div class="w-full h-64 md:h-72 overflow-hidden relative shadow-md group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-100">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105">
     <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 </div>
 
@@ -223,7 +223,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
                                 
                                 $statusClass = ($bk['Status'] === 'Approved') 
                                     ? 'bg-green-100 text-green-700 border-green-200' 
-                                    : 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
                             ?>
                             <tr class="hover:bg-gray-50 transition duration-150">
                                 <td class="p-5">
