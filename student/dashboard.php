@@ -9,21 +9,44 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
-// Fetch student details
+// 1. Fetch Student Details
 $studentIdentifier = $_SESSION['user_id'] ?? '';
 $studentName = 'Student';
 $studentID = $studentIdentifier;
+$db_numeric_id = 0;
 
 if ($studentIdentifier) {
-    $stmtStudent = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
+    $stmtStudent = $conn->prepare("SELECT UserID, FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
     $stmtStudent->bind_param("s", $studentIdentifier);
     $stmtStudent->execute();
     $resStudent = $stmtStudent->get_result();
     if ($rowStudent = $resStudent->fetch_assoc()) {
         $studentName = $rowStudent['FirstName'] . ' ' . $rowStudent['LastName'];
         $studentID = $rowStudent['UserIdentifier'];
+        $db_numeric_id = $rowStudent['UserID']; // Needed for bookings query
     }
     $stmtStudent->close();
+}
+
+// 2. Fetch Active Bookings (Future + Pending/Approved)
+$activeBookings = [];
+if ($db_numeric_id > 0) {
+    $sql = "SELECT b.BookingID, b.StartTime, b.EndTime, b.Status, f.Name as FacilityName
+            FROM bookings b
+            JOIN facilities f ON b.FacilityID = f.FacilityID
+            WHERE b.UserID = ? 
+            AND b.StartTime > NOW() 
+            AND b.Status IN ('Pending', 'Approved')
+            ORDER BY b.StartTime ASC";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $db_numeric_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $activeBookings[] = $row;
+    }
+    $stmt->close();
 }
 
 if ($conn->connect_error) {
@@ -115,9 +138,9 @@ nav {
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 14px; text-align: center; border-bottom: 1px solid #eee; }
 th { background: var(--primary); color: white; text-transform: uppercase; }
-button.cancel-btn { background: var(--primary); color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; }
-button.review-btn { background: #21b32d; color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; }
-button.cancel-btn:hover { background: #07365f; }
+button.cancel-btn { background: #dc3545; color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; border:none; transition: 0.3s; }
+button.review-btn { background: #21b32d; color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; border:none; transition: 0.3s; }
+button.cancel-btn:hover { background: #bb2d3b; }
 button.review-btn:hover { background: #1a8b23; }
 
 /* COUNTERS */
@@ -166,9 +189,10 @@ button.review-btn:hover { background: #1a8b23; }
     </div>
 
     <div class="d-flex align-items-center gap-4">
-        <a class="nav-link" href="#">Home</a>
+        <a class="nav-link active" href="#">Home</a>
         <a class="nav-link" href="student_facilities.php">Facilities</a>
-        <a class="nav-link" href="booking_history.php">Booking History</a>
+        <!-- Booking History now merged into dashboard, but kept link if you separate page -->
+        <a class="nav-link" href="#">Booking History</a>
 
         <div class="dropdown">
             <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -197,27 +221,47 @@ button.review-btn:hover { background: #1a8b23; }
 <div class="section-title text-center text-3xl font-bold text-[#0b4d9d] mb-6">ACTIVE BOOKINGS</div>
 <div class="table-wrapper">
 <table>
-<tr>
-<th>Facility</th>
-<th>Date / Time</th>
-<th>Action</th>
-</tr>
-<tr>
-<td>Field D</td>
-<td>23 Nov 2025<br>09:00 – 11:00</td>
-<td>
-<button class="cancel-btn">Cancel</button>
-<button class="review-btn">Review</button>
-</td>
-</tr>
-<tr>
-<td>Squash Court</td>
-<td>23 Nov 2025<br>09:00 – 11:00</td>
-<td>
-<button class="cancel-btn">Cancel</button>
-<button class="review-btn">Review</button>
-</td>
-</tr>
+    <thead>
+        <tr>
+            <th>Facility</th>
+            <th>Date / Time</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if (empty($activeBookings)): ?>
+            <tr>
+                <td colspan="4" class="py-8 text-gray-500">
+                    No active bookings found. <br>
+                    <a href="student_facilities.php" class="text-blue-600 font-bold hover:underline">Book a facility now</a>
+                </td>
+            </tr>
+        <?php else: ?>
+            <?php foreach ($activeBookings as $bk): 
+                $startObj = new DateTime($bk['StartTime']);
+                $endObj = new DateTime($bk['EndTime']);
+            ?>
+            <tr>
+                <td class="font-bold text-[#0b4d9d]"><?php echo htmlspecialchars($bk['FacilityName']); ?></td>
+                <td>
+                    <div class="font-semibold"><?php echo $startObj->format('d M Y'); ?></div>
+                    <div class="text-sm text-gray-500"><?php echo $startObj->format('h:i A') . ' - ' . $endObj->format('h:i A'); ?></div>
+                </td>
+                <td>
+                    <span class="badge <?php echo ($bk['Status']=='Approved') ? 'bg-success' : 'bg-warning text-dark'; ?>">
+                        <?php echo $bk['Status']; ?>
+                    </span>
+                </td>
+                <td>
+                    <button class="cancel-btn" onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)">Cancel</button>
+                    <!-- Review button kept for UI consistency, but disabled logic for now -->
+                    <button class="review-btn opacity-50 cursor-not-allowed" title="Available after completion">Review</button>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </tbody>
 </table>
 </div>
 
@@ -261,8 +305,9 @@ button.review-btn:hover { background: #1a8b23; }
     </div>
 </div>
 
-<!-- COUNTER SCRIPT -->
+<!-- LOGIC SCRIPTS -->
 <script>
+// 1. Counter Logic
 let facilityCount = 0;
 let staffCount = 0;
 const facilityTarget = 15;
@@ -278,6 +323,32 @@ function incrementCounters() {
     }
 }
 incrementCounters();
+
+// 2. Cancel Booking Logic
+function cancelBooking(id) {
+    if(!confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) return;
+
+    const formData = new FormData();
+    formData.append('booking_id', id);
+
+    fetch('cancel_booking.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            alert("Booking cancelled successfully.");
+            location.reload(); // Refresh table
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Network error. Please try again.");
+    });
+}
 </script>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
