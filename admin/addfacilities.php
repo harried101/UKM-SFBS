@@ -10,11 +10,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 require_once '../includes/db_connect.php';
 
 // Fetch Admin Details
-// We use the session 'user_id' which holds the UserIdentifier (e.g., K012033) to find the name
-$adminName = 'Admin'; 
-if (isset($_SESSION['user_id'])) {
+$adminName = 'Admin';
+$adminIdentifier = $_SESSION['user_id'] ?? ''; // This is the UserIdentifier
+
+if ($adminIdentifier) {
     $stmt = $conn->prepare("SELECT FirstName, LastName FROM users WHERE UserIdentifier = ?");
-    $stmt->bind_param("s", $_SESSION['user_id']);
+    $stmt->bind_param("s", $adminIdentifier);
     $stmt->execute();
     $res = $stmt->get_result();
     if ($r = $res->fetch_assoc()) {
@@ -265,18 +266,20 @@ if (isset($_GET['del_closure'])) {
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider">Administrator</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
                 </div>
                 <!-- Profile Dropdown Container -->
                 <div class="relative group">
                     <button class="flex items-center focus:outline-none">
                         <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition">
                     </button>
-                    <!-- Dropdown Menu -->
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                        <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
+                    <!-- Dropdown Menu (Fixed hover issue with pt-2 padding bridge) -->
+                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                        <div class="bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
+                            <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
+                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
