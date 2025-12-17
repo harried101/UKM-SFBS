@@ -2,193 +2,114 @@
 session_start();
 require_once '../includes/db_connect.php';
 
-$facility_id = $_GET['facility_id'] ?? '';
-$facility_name = "Facility";
-
-if ($facility_id) {
-    $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
-    $stmt->bind_param("s", $facility_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($row = $res->fetch_assoc()) {
-        $facility_name = $row['Name'];
-    }
+// SECURITY CHECK
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
+    http_response_code(403);
+    exit('<div class="col-span-full text-center text-red-600">Session expired. Please refresh the page.</div>');
 }
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body::-webkit-scrollbar { display: none; }
-        body { -ms-overflow-style: none; scrollbar-width: none; }
-        .calendar-day:hover:not(.disabled):not(.selected) { background-color: #e0f2fe; color: #0b4d9d; cursor: pointer; transform: scale(1.05); }
-        .calendar-day.selected { background-color: #0b4d9d; color: white; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(11, 77, 157, 0.3); }
-        .calendar-day.today { border: 2px solid #0b4d9d; font-weight: bold; color: #0b4d9d; }
-        .calendar-day.disabled { color: #d1d5db; cursor: default; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body class="bg-white p-4 font-sans select-none">
 
-    <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-[#0b4d9d]"><?php echo htmlspecialchars($facility_name); ?></h2>
-        <p class="text-gray-500 text-sm mt-1">Select a date to check availability</p>
-    </div>
+$search = $_GET['search'] ?? '';
+$typeFilter = $_GET['type'] ?? '';
 
-    <div class="max-w-xl mx-auto bg-white rounded-xl">
-        <!-- Month Navigation -->
-        <div class="flex justify-between items-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <button id="prevMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#0b4d9d] transition"><i class="fa-solid fa-chevron-left text-sm"></i></button>
-            <h3 id="monthYear" class="text-lg font-bold text-gray-800"></h3>
-            <button id="nextMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#0b4d9d] transition"><i class="fa-solid fa-chevron-right text-sm"></i></button>
-        </div>
+// SQL: Fetch based on Name/Location/Type
+$sql = "SELECT * FROM facilities WHERE Status IN ('Active', 'Maintenance')";
+$params = [];
+$types_str = "";
 
-        <!-- Calendar -->
-        <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm mb-8"></div>
+if (!empty($search)) {
+    $sql .= " AND (Name LIKE ? OR Location LIKE ?)";
+    $search_param = "%" . $search . "%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $types_str .= "ss";
+}
 
-        <!-- Legend -->
-        <div id="legend" class="hidden flex justify-center gap-4 text-xs text-gray-500 mb-4 border-t border-gray-100 pt-4">
-            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-white border border-green-500 mr-1.5"></span> Available</div>
-            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 mr-1.5"></span> Booked</div>
-            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-[#0b4d9d] mr-1.5"></span> Selected</div>
-        </div>
+if (!empty($typeFilter)) {
+    $sql .= " AND Type = ?";
+    $params[] = $typeFilter;
+    $types_str .= "s";
+}
 
-        <!-- Slots -->
-        <div id="timeSlotsSection" class="hidden fade-in">
-            <h4 class="font-bold text-gray-800 mb-4 flex items-center justify-between">
-                <span><i class="fa-regular fa-clock mr-2 text-[#0b4d9d]"></i> Available Slots</span>
-                <span id="selectedDateDisplay" class="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded"></span>
-            </h4>
-            <div id="slotsLoader" class="flex flex-col items-center justify-center py-8 text-gray-400">
-                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-[#0b4d9d]"></i> Checking schedule...
+$sql .= " ORDER BY Name ASC";
+
+$stmt = $conn->prepare($sql);
+if (!empty($params)) {
+    $stmt->bind_param($types_str, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        
+        $photo = $row['PhotoURL'];
+        $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
+                  ? "../admin/uploads/".$photo
+                  : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
+
+        // --- STATUS LOGIC ---
+        $isMaintenance = ($row['Status'] === 'Maintenance');
+        $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
+        $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
+        
+        // Button Logic
+        if ($isMaintenance) {
+            $btnAttr = 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
+            $btnText = 'Under Maintenance';
+        } else {
+            // UPDATED TO UKM BLUE (#0b4d9d)
+            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#0b4d9d] text-white py-2.5 rounded-lg font-bold hover:bg-[#083a75] transition shadow-md hover:shadow-lg transform active:scale-95"';
+            $btnText = 'Check Availability';
+        }
+
+        echo '
+        <div class="facility-card group bg-white rounded-xl overflow-hidden border border-blue-50 shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
+            <div class="relative h-56 overflow-hidden">
+                <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                <div class="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#0b4d9d] shadow-sm uppercase tracking-wide border border-gray-100">
+                    '.htmlspecialchars($row['Type']).'
+                </div>
             </div>
-            <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
-        </div>
+            
+            <div class="p-5 flex flex-col flex-grow">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#0b4d9d] transition-colors">
+                        '.htmlspecialchars($row['Name']).'
+                    </h3>
+                </div>
 
-        <!-- Form -->
-        <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
-            <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
-            <input type="hidden" name="start_time" id="hiddenStartTime">
-            <div class="flex justify-between items-center mb-4 text-sm">
-                <span class="text-gray-500">Selected Time:</span>
-                <span id="summaryTime" class="font-bold text-[#0b4d9d] text-lg">--:--</span>
-            </div>
-            <button type="submit" class="w-full bg-[#0b4d9d] text-white py-3.5 rounded-xl font-bold hover:bg-[#083a75] transition shadow-lg">Confirm Booking</button>
-        </form>
-    </div>
-
-    <script>
-        const facilityId = "<?php echo $facility_id; ?>";
-        let currDate = new Date();
-        let currMonth = currDate.getMonth();
-        let currYear = currDate.getFullYear();
-
-        const calendarGrid = document.getElementById('calendarGrid');
-        const monthYear = document.getElementById('monthYear');
-        const slotsSection = document.getElementById('timeSlotsSection');
-        const slotsContainer = document.getElementById('slotsContainer');
-        const slotsLoader = document.getElementById('slotsLoader');
-        const bookingForm = document.getElementById('bookingForm');
-        const legend = document.getElementById('legend');
-
-        function renderCalendar(month, year) {
-            calendarGrid.innerHTML = "";
-            monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
-            let firstDay = new Date(year, month, 1).getDay();
-            let daysInMonth = new Date(year, month + 1, 0).getDate();
-            for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateDiv = document.createElement('div');
-                dateDiv.innerText = day;
-                dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 flex items-center mb-2">
+                        <i class="fa-solid fa-location-dot text-[#0b4d9d] w-5 text-center mr-1"></i> 
+                        '.htmlspecialchars($row['Location']).'
+                    </p>
+                    <div class="inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-semibold '.$statusClass.'">
+                        '.$statusIcon.' '.htmlspecialchars($row['Status']).'
+                    </div>
+                </div>
                 
-                const checkDate = new Date(year, month, day);
-                const today = new Date();
-                today.setHours(0,0,0,0);
+                <p class="text-gray-600 text-sm line-clamp-2 mb-6 h-10 leading-relaxed">
+                    '.htmlspecialchars($row['Description']).'
+                </p>
+                
+                <div class="mt-auto pt-4 border-t border-gray-50">
+                    <button '.$btnAttr.'>
+                        '.$btnText.'
+                    </button>
+                </div>
+            </div>
+        </div>';
+    }
+} else {
+    echo '
+    <div class="col-span-full py-16 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <i class="fa-solid fa-magnifying-glass text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">No facilities found</h3>
+    </div>';
+}
 
-                if (checkDate < today) {
-                    dateDiv.classList.add('disabled');
-                } else {
-                    dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
-                }
-                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateDiv.classList.add('today');
-                calendarGrid.appendChild(dateDiv);
-            }
-        }
-
-        function selectDate(day, month, year, element) {
-            document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            document.getElementById('selectedDateDisplay').innerText = new Date(year, month, day).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
-            
-            legend.classList.remove('hidden');
-            slotsSection.classList.remove('hidden');
-            bookingForm.classList.add('hidden');
-            slotsSection.scrollIntoView({ behavior: 'smooth' });
-            fetchSlots(dateStr);
-        }
-
-        function fetchSlots(dateStr) {
-            slotsContainer.innerHTML = '';
-            slotsLoader.classList.remove('hidden');
-
-            fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
-                .then(res => res.json())
-                .then(data => {
-                    slotsLoader.classList.add('hidden');
-                    
-                    if (!data.success && data.is_closed) {
-                        slotsContainer.innerHTML = `<div class="col-span-full text-red-500 font-medium text-center py-4 bg-red-50 rounded-lg border border-red-100"><i class="fa-solid fa-triangle-exclamation mr-2"></i>${data.message}</div>`;
-                        return;
-                    }
-
-                    data.slots.forEach(slot => {
-                        const btn = document.createElement('button');
-                        const isBooked = slot.status === 'booked';
-                        btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
-                            isBooked 
-                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-75' 
-                            : 'bg-white text-green-700 border-green-200 hover:border-green-500 hover:shadow-md'
-                        }`;
-                        
-                        btn.innerHTML = `${slot.label} ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}`;
-                        
-                        if(isBooked) {
-                            btn.disabled = true;
-                            btn.setAttribute("aria-disabled", "true");
-                        } else {
-                            btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
-                        }
-                        slotsContainer.appendChild(btn);
-                    });
-                })
-                .catch(err => {
-                    slotsLoader.classList.add('hidden');
-                    slotsContainer.innerHTML = '<div class="col-span-full text-red-400 text-center text-sm">Connection Error</div>';
-                });
-        }
-
-        function selectSlot(startTime, label, dateStr, btn) {
-            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
-            btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#0b4d9d] border-[#0b4d9d] text-white shadow-md transform scale-105';
-            
-            document.getElementById('hiddenStartTime').value = `${dateStr} ${startTime}`;
-            document.getElementById('summaryTime').innerText = label;
-            bookingForm.classList.remove('hidden');
-            setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
-        }
-
-        document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
-        document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
-        renderCalendar(currMonth, currYear);
-    </script>
-</body>
-</html>
+$stmt->close();
+$conn->close();
+?>
