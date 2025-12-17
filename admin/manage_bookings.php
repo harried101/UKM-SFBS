@@ -8,7 +8,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit();
 }
 
-$page_title = "ALL BOOKINGS MANAGEMENT";
+$page_title = "Booking Management";
 
 // Fetch Admin Details
 $adminIdentifier = $_SESSION['user_id'] ?? '';
@@ -22,7 +22,7 @@ if ($adminIdentifier) {
     $resAdmin = $stmtAdmin->get_result();
     if ($rowAdmin = $resAdmin->fetch_assoc()) {
         $adminName = $rowAdmin['FirstName'] . ' ' . $rowAdmin['LastName'];
-        // $adminID already set
+        $adminID = $rowAdmin['UserIdentifier'];
     }
     $stmtAdmin->close();
 }
@@ -91,13 +91,13 @@ if ($result) {
 
 function getStatusClass($status) {
     switch ($status) {
-        case 'Pending': return 'bg-warning text-dark'; 
-        case 'Confirmed': return 'bg-success';
-        case 'Approved': return 'bg-success'; // Handle Approved as Confirmed visually
-        case 'Canceled': return 'bg-danger';
-        case 'Cancelled': return 'bg-danger'; // Handle spelling variation
-        case 'Complete': return 'bg-secondary';
-        default: return 'bg-info';
+        case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'; 
+        case 'Confirmed': return 'bg-green-100 text-green-800 border-green-200';
+        case 'Approved': return 'bg-green-100 text-green-800 border-green-200';
+        case 'Canceled': return 'bg-red-100 text-red-800 border-red-200';
+        case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+        case 'Complete': return 'bg-gray-100 text-gray-800 border-gray-200';
+        default: return 'bg-blue-100 text-blue-800 border-blue-200';
     }
 }
 ?>
@@ -107,15 +107,15 @@ function getStatusClass($status) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - UKM-SFBS Admin</title>
+    <title><?php echo $page_title; ?> - UKM Sports Center</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (via CDN for consistency with addfacilities.php style) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <!-- Bootstrap CSS for Modals/Tables (kept for functionality compatibility) -->
+    <!-- Bootstrap CSS for Modals (kept for compatibility with existing modals) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
@@ -132,37 +132,22 @@ function getStatusClass($status) {
             min-height: 100vh;
         }
         h1, h2, h3 { font-family: 'Playfair Display', serif; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Overriding Bootstrap for consistent look */
-        .btn-primary-custom {
-            background-color: #0b4d9d;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-        .btn-primary-custom:hover {
-            background-color: #083a75;
-            color: white;
-        }
-
-        /* Form Inputs matching addfacilities */
-        input:focus, select:focus {
+        /* Form Inputs */
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #0b4d9d;
             box-shadow: 0 0 0 1px #0b4d9d;
         }
-        
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 
 <body>
 
-<!-- NAVBAR (Matches addfacilities.php) -->
+<!-- NAVBAR -->
 <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -187,12 +172,12 @@ function getStatusClass($status) {
                 Bookings
             </a>
             
-            <!-- Closures removed from here as requested -->
+            <a href="manage_closures.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Closures</a>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider">Administrator</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminID); ?></p>
                 </div>
                 <!-- Profile Dropdown Container -->
                 <div class="relative group">
@@ -220,41 +205,47 @@ function getStatusClass($status) {
     <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1">Booking Management</h1>
-            <p class="text-gray-500">View, filter, and manage all facility bookings.</p>
+            <p class="text-gray-500">View, filter, and manage student facility bookings.</p>
         </div>
         
-        <button type="button" class="bg-[#0b4d9d] text-white px-5 py-2.5 rounded-lg hover:bg-[#083a75] transition shadow-sm font-medium flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal">
+        <button class="bg-[#0b4d9d] text-white px-5 py-2.5 rounded-lg hover:bg-[#083a75] transition shadow-sm font-medium flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal">
             <i class="fas fa-plus"></i> Walk-in Booking
         </button>
     </div>
 
     <!-- Alert Messages -->
     <?php if (isset($_GET['msg'])): ?>
-        <div class="alert alert-success alert-dismissible fade show mb-6 shadow-sm border-0 bg-green-50 text-green-800" role="alert">
-            <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($_GET['msg']); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-check-circle"></i>
+                <span><?php echo htmlspecialchars($_GET['msg']); ?></span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-green-500 hover:text-green-700"><i class="fas fa-times"></i></button>
         </div>
     <?php endif; ?>
 
     <?php if (isset($_GET['err'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show mb-6 shadow-sm border-0 bg-red-50 text-red-800" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($_GET['err']); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i>
+                <span><?php echo htmlspecialchars($_GET['err']); ?></span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
         </div>
     <?php endif; ?>
 
     <!-- Search & Filter Box -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-        <h5 class="font-bold text-gray-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-filter text-[#0b4d9d]"></i> Filters</h5>
+        <h5 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide"><i class="fa-solid fa-filter text-[#0b4d9d]"></i> Filters</h5>
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Search</label>
-                <input type="search" name="search" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d]" placeholder="ID, Name, Facility..." value="<?php echo htmlspecialchars($searchQuery); ?>">
+                <input type="search" name="search" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="ID, Name, Facility..." value="<?php echo htmlspecialchars($searchQuery); ?>">
             </div>
             
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
-                <select name="status" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] bg-white">
+                <select name="status" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white">
                     <option value="all" <?php echo ($statusFilter == 'all') ? 'selected' : ''; ?>>All Statuses</option>
                     <option value="Pending" <?php echo ($statusFilter == 'Pending') ? 'selected' : ''; ?>>Pending</option>
                     <option value="Confirmed" <?php echo ($statusFilter == 'Confirmed') ? 'selected' : ''; ?>>Confirmed/Approved</option>
@@ -264,12 +255,12 @@ function getStatusClass($status) {
             
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
-                <input type="date" name="date" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d]" value="<?php echo htmlspecialchars($dateFilter); ?>">
+                <input type="date" name="date" class="w-full p-2 border border-gray-300 rounded-lg text-sm" value="<?php echo htmlspecialchars($dateFilter); ?>">
             </div>
             
             <div class="flex gap-2">
                 <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition text-sm font-bold flex-grow">Apply</button>
-                <a href="bookinglist.php" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-bold">Reset</a>
+                <a href="bookinglist.php" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-bold text-center">Reset</a>
             </div>
         </form>
     </div>
@@ -277,56 +268,56 @@ function getStatusClass($status) {
     <!-- Bookings Table -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="table table-hover align-middle mb-0 w-full">
-                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs border-b border-gray-200">
                     <tr>
-                        <th scope="col" class="py-3 px-4">ID</th>
-                        <th scope="col" class="py-3 px-4">Facility</th>
-                        <th scope="col" class="py-3 px-4">User</th>
-                        <th scope="col" class="py-3 px-4">Schedule</th>
-                        <th scope="col" class="py-3 px-4 text-center">Status</th>
-                        <th scope="col" class="py-3 px-4 text-end">Action</th>
+                        <th class="py-4 px-6">ID</th>
+                        <th class="py-4 px-6">Facility</th>
+                        <th class="py-4 px-6">User</th>
+                        <th class="py-4 px-6">Schedule</th>
+                        <th class="py-4 px-6 text-center">Status</th>
+                        <th class="py-4 px-6 text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm">
                     <?php if (empty($bookings)): ?>
-                        <tr><td colspan="6" class="text-center py-8 text-muted">No bookings found matching your criteria.</td></tr>
+                        <tr><td colspan="6" class="text-center py-8 text-gray-400">No bookings found matching your criteria.</td></tr>
                     <?php else: ?>
                         <?php foreach ($bookings as $booking): 
-                            // User Display Logic - Prioritizes displaying the ID if name is missing or displaying both clearly
+                            // User Display Logic
                             $fullName = trim(($booking['FirstName'] ?? '') . ' ' . ($booking['LastName'] ?? ''));
                             $userId = $booking['UserIdentifier'] ?? 'Unknown';
                             
                             // Created By Logic
-                            $createdBy = !empty($booking['CreatedByAdminID']) ? '<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] border border-gray-200 ml-1">STAFF</span>' : '';
+                            $createdBy = !empty($booking['CreatedByAdminID']) ? '<span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] border border-gray-200 ml-1 font-mono">STAFF</span>' : '';
                             
                             // Dates
                             $start = new DateTime($booking['StartTime']);
                             $end = new DateTime($booking['EndTime']);
                         ?>
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 fw-bold text-gray-700">#<?php echo $booking['BookingID']; ?></td>
-                            <td class="px-4 py-3 text-[#0b4d9d] fw-bold"><?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown Facility'); ?></td>
-                            <td class="px-4 py-3">
+                            <td class="px-6 py-4 font-bold text-gray-700">#<?php echo $booking['BookingID']; ?></td>
+                            <td class="px-6 py-4 text-[#0b4d9d] font-bold"><?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown Facility'); ?></td>
+                            <td class="px-6 py-4">
                                 <?php if (!empty($fullName)): ?>
-                                    <div class="fw-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
+                                    <div class="font-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
                                 <?php endif; ?>
                                 <div class="text-xs text-gray-500 flex items-center">
-                                    <span class="font-mono bg-gray-100 px-1 rounded"><?php echo htmlspecialchars($userId); ?></span> 
+                                    <span class="font-mono bg-gray-50 px-1 rounded text-[11px]"><?php echo htmlspecialchars($userId); ?></span> 
                                     <?php echo $createdBy; ?>
                                 </div>
                             </td>
-                            <td class="px-4 py-3">
-                                <div class="fw-bold text-gray-700"><?php echo $start->format('d M Y'); ?></div>
-                                <small class="text-gray-500"><?php echo $start->format('h:i A') . ' - ' . $end->format('h:i A'); ?></small>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-700"><?php echo $start->format('d M Y'); ?></div>
+                                <small class="text-gray-500 font-medium"><?php echo $start->format('h:i A') . ' - ' . $end->format('h:i A'); ?></small>
                             </td>
-                            <td class="px-4 py-3 text-center">
-                                <span class="badge <?php echo getStatusClass($booking['Status']); ?> shadow-sm">
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-2.5 py-1 rounded text-xs font-bold border <?php echo getStatusClass($booking['Status']); ?>">
                                     <?php echo $booking['Status']; ?>
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-end">
-                                <button class="btn btn-sm btn-outline-primary rounded-lg px-3" 
+                            <td class="px-6 py-4 text-end">
+                                <button class="text-[#0b4d9d] hover:text-[#083a75] font-semibold text-xs border border-[#0b4d9d] hover:bg-blue-50 px-3 py-1.5 rounded transition" 
                                         data-bs-toggle="modal" data-bs-target="#viewEditModal"
                                         data-id="<?php echo $booking['BookingID']; ?>"
                                         data-facility="<?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown'); ?>"
@@ -347,7 +338,7 @@ function getStatusClass($status) {
     </div>
 </main>
 
-<!-- FOOTER (Matches addfacilities.php) -->
+<!-- FOOTER -->
 <footer class="bg-white border-t border-gray-200 py-8 mt-auto">
     <div class="container mx-auto px-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-6">
@@ -372,44 +363,44 @@ function getStatusClass($status) {
 
 <!-- VIEW/EDIT MODAL -->
 <div class="modal fade" id="viewEditModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold text-[#0b4d9d]">Manage Booking #<span id="bookingIdDisplay"></span></h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-xl rounded-lg overflow-hidden">
+            <div class="modal-header bg-[#f8f9fa] border-bottom">
+                <h5 class="modal-title fw-bold text-[#0b4d9d]"><i class="fas fa-edit me-2"></i>Manage Booking #<span id="bookingIdDisplay"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <form id="processBookingForm" action="process.php" method="POST">
                     <input type="hidden" name="booking_id" id="modalBookingId">
                     <input type="hidden" name="action" id="modalAction">
                     
-                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small uppercase fw-bold">Facility</span>
-                            <span class="fw-bold text-dark" id="modalFacility"></span>
+                    <div class="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-blue-200">
+                            <span class="text-xs font-bold text-blue-800 uppercase tracking-wide">Facility</span>
+                            <span class="fw-bold text-dark text-end" id="modalFacility"></span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small uppercase fw-bold">User</span>
-                            <span class="fw-bold text-dark" id="modalUser"></span>
+                        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-blue-200">
+                            <span class="text-xs font-bold text-blue-800 uppercase tracking-wide">User</span>
+                            <span class="fw-bold text-dark text-end" id="modalUser"></span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-muted small uppercase fw-bold">Time</span>
-                            <span class="fw-bold text-dark" id="modalTime"></span>
+                            <span class="text-xs font-bold text-blue-800 uppercase tracking-wide">Time</span>
+                            <span class="fw-bold text-dark text-end" id="modalTime"></span>
                         </div>
                     </div>
 
-                    <div id="actionButtons" class="d-grid gap-2 mb-3">
-                        <button type="button" class="btn btn-success fw-bold py-2" onclick="submitAction('approve')">
+                    <div id="actionButtons" class="d-grid gap-2 mb-4">
+                        <button type="button" class="btn btn-success fw-bold py-2 shadow-sm" onclick="submitAction('approve')">
                             <i class="fas fa-check me-2"></i>Approve Request
                         </button>
-                        <button type="button" class="btn btn-danger fw-bold py-2" onclick="submitAction('reject')">
+                        <button type="button" class="btn btn-danger fw-bold py-2 shadow-sm" onclick="submitAction('reject')">
                             <i class="fas fa-times me-2"></i>Reject / Cancel
                         </button>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="adminNotes" class="form-label small fw-bold text-gray-500 uppercase">Admin Notes (Reason)</label>
-                        <textarea class="form-control" name="admin_notes" id="adminNotes" rows="2" placeholder="Reason for rejection or internal note..."></textarea>
+                    <div class="mb-2">
+                        <label for="adminNotes" class="form-label small fw-bold text-gray-500 uppercase tracking-wide">Admin Notes (Reason)</label>
+                        <textarea class="form-control" name="admin_notes" id="adminNotes" rows="2" placeholder="Reason for rejection or internal note..." style="font-size:0.9rem;"></textarea>
                     </div>
                 </form>
             </div>
@@ -420,7 +411,7 @@ function getStatusClass($status) {
 <!-- WALK-IN BOOKING MODAL -->
 <div class="modal fade" id="newBookingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-2xl rounded-3" style="height: 85vh;">
+        <div class="modal-content border-0 shadow-2xl rounded-lg overflow-hidden" style="height: 85vh;">
             <div class="modal-header bg-[#0b4d9d] text-white">
                 <h5 class="modal-title fw-bold"><i class="fas fa-calendar-plus me-2"></i>New Walk-in Booking</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -428,7 +419,7 @@ function getStatusClass($status) {
             <div class="modal-body p-0 d-flex flex-column bg-light">
                 
                 <!-- Step 1: Select Facility -->
-                <div id="facilitySelector" class="p-3 bg-white border-bottom shadow-sm">
+                <div id="facilitySelector" class="p-4 bg-white border-bottom shadow-sm">
                     <div class="d-flex justify-content-center align-items-center gap-3">
                         <label class="fw-bold text-secondary">Select Facility:</label>
                         <select id="newBookingFacility" class="form-select w-auto" style="min-width: 250px;">
@@ -437,7 +428,7 @@ function getStatusClass($status) {
                                 <option value="<?php echo $fac['FacilityID']; ?>"><?php echo htmlspecialchars($fac['Name']); ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="btn btn-primary-custom" onclick="loadBookingFrame()">Load Schedule</button>
+                        <button class="bg-[#0b4d9d] text-white px-4 py-2 rounded-lg hover:bg-[#083a75] transition font-bold" onclick="loadBookingFrame()">Load Schedule</button>
                     </div>
                 </div>
 
@@ -452,7 +443,7 @@ function getStatusClass($status) {
                     
                     <div id="framePlaceholder" class="d-flex align-items-center justify-content-center h-100 text-muted">
                         <div class="text-center">
-                            <i class="fas fa-arrow-up fa-2x mb-3 text-secondary"></i>
+                            <i class="fas fa-arrow-up fa-2x mb-3 text-secondary opacity-50"></i>
                             <p>Please select a facility above to view availability.</p>
                         </div>
                     </div>
@@ -497,10 +488,9 @@ document.addEventListener('DOMContentLoaded', function() {
             actionButtons.style.display = 'grid';
             adminNotes.readOnly = false;
         } else {
-            // If already processed, hide action buttons (view only mode)
-            // Or allow cancellation of approved bookings
+            // Allow cancelling existing bookings
             if (status === 'Approved' || status === 'Confirmed') {
-                actionButtons.innerHTML = '<button type="button" class="btn btn-danger w-100" onclick="submitAction(\'cancel\')">Cancel Booking</button>';
+                actionButtons.innerHTML = '<button type="button" class="btn btn-danger w-100 fw-bold py-2" onclick="submitAction(\'cancel\')">Cancel Booking</button>';
                 actionButtons.style.display = 'block';
                 adminNotes.readOnly = false;
             } else {
