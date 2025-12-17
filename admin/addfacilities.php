@@ -1,7 +1,7 @@
 <?php
-
 session_start();
 
+// Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
     header("Location: ../index.php");
     exit();
@@ -9,861 +9,288 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
-// Fetch Admin Details
-$adminIdentifier = $_SESSION['user_id'] ?? '';
+// Fetch Admin Name
 $adminName = 'Admin';
-$adminID = $adminIdentifier;
-
-if ($adminIdentifier) {
-    $stmtAdmin = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
-    $stmtAdmin->bind_param("s", $adminIdentifier);
-    $stmtAdmin->execute();
-    $resAdmin = $stmtAdmin->get_result();
-    if ($rowAdmin = $resAdmin->fetch_assoc()) {
-        $adminName = $rowAdmin['FirstName'];
-        $adminID = $rowAdmin['UserIdentifier'];
-    }
-    $stmtAdmin->close();
+if (isset($_SESSION['user_id'])) {
+    $stmt = $conn->prepare("SELECT FirstName FROM users WHERE UserIdentifier = ?");
+    $stmt->bind_param("s", $_SESSION['user_id']);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($r = $res->fetch_assoc()) $adminName = $r['FirstName'];
 }
 
-if ($conn->connect_error) {
-    die("DB Connection failed: " . $conn->connect_error);
-}
-
-function getNextFacilityNumber($conn) {
-    // Find the last FacilityID and extract the number
-    $result = $conn->query("
-        SELECT FacilityID 
-        FROM facilities 
-        ORDER BY CAST(SUBSTRING(FacilityID, 3) AS UNSIGNED) DESC 
-        LIMIT 1
-    ");
-
-    if ($result->num_rows == 0) {
-        return "001";
-    } else {
-        $row = $result->fetch_assoc();
-        $lastIDNumber = substr($row['FacilityID'], -3); 
-        $newID = intval($lastIDNumber) + 1;
-        return str_pad($newID, 3, "0", STR_PAD_LEFT);
-    }
-}
-
-$nextFacilityNumber = getNextFacilityNumber($conn);
-
-// untuk day mapping guna int
-$dayNameToIndex = [
-    "Sunday"    => 0,
-    "Monday"    => 1,
-    "Tuesday"   => 2,
-    "Wednesday" => 3,
-    "Thursday"  => 4,
-    "Friday"    => 5,
-    "Saturday"  => 6
+// Map UI Strings -> DB Integers
+$dayMap = [
+    'Sunday' => 0, 'Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3,
+    'Thursday' => 4, 'Friday' => 5, 'Saturday' => 6
 ];
-$dayIndexToName = array_flip($dayNameToIndex);
-$dayIndexToName = [
-    0 => 'Sunday',
-    1 => 'Monday',
-    2 => 'Tuesday',
-    3 => 'Wednesday',
-    4 => 'Thursday',
-    5 => 'Friday',
-    6 => 'Saturday'
-];
+$dayMapReverse = array_flip($dayMap);
 
-// data fetch
 $facilityData = null;
 $isUpdate = false;
-$currentFacilityID = $_GET['id'] ?? '';
-$formTitle = "ADD NEW FACILITY";
+$currentID = $_GET['id'] ?? '';
+$formTitle = "Add New Facility";
 $existingSchedules = [];
-$existingOverrides = []; 
 
-
-// untuk update existing facility
-if (!empty($currentFacilityID)) {
-   
+// --- LOAD EXISTING DATA ---
+if ($currentID) {
+    // 1. Facility Details
     $stmt = $conn->prepare("SELECT * FROM facilities WHERE FacilityID = ?");
-    $stmt->bind_param("s", $currentFacilityID);
+    $stmt->bind_param("i", $currentID); // Integer!
     $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $facilityData = $result->fetch_assoc();
+    $res = $stmt->get_result();
+    
+    if ($res->num_rows > 0) {
+        $facilityData = $res->fetch_assoc();
         $isUpdate = true;
-        $formTitle = "UPDATE FACILITY: " . $currentFacilityID;
-    } else {
-        echo "<script>alert('Error: Facility ID \\'{$currentFacilityID}\\' not found. Switching to Add mode.'); window.location='addfacilities.php';</script>";
-        exit();
+        $formTitle = "Edit Facility #" . $currentID;
     }
     $stmt->close();
 
-// kalau dah ada schedule
-    $schedule_sql = "SELECT DayOfWeek, OpenTime, CloseTime, SlotDuration 
-                      FROM facilityschedules WHERE FacilityID = ?";
-    $schedule_stmt = $conn->prepare($schedule_sql);
-    $schedule_stmt->bind_param("s", $currentFacilityID);
-    $schedule_stmt->execute();
-    $schedule_result = $schedule_stmt->get_result();
-    while ($row = $schedule_result->fetch_assoc()) {
-        
-        $idx = intval($row['DayOfWeek']);
-        $dayName = $dayIndexToName[$idx] ?? null;
-        if ($dayName !== null) {
-            $existingSchedules[$dayName] = $row;
+    // 2. Schedules
+    $stmt = $conn->prepare("SELECT DayOfWeek, OpenTime, CloseTime, SlotDuration FROM facilityschedules WHERE FacilityID = ?");
+    $stmt->bind_param("i", $currentID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $dayInt = $row['DayOfWeek'];
+        if (isset($dayMapReverse[$dayInt])) {
+            $existingSchedules[$dayMapReverse[$dayInt]] = $row;
         }
     }
-    $schedule_stmt->close();
-
-// tutup facility
-    $override_sql = "SELECT OverrideID, StartTime, EndTime, Reason FROM scheduleoverrides WHERE FacilityID = ? ORDER BY StartTime DESC";
-    $override_stmt = $conn->prepare($override_sql);
-    $override_stmt->bind_param("s", $currentFacilityID);
-    $override_stmt->execute();
-    $override_result = $override_stmt->get_result();
-    while ($row = $override_result->fetch_assoc()) {
-        $existingOverrides[] = $row;
-    }
-    $override_stmt->close();
+    $stmt->close();
 }
 
-
+// --- PROCESS FORM ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
+    // Search Redirect
     if (isset($_POST['search_id'])) {
-        $searchID = strtoupper(trim($_POST['search_id']));
-        if (!empty($searchID)) {
-             header("Location: addfacilities.php?id=" . $searchID);
-             exit();
-        }
+        $sid = intval($_POST['search_id']);
+        if($sid > 0) header("Location: addfacilities.php?id=$sid");
+        exit();
     }
-  
-    if (!isset($_POST['add_closure']) && !isset($_POST['search_id'])) { 
-    
-        $id = $_POST['FacilityIDHidden'] ?? $_POST['FacilityIDCombined'] ?? ''; 
-        $name = $_POST['Name'] ?? '';
-        $description = $_POST['Description'] ?? '';
-        $location = $_POST['Location'] ?? '';
-        $type = $_POST['Type'] ?? '';
-        $status = $_POST['Status'] ?? 'Active';
-        
-        if (empty($id) || empty($name)) {
-            echo "<script>alert('Please fill Facility ID and Name'); window.history.back();</script>";
-            exit();
+
+    // Save Data
+    if (isset($_POST['save_facility'])) {
+        $name = $_POST['Name'];
+        $desc = $_POST['Description'];
+        $loc = $_POST['Location'];
+        $type = $_POST['Type'];
+        $status = $_POST['Status'];
+        $id = $_POST['FacilityIDHidden'] ?? null;
+
+        // Photo Upload
+        $photoName = $facilityData['PhotoURL'] ?? NULL;
+        if (!empty($_FILES['PhotoURL']['name'])) {
+            $ext = pathinfo($_FILES['PhotoURL']['name'], PATHINFO_EXTENSION);
+            $newName = time() . "_" . uniqid() . "." . $ext;
+            move_uploaded_file($_FILES['PhotoURL']['tmp_name'], "../admin/uploads/" . $newName);
+            $photoName = $newName;
         }
 
-        $newPhotoName = $facilityData['PhotoURL'] ?? ''; 
-
-        // upload photo
-        if (isset($_FILES['PhotoURL']) && isset($_FILES['PhotoURL']['name']) && $_FILES['PhotoURL']['name'] !== '') {
-            if ($_FILES['PhotoURL']['error'] === 0) {
-                $uploadDir = __DIR__ . "/../uploads/facilities/"; // absolute server path
-                $webUploadDir = "../uploads/facilities/"; // web path for storing file name only
-
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
-
-                $fileTmp = $_FILES['PhotoURL']['tmp_name'];
-                // sanitize filename
-                $originalName = basename($_FILES['PhotoURL']['name']);
-                $ext = pathinfo($originalName, PATHINFO_EXTENSION);
-                $safeBase = preg_replace("/[^A-Za-z0-9_\-]/", '_', pathinfo($originalName, PATHINFO_FILENAME));
-                $fileName = time() . "_" . $safeBase . "." . $ext;
-                $filePath = $uploadDir . $fileName;
-
-                if (move_uploaded_file($fileTmp, $filePath)) {
-                    // delete old file if updating and different
-                    if ($isUpdate && !empty($facilityData['PhotoURL']) && $facilityData['PhotoURL'] !== $fileName) {
-                        $oldFile = $uploadDir . $facilityData['PhotoURL'];
-                        if (is_file($oldFile)) {
-                            @unlink($oldFile);
-                        }
-                    }
-                    // store the filename only
-                    $newPhotoName = $fileName;
-                } else {
-                    // upload failed
-                    echo "<script>alert('Failed to move uploaded file.'); window.history.back();</script>";
-                    exit();
-                }
-            } else {
-                // upload error (you can handle more cases)
-                echo "<script>alert('Error uploading image. Error code: " . intval($_FILES['PhotoURL']['error']) . "'); window.history.back();</script>";
-                exit();
-            }
-        }
-
-  // simpan data update dalam table facilities
-        if ($isUpdate) {
+        if ($isUpdate && $id) {
             $sql = "UPDATE facilities SET Name=?, Description=?, Location=?, Type=?, PhotoURL=?, Status=? WHERE FacilityID=?";
-            if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("sssssss", $name, $description, $location, $type, $newPhotoName, $status, $id);
-                $successMsg = "Facility updated successfully";
-                $redirectFile = "addfacilities.php?id=" . $id; 
-            } else {
-                echo "Prepare failed: " . $conn->error;
-                exit();
-            }
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssssi", $name, $desc, $loc, $type, $photoName, $status, $id);
         } else {
-            // check duplicate ID
-            $check = $conn->query("SELECT FacilityID FROM facilities WHERE FacilityID = '". $conn->real_escape_string($id) ."'");
-            if ($check->num_rows > 0) {
-                echo "<script>alert('Error: Facility ID $id already exists.'); window.location='addfacilities.php';</script>";
-                exit();
-            }
-
-            $sql = "INSERT INTO facilities (FacilityID, Name, Description, Location, Type, PhotoURL, Status) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("sssssss", $id, $name, $description, $location, $type, $newPhotoName, $status);
-                $successMsg = "Facility added successfully";
-                $redirectFile = "addfacilities.php?id=" . $id; 
-            }
+            // INSERT (No ID, Auto Increment)
+            $sql = "INSERT INTO facilities (Name, Description, Location, Type, PhotoURL, Status) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssss", $name, $desc, $loc, $type, $photoName, $status);
         }
 
-        if ($stmt && $stmt->execute()) {
+        if ($stmt->execute()) {
+            $targetID = $isUpdate ? $id : $stmt->insert_id;
             
-            $del_stmt = $conn->prepare("DELETE FROM facilityschedules WHERE FacilityID = ?");
-            if ($del_stmt) {
-                $del_stmt->bind_param("s", $id);
-                $del_stmt->execute();
-                $del_stmt->close();
-            } else {
-                // fallback to query if prepare fails 
-                $conn->query("DELETE FROM facilityschedules WHERE FacilityID = '$id'");
-            }
-
-            $schedule_stmt = $conn->prepare("INSERT INTO facilityschedules (FacilityID, DayOfWeek, OpenTime, CloseTime, SlotDuration) VALUES (?, ?, ?, ?, ?)");
+            // Update Schedules (Delete Old -> Insert New)
+            $conn->query("DELETE FROM facilityschedules WHERE FacilityID = $targetID");
             
-            if ($schedule_stmt === false) {
-                
-                // error_log
-            } else {
-                if (!empty($_POST['available_days'])) {
-                    foreach ($_POST['available_days'] as $day) {
-                        if (!isset($dayNameToIndex[$day])) {
-                            continue;
-                        }
-                        $dayIndex = intval($dayNameToIndex[$day]);
-
-                        
-                        $startRaw = $_POST['start_time'][$day] ?? '00:00';
-                        $endRaw = $_POST['end_time'][$day] ?? '00:00';
-
-                        
-                        $start = date('H:i:s', strtotime($startRaw));
-                        $end = date('H:i:s', strtotime($endRaw));
-
-                        $slot_duration = intval($_POST['slot_duration'][$day] ?? 60); 
-
-                        $schedule_stmt->bind_param("sissi", $id, $dayIndex, $start, $end, $slot_duration);
-                        $schedule_stmt->execute();
-                    }
+            $insSched = $conn->prepare("INSERT INTO facilityschedules (FacilityID, DayOfWeek, OpenTime, CloseTime, SlotDuration) VALUES (?, ?, ?, ?, ?)");
+            
+            if (!empty($_POST['available_days'])) {
+                foreach ($_POST['available_days'] as $dayName) {
+                    $dayInt = $dayMap[$dayName];
+                    $start = $_POST['start_time'][$dayName];
+                    $end = $_POST['end_time'][$dayName];
+                    $dur = $_POST['slot_duration'][$dayName];
+                    
+                    $insSched->bind_param("iissi", $targetID, $dayInt, $start, $end, $dur);
+                    $insSched->execute();
                 }
-                $schedule_stmt->close();
-            } 
-
-            echo "<script>alert('$successMsg'); window.location='$redirectFile';</script>";
+            }
+            echo "<script>alert('Saved Successfully!'); window.location='addfacilities.php?id=$targetID';</script>";
         } else {
-            echo "SQL Error: " . $conn->error;
+            echo "<script>alert('Error: ".$stmt->error."');</script>";
         }
-        $stmt->close();
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><?php echo $formTitle; ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Facilities</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<style>
-
-body {
-    background: url('../assets/img/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    font-family: 'Poppins', sans-serif;
-}
-
-nav {
-    background: #bfd9dc;
-    padding: 10px 40px;
-    border-bottom-left-radius: 25px;
-    border-bottom-right-radius: 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-
-.nav-logo img { height: 65px; }
-.nav-link {
-    color: #071239ff;
-    font-weight: 600;
-    padding: 8px 18px;
-    border-radius: 12px;
-    transition: 0.3s ease;
-}
-.nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.5); }
-
-        .dropdown-menu {
-            border-radius: 12px;
-            background: #bfd9dc;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            padding: 5px;
-        }
-        .dropdown-item {
-            color: #071239ff;
-            font-weight: 600;
-            padding: 8px 18px;
-            border-radius: 10px;
-            transition: 0.3s ease;
-        }
-        .dropdown-item:hover {
-            background: rgba(255,255,255,0.5);
-            color: #071239ff;
-        }
-
-.main-box {
-    background: #bfd9dc;
-    border-radius: 25px;
-    padding: 30px 40px;
-    max-width: 1200px; 
-    margin: 40px auto;
-    box-shadow: 0 0 20px rgba(0,0,0,0.25);
-}
-
-h1 {
-    font-weight: 900;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 36px;
-    color: #071239ff;
-}
-
-.form-label {
-    font-weight: 600;
-    font-size: 14px;  
-    color: #071239ff;
-    margin-bottom: 5px; 
-}
-
-.form-control, .form-select, textarea {
-    border-radius: 12px;
-    padding: 6px 12px;
-    font-size: 14px;
-    color: #071239ff;
-}
-
-.btn-reset { background: #c62828; color: white; padding: 6px 22px; border-radius: 10px; }
-.btn-submit { background: #1e40af; color: white; padding: 6px 22px; border-radius: 10px; }
-.btn-search { background: #071239ff; color: white; border-radius: 10px; padding: 6px 15px;}
-
-.btn-closure {
-    background-color: #2d4baeff; /* soft navy */
-    color: #fff;
-    font-weight: 600;
-    font-size: 1rem;
-    border-radius: 12px; /* soft rounded corners */
-    padding: 10px 18px;
-    text-align: center;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.btn-closure:hover {
-    background-color: #627fbdff; /* slightly lighter blue on hover */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(208, 208, 208, 1);
-}
-
-.section-card {
-    background: rgba(255, 255, 255, 0.5); 
-    border-radius: 15px;
-    padding: 20px;
-    border: 1px solid #bfd9dc; 
-    height: 100%;
-}
-
-.section-title {
-    font-weight: 800;
-    color: #1e40af;
-    margin-top: 0;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #1e40af;
-    padding-bottom: 5px;
-}
-
-
-.btn-closure-nav {
-    font-weight: 700;
-    padding: 10px 18px; 
-    background: #3f58acff; 
-    color: white;
-    border-radius: 4px; 
-    text-decoration: none;
-    transition: background 0.3s, transform 0.1s;
-    display: block; 
-    max-width: 400px; 
-    margin: 15px auto 0; 
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4); 
-    border: none; 
-}
-.btn-closure-nav:hover { 
-    background: #707eb0ff; 
-    color: white;
-    transform: translateY(-1px);
-}
-.btn-closure-nav:active {
-    transform: translateY(1px);
-}
-.search-box {
-    background: #fff;
-    border-radius: 15px;
-    padding: 15px 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-/* image preview */
-.img-preview {
-    max-width: 220px;
-    max-height: 160px;
-    object-fit: cover;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-}
-</style>
-
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0b4d9d; --bg-light: #f8f9fa; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-light); color: #333; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+        
+        .navbar-custom { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .nav-link { color: #555; font-weight: 500; }
+        .nav-link.active { color: var(--primary) !important; font-weight: 700; }
+        
+        .main-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 1200px; margin: 30px auto; }
+        
+        .form-control, .form-select { border-radius: 8px; padding: 10px; border-color: #dee2e6; }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 0.2rem rgba(11, 77, 157, 0.15); }
+        
+        .section-title { color: var(--primary); font-weight: 700; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px; margin-bottom: 20px; }
+        .btn-primary-custom { background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 8px; font-weight: 600; }
+        .btn-primary-custom:hover { background: #083a75; }
+        
+        .schedule-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+    </style>
 </head>
-
 <body>
 
-<nav class="d-flex justify-content-between align-items-center px-4 py-2">
-    <div class="nav-logo d-flex align-items-center gap-3">
-        <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
-        <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" height="45">
-    </div>
-
-    <div class="d-flex align-items-center gap-4">
-        
-        <div class="dropdown">
-            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Facility
-            </a>
-
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="addfacilities.php">Add Facility</a></li>
-                <li><a class="dropdown-item" href="manage_closures.php">Facility Closures</a></li>
-            </ul>
-        </div>
-        
-        <a class="nav-link" href="bookinglist.php">Booking</a>
-        
-        <a class="nav-link" href="report.php">Report</a>
-
-        <div class="dropdown">
-            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
-                <div style="line-height:1.2; text-align: left;">
-                    <div class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($adminName); ?></div>
-                    <small class="text-muted" style="font-size: 0.8rem;"><?php echo htmlspecialchars($adminID); ?></small>
-                </div>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item text-danger" href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+            <img src="../assets/img/ukm.png" height="40">
+            <span class="fw-bold" style="color: var(--primary)">Admin Portal</span>
+        </a>
+        <div class="collapse navbar-collapse justify-content-end">
+            <ul class="navbar-nav align-items-center gap-3">
+                <li class="nav-item"><a class="nav-link active" href="addfacilities.php">Facilities</a></li>
+                <li class="nav-item"><a class="nav-link" href="bookinglist.php">Bookings</a></li>
+                <li class="nav-item"><a class="nav-link" href="manage_closures.php">Closures</a></li>
+                <li class="nav-item">
+                    <span class="badge bg-light text-dark border"><?php echo htmlspecialchars($adminName); ?></span>
+                </li>
+                <li class="nav-item"><a href="../logout.php" class="btn btn-sm btn-outline-danger">Logout</a></li>
             </ul>
         </div>
     </div>
 </nav>
+
 <div class="container">
-    <div class="main-box position-relative">
-        <h1><?php echo $formTitle; ?></h1>
-
-        <div class="search-box">
-            <h5 class="section-title mb-3" style="border-color:#071239ff; color:#071239ff;">Update Existing Facility</h5>
-            <form method="POST" class="row g-2 align-items-center">
-                <div class="col-md-5">
-                    <input type="text" class="form-control" name="search_id" id="searchIDInput" placeholder="Enter Facility ID (e.g., ID001 or OD005)" required>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-search w-100">Search & Load</button>
-                </div>
-                <div class="col-md-4">
-                    <?php if ($isUpdate): ?>
-                           <a href="addfacilities.php" class="btn btn-reset w-100">+ Add New Facility</a>
-                    <?php endif; ?>
-                </div>
-            </form>
+    <div class="main-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0"><?php echo $formTitle; ?></h2>
+            <?php if($isUpdate): ?>
+                <a href="addfacilities.php" class="btn btn-outline-secondary btn-sm">+ Add New</a>
+            <?php endif; ?>
         </div>
+
+        <!-- Search -->
+        <form method="POST" class="mb-5 bg-light p-3 rounded border">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">Edit ID:</span>
+                <input type="number" name="search_id" class="form-control border-start-0" placeholder="e.g. 12" required>
+                <button class="btn btn-dark" type="submit">Load Facility</button>
+            </div>
+        </form>
+
         <form method="POST" enctype="multipart/form-data">
-            <div class="row g-4"> 
-                
+            <input type="hidden" name="save_facility" value="1">
+            <?php if($isUpdate): ?><input type="hidden" name="FacilityIDHidden" value="<?php echo $facilityData['FacilityID']; ?>"><?php endif; ?>
+
+            <div class="row g-5">
+                <!-- Left: Details -->
                 <div class="col-md-6">
-                    <div class="section-card">
-                        <h5 class="section-title">1. Facility Details</h5>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Facility ID</label>
-                            <?php if ($isUpdate): ?>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($facilityData['FacilityID']); ?>" readonly>
-                                <input type="hidden" name="FacilityIDHidden" value="<?php echo htmlspecialchars($facilityData['FacilityID']); ?>">
-                                <small class="text-muted">Current ID: <?php echo htmlspecialchars($facilityData['FacilityID']); ?></small>
-                            <?php else: ?>
-                                <div class="input-group">
-                                    <select class="form-select" name="FacilityPrefix" id="FacilityPrefix" style="max-width: 80px;" required>
-                                        <option value="ID" selected>ID (Indoor)</option> 
-                                        <option value="OD">OD (Outdoor)</option> 
-                                    </select>
-                                    <input type="text" class="form-control" name="FacilityNumber" id="FacilityNumber" value="<?php echo $nextFacilityNumber; ?>" pattern="[0-9]*" maxlength="5" required>
-                                </div>
-                                <input type="hidden" name="FacilityIDCombined" id="FacilityIDCombined">
-                                <small class="text-muted" style="font-size:11px;">Next ID: <?php echo "ID" . $nextFacilityNumber; ?> or <?php echo "OD" . $nextFacilityNumber; ?></small>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Facility Name</label>
-                            <input type="text" class="form-control" name="Name" 
-                                       value="<?php echo htmlspecialchars($facilityData['Name'] ?? ''); ?>" required>
-                        </div>
+                    <h5 class="section-title">Facility Details</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Name</label>
+                        <input type="text" name="Name" class="form-control" value="<?php echo htmlspecialchars($facilityData['Name'] ?? ''); ?>" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea name="Description" class="form-control" rows="3"><?php echo htmlspecialchars($facilityData['Description'] ?? ''); ?></textarea>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" rows="3" name="Description" required><?php echo htmlspecialchars($facilityData['Description'] ?? ''); ?></textarea>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Location</label>
+                            <input type="text" name="Location" class="form-control" value="<?php echo htmlspecialchars($facilityData['Location'] ?? ''); ?>">
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Location</label>
-                            <input type="text" class="form-control" name="Location" 
-                                       value="<?php echo htmlspecialchars($facilityData['Location'] ?? ''); ?>" required>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Type</label>
+                            <input type="text" name="Type" class="form-control" value="<?php echo htmlspecialchars($facilityData['Type'] ?? ''); ?>" placeholder="e.g. Court">
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Facility Type</label>
-                            <input type="text" class="form-control" name="Type" 
-                                       value="<?php echo htmlspecialchars($facilityData['Type'] ?? ''); ?>" required>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select name="Status" class="form-select">
+                            <?php 
+                            $st = $facilityData['Status'] ?? 'Active';
+                            foreach(['Active','Maintenance','Archived'] as $opt) echo "<option value='$opt' ".($st==$opt?'selected':'').">$opt</option>";
+                            ?>
+                        </select>
+                    </div>
 
-                       <div class="mb-3">
-                            <label class="form-label d-block">Upload Photo</label>
-                            <input type="file" id="photoInput" name="PhotoURL" class="form-control" accept="image/*" <?php echo $isUpdate && empty($facilityData['PhotoURL']) ? '' : ''; ?>>
-                            <div class="mt-2">
-                                <?php if (!empty($facilityData['PhotoURL'])): ?>
-                                    <img id="photoPreview" class="img-preview" src="../uploads/facilities/<?php echo htmlspecialchars($facilityData['PhotoURL']); ?>" alt="Current photo">
-                                <?php else: ?>
-                                    <img id="photoPreview" class="img-preview" src="../assets/img/no-photo.png" alt="Preview" style="display:block;">
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" name="Status" required>
-                                <?php 
-                                    $currentStatus = $facilityData['Status'] ?? 'Active';
-                                    $options = ['Active', 'Maintenance', 'Archived'];
-                                    foreach ($options as $option): 
-                                ?>
-                                    <option value="<?php echo $option; ?>" <?php echo ($currentStatus === $option) ? 'selected' : ''; ?>>
-                                        <?php echo $option; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Image</label>
+                        <input type="file" name="PhotoURL" class="form-control">
+                        <?php if(!empty($facilityData['PhotoURL'])): ?>
+                            <img src="../admin/uploads/<?php echo $facilityData['PhotoURL']; ?>" class="mt-2 rounded" style="height:100px; object-fit:cover;">
+                        <?php endif; ?>
                     </div>
                 </div>
-                
+
+                <!-- Right: Schedule -->
                 <div class="col-md-6">
-                    <div class="section-card">
-                        <h5 class="section-title">2. Weekly Recurring Schedule</h5>
-                        
- <small class="text-muted d-block mb-3">
-    Check box if OPEN. Set times & slot duration (mins).
-</small>
+                    <h5 class="section-title">Weekly Schedule</h5>
+                    <p class="text-muted small">Check days to open facility.</p>
 
-<style>
-    .time-btn {
-        padding: 4px 8px;
-        font-size: 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background: #f8f9fa;
-        cursor: pointer;
-        margin: 2px;
-    }
-    .time-btn.active {
-        background: #0d6efd;
-        color: #fff;
-        border-color: #0d6efd;
-    }
-    .time-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    .schedule-section { display:none; }
-</style>
-
-<?php 
-$days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-$timeOptions = [];
-
-// default pilih 9 pagi - 9 malam
-for ($h = 9; $h <= 21; $h++) { 
-    $timeOptions[] = date("h:i A", strtotime("$h:00"));
-}
-?>
-
-<div class="mb-3">
-    <label class="form-label fw-bold">Select Day</label>
-    <select id="daySelector" class="form-select form-select-sm">
-        <option selected disabled>-- Choose Day --</option>
-        <?php foreach($days as $day): ?>
-            <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
-        <?php endforeach; ?>
-    </select>
-</div>
-
-<?php foreach($days as $day): 
-    $dayData = $existingSchedules[$day] ?? [
-        'OpenTime'=>'08:00:00','CloseTime'=>'17:00:00','SlotDuration'=>60
-    ];
-    $isChecked = !empty($existingSchedules[$day]);
-?>
-<div class="schedule-section" id="section-<?php echo $day; ?>">
-
-    <div class="border rounded p-3 mb-3 bg-light">
-
-        <div class="form-check mb-3">
-            <input class="form-check-input day-open-checkbox"
-                   type="checkbox"
-                   name="available_days[]"
-                   id="open-<?php echo $day; ?>"
-                   value="<?php echo $day; ?>"
-                   <?php echo $isChecked ? 'checked' : ''; ?>>
-            <label class="form-check-label" for="open-<?php echo $day; ?>">
-                Open on <?php echo $day; ?>
-            </label>
-        </div>
-
-        <div class="day-schedule-controls">
-
-            <label class="text-muted mb-1">Start Time</label>
-            <div>
-                <?php foreach ($timeOptions as $t): 
-                    
-                    $isActiveStart = $isChecked && ($t == date("h:i A", strtotime($dayData['OpenTime'])));
-                ?>
-                    <button type="button"
-                        class="time-btn start-btn-<?php echo $day; ?> <?php echo $isActiveStart ? 'active' : ''; ?>"
-                        onclick="selectTime('<?php echo $day; ?>','start','<?php echo $t; ?>', this)">
-                        <?php echo $t; ?>
-                    </button>
-                <?php endforeach; ?>
-            </div>
-
-            <input type="hidden" 
-                    name="start_time[<?php echo $day; ?>]"
-                    id="start-<?php echo $day; ?>"
-                    value="<?php echo date('H:i', strtotime($dayData['OpenTime'])); ?>">
-
-            <label class="text-muted mt-3 mb-1">End Time</label>
-            <div>
-                <?php foreach ($timeOptions as $t): 
-                    $isActiveEnd = $isChecked && ($t == date("h:i A", strtotime($dayData['CloseTime'])));
-                ?>
-                    <button type="button"
-                        class="time-btn end-btn-<?php echo $day; ?> <?php echo $isActiveEnd ? 'active' : ''; ?>"
-                        onclick="selectTime('<?php echo $day; ?>','end','<?php echo $t; ?>', this)">
-                        <?php echo $t; ?>
-                    </button>
-                <?php endforeach; ?>
-            </div>
-
-            <input type="hidden" 
-                    name="end_time[<?php echo $day; ?>]"
-                    id="end-<?php echo $day; ?>"
-                    value="<?php echo date('H:i', strtotime($dayData['CloseTime'])); ?>">
-
-            <div class="mt-3">
-                <label class="form-label mb-1">Slot Duration (minutes)</label>
-                <div class="d-flex align-items-center">
-                    <input type="number"
-                        class="form-control form-control-sm slot-duration-<?php echo $day; ?>"
-                        name="slot_duration[<?php echo $day; ?>]"
-                        value="<?php echo $dayData['SlotDuration']; ?>"
-                        min="5" step="5" style="max-width:70px;">
-                    <span class="ms-1 text-muted">mins</span>
+                    <?php 
+                    $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                    foreach($days as $day):
+                        $dData = $existingSchedules[$day] ?? ['OpenTime'=>'08:00', 'CloseTime'=>'22:00', 'SlotDuration'=>60];
+                        $checked = isset($existingSchedules[$day]) ? 'checked' : '';
+                        $display = isset($existingSchedules[$day]) ? 'flex' : 'none';
+                    ?>
+                    <div class="schedule-box">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input sched-toggle" type="checkbox" name="available_days[]" value="<?php echo $day; ?>" id="chk_<?php echo $day; ?>" <?php echo $checked; ?>>
+                            <label class="form-check-label fw-bold" for="chk_<?php echo $day; ?>"><?php echo $day; ?></label>
+                        </div>
+                        <div class="row g-2 inputs-<?php echo $day; ?>" style="display:<?php echo $display; ?>">
+                            <div class="col-4"><small>Open</small><input type="time" class="form-control form-control-sm" name="start_time[<?php echo $day; ?>]" value="<?php echo substr($dData['OpenTime'],0,5); ?>"></div>
+                            <div class="col-4"><small>Close</small><input type="time" class="form-control form-control-sm" name="end_time[<?php echo $day; ?>]" value="<?php echo substr($dData['CloseTime'],0,5); ?>"></div>
+                            <div class="col-4"><small>Slot(m)</small><input type="number" class="form-control form-control-sm" name="slot_duration[<?php echo $day; ?>]" value="<?php echo $dData['SlotDuration']; ?>" step="5"></div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
 
-        </div>
-
-    </div>
-
-</div>
-<?php endforeach; ?>
-
-<script>
-// Show selected day section
-document.getElementById("daySelector").addEventListener("change", function() {
-    let day = this.value;
-    document.querySelectorAll(".schedule-section").forEach(sec => sec.style.display = "none");
-    document.getElementById("section-" + day).style.display = "block";
-});
-
-// Select time button
-function selectTime(day, type, timeValue, btn) {
-    const date = new Date("1970-01-01 " + timeValue);
-    const formatted = date.toTimeString().substring(0,5); // Gets H:i format
-
-    document.getElementById(type + "-" + day).value = formatted;
-
-    document.querySelectorAll("." + type + "-btn-" + day).forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-}
-
-// Enable/disable time buttons & slot input based on checkbox
-document.querySelectorAll('.day-open-checkbox').forEach(cb => {
-    toggleDayControls(cb); // initial state
-    cb.addEventListener('change', () => toggleDayControls(cb));
-});
-
-function toggleDayControls(checkbox) {
-    const day = checkbox.value;
-    const isEnabled = checkbox.checked;
-
-    document.querySelectorAll(`.start-btn-${day}, .end-btn-${day}`).forEach(b => {
-        b.disabled = !isEnabled;
-        b.style.opacity = isEnabled ? '1' : '0.5';
-        b.style.cursor = isEnabled ? 'pointer' : 'not-allowed';
-    });
-
-    const slotInput = document.querySelector(`.slot-duration-${day}`);
-    slotInput.disabled = !isEnabled;
-
-    // Remove active state from buttons if disabled
-    if (!isEnabled) {
-        document.querySelectorAll(`.start-btn-${day}, .end-btn-${day}`).forEach(b => b.classList.remove('active'));
-    }
-}
-</script>
-
-                        
-                        
-<div class="col-md-6 mb-4">
-        
-            <h5 class="section-title">3. Facility Closure</h5>
-             <small class="text-muted d-block mb-3">
-    Manage temporary closures for this facility.
-</small>
-            <a href="manage_closures.php" class="btn btn-closure w-100 mt-3">
-    <span class="me-2">📅</span> Go to Closures Management
-</a>
-        </div>
-    </div>
-</div>
-
-
-            <div class="text-center mt-4">
-                <button type="reset" class="btn btn-reset me-2">Reset</button>
-                <button type="submit" class="btn btn-submit"><?php echo $isUpdate ? 'Update Facility' : 'Add Facility'; ?></button>
+            <div class="text-center mt-5">
+                <button type="submit" class="btn btn-primary-custom btn-lg shadow w-100">
+                    <?php echo $isUpdate ? 'Save Changes' : 'Create Facility'; ?>
+                </button>
             </div>
-
         </form>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // id combination logic
-    const form = document.querySelector('form');
-    const prefixSelect = document.getElementById('FacilityPrefix');
-    const numberInput = document.getElementById('FacilityNumber');
-    const combinedInput = document.getElementById('FacilityIDCombined');
-    
-    const nextIdNumber = <?php echo json_encode($nextFacilityNumber); ?>;
-    const isUpdateMode = <?php echo json_encode($isUpdate); ?>;
-    
-    function updateCombinedID() {
-        if (prefixSelect && numberInput && combinedInput) {
-            const prefix = prefixSelect.value;
-            let number = numberInput.value.replace(/[^0-9]/g, ''); 
-            
-            if (number.length > 0) {
-                
-                 number = number.padStart(3, '0');
-                 numberInput.value = number; 
-            }
-            
-            combinedInput.value = prefix + number;
-        }
-    }
-
-    if (prefixSelect && numberInput) {
-    
-        if (!isUpdateMode) {
-             // ensure the input starts with the suggested number in Add Facility
-             numberInput.value = nextIdNumber;
-        }
-        
-        numberInput.addEventListener('input', updateCombinedID);
-        prefixSelect.addEventListener('change', updateCombinedID);
-        
-        
-        updateCombinedID(); // Initial call to set the hidden field
-        
-        form.addEventListener('submit', function(e) {
-            
-            if (!isUpdateMode && (!combinedInput.value || combinedInput.value.length < 5)) { 
-                e.preventDefault();
-                alert('Please complete the Facility ID (Prefix + 3-digit Number).');
-            }
-        });
-    }
-    
-    const searchInput = document.getElementById('searchIDInput');
-    if(searchInput) {
-        searchInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase().trim();
-        });
-    }
-
-    // Photo preview
-    const photoInput = document.getElementById('photoInput');
-    const photoPreview = document.getElementById('photoPreview');
-    if (photoInput) {
-        photoInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (photoPreview) {
-                    photoPreview.src = e.target.result;
-                    photoPreview.style.display = 'block';
-                }
-            }
-            reader.readAsDataURL(file);
-        });
-    }
-
-   
+document.querySelectorAll('.sched-toggle').forEach(t => {
+    t.addEventListener('change', function() {
+        const row = document.querySelector(`.inputs-${this.value}`);
+        row.style.display = this.checked ? 'flex' : 'none';
+        row.querySelectorAll('input').forEach(i => i.disabled = !this.checked);
+    });
+    // Init logic
+    const row = document.querySelector(`.inputs-${t.value}`);
+    row.querySelectorAll('input').forEach(i => i.disabled = !t.checked);
 });
 </script>
 </body>
-
-
- 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </html>
