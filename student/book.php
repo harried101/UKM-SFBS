@@ -181,11 +181,60 @@ if ($facility_id) {
             document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
             btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#0b4d9d] border-[#0b4d9d] text-white shadow-md transform scale-105';
             
+            // Fix: Combine date and time properly for the database
             document.getElementById('hiddenStartTime').value = `${dateStr} ${startTime}`;
             document.getElementById('summaryTime').innerText = label;
             bookingForm.classList.remove('hidden');
             setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
         }
+
+        // AJAX form submit to avoid raw JSON response showing in browser
+        const form = document.getElementById('bookingForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                // Check if response is JSON, otherwise throw error (e.g., PHP warnings)
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        // Sometimes PHP errors are printed before JSON
+                        // Extract JSON if possible
+                        try {
+                            const jsonStart = text.indexOf('{');
+                            if (jsonStart !== -1) {
+                                return JSON.parse(text.substring(jsonStart));
+                            }
+                        } catch (e) {}
+                        throw new Error('Server returned non-JSON response: ' + text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Booking Submitted Successfully!');
+                    // Reload parent window (student_facilities.php) to update status/history
+                    if (window.parent) {
+                        window.parent.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                alert('An error occurred while submitting the booking.');
+            });
+        });
 
         document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
         document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
