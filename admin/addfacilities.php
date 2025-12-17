@@ -10,13 +10,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 require_once '../includes/db_connect.php';
 
 // Fetch Admin Details
-$adminName = 'Admin';
+// We use the session 'user_id' which holds the UserIdentifier (e.g., K012033) to find the name
+$adminName = 'Admin'; 
 if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT FirstName FROM users WHERE UserIdentifier = ?");
+    $stmt = $conn->prepare("SELECT FirstName, LastName FROM users WHERE UserIdentifier = ?");
     $stmt->bind_param("s", $_SESSION['user_id']);
     $stmt->execute();
     $res = $stmt->get_result();
-    if ($r = $res->fetch_assoc()) $adminName = $r['FirstName'];
+    if ($r = $res->fetch_assoc()) {
+        $adminName = $r['FirstName'] . ' ' . $r['LastName'];
+    }
+    $stmt->close();
 }
 
 // Map Logic (Strings <-> Integers)
@@ -257,15 +261,18 @@ if (isset($_GET['del_closure'])) {
             </a>
             
             <a href="manage_bookings.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
-            <a href="manage_closures.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Closures</a>
-
+            
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
                     <p class="text-xs text-gray-500 uppercase tracking-wider">Administrator</p>
                 </div>
+                <!-- Profile Dropdown Container -->
                 <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <button class="flex items-center focus:outline-none">
+                        <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition">
+                    </button>
+                    <!-- Dropdown Menu -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
                         <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
                             <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
