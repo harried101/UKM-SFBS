@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Redirect if not logged in or not a student
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
@@ -9,26 +8,40 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
-// Fetch student details
+// Fetch student info
 $studentIdentifier = $_SESSION['user_id'] ?? '';
 $studentName = 'Student';
 $studentID = $studentIdentifier;
 
 if ($studentIdentifier) {
-    $stmtStudent = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
+    $stmtStudent = $conn->prepare("SELECT FirstName, LastName, UserIdentifier, UserID FROM users WHERE UserIdentifier = ?");
     $stmtStudent->bind_param("s", $studentIdentifier);
     $stmtStudent->execute();
     $resStudent = $stmtStudent->get_result();
-    if ($rowStudent = $resStudent->fetch_assoc()) {
-        $studentName = $rowStudent['FirstName'] . ' ' . $rowStudent['LastName'];
-        $studentID = $rowStudent['UserIdentifier'];
+    if ($row = $resStudent->fetch_assoc()) {
+        $studentName = $row['FirstName'] . ' ' . $row['LastName'];
+        $studentID = $row['UserIdentifier'];
+        $userID = $row['UserID'];
     }
     $stmtStudent->close();
 }
 
-if ($conn->connect_error) {
-    die("DB Connection failed: " . $conn->connect_error);
+// Fetch booking history
+$bookings = [];
+$stmtBooking = $conn->prepare("
+    SELECT f.Name AS FacilityName, b.StartTime, b.EndTime, b.Status
+    FROM bookings b
+    JOIN facilities f ON b.FacilityID = f.FacilityID
+    WHERE b.UserID = ?
+    ORDER BY b.StartTime DESC
+");
+$stmtBooking->bind_param("i", $userID);
+$stmtBooking->execute();
+$resBooking = $stmtBooking->get_result();
+while ($row = $resBooking->fetch_assoc()) {
+    $bookings[] = $row;
 }
+$stmtBooking->close();
 ?>
 
 <!DOCTYPE html>
@@ -36,7 +49,7 @@ if ($conn->connect_error) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Dashboard – UKM Sports Center</title>
+<title>Booking History – UKM Sports Center</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -94,10 +107,10 @@ nav {
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-/* WELCOME TEXT */
-.welcome-text {
+/* PAGE TITLE */
+.section-title {
     text-align: center;
-    margin: 30px auto 50px auto;
+    margin: 30px 0;
     font-size: 36px;
     font-weight: 900;
     color: var(--primary);
@@ -115,30 +128,10 @@ nav {
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 14px; text-align: center; border-bottom: 1px solid #eee; }
 th { background: var(--primary); color: white; text-transform: uppercase; }
-button.cancel-btn { background: var(--primary); color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; }
-button.review-btn { background: #21b32d; color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; }
-button.cancel-btn:hover { background: #07365f; }
-button.review-btn:hover { background: #1a8b23; }
-
-/* COUNTERS */
-.counters { display: flex; justify-content: center; gap: 80px; margin: 30px auto 50px; flex-wrap: wrap; text-align: center; }
-.counter-number { font-size: 48px; font-weight: 700; color: var(--primary); }
-.counter-label { font-size: 18px; margin-top: 5px; color: #004d7a; }
-
-/* INFO BOX */
-.info-text {
-    width: 85%;
-    margin: 40px auto;
-    background: white;
-    padding: 25px 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    font-size: 16px;
-    line-height: 1.7;
-    text-align: center;
-    color: #004d7a;
-}
-.info-text h2 { font-size: 28px; margin-bottom: 15px; font-weight: bold; color: var(--primary); }
+.status-completed { color: green; font-weight: 700; }
+.status-canceled { color: red; font-weight: 700; }
+.status-pending { color: orange; font-weight: 700; }
+.status-confirmed { color: blue; font-weight: 700; }
 
 /* FOOTER */
 .footer { background: white; border-top: 1px solid #eee; margin-top: auto; }
@@ -150,7 +143,6 @@ button.review-btn:hover { background: #1a8b23; }
 .footer-bottom { background: var(--primary); color: white; text-align: center; padding: 12px 15px; font-size: 13px; }
 
 @media screen and (max-width:768px) {
-    .counters { flex-direction: column; gap: 30px; }
     .footer-top { flex-direction: column; gap: 20px; }
     .footer-logo img, .footer-sdg img { height: 100px; }
 }
@@ -158,7 +150,7 @@ button.review-btn:hover { background: #1a8b23; }
 </head>
 <body>
 
-<!-- NAVBAR (Admin-style) -->
+<!-- NAVBAR (EXACTLY LIKE DASHBOARD) -->
 <nav class="d-flex justify-content-between align-items-center px-4 py-2">
     <div class="nav-logo d-flex align-items-center gap-3">
         <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
@@ -166,9 +158,9 @@ button.review-btn:hover { background: #1a8b23; }
     </div>
 
     <div class="d-flex align-items-center gap-4">
-        <a class="nav-link" href="#">Home</a>
+        <a class="nav-link" href="dashboard.php">Home</a>
         <a class="nav-link" href="student_facilities.php">Facilities</a>
-        <a class="nav-link" href="booking_history.php">Booking History</a>
+        <a class="nav-link active" href="booking_history.php">Booking History</a>
 
         <div class="dropdown">
             <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -185,100 +177,46 @@ button.review-btn:hover { background: #1a8b23; }
     </div>
 </nav>
 
-<!-- BANNER -->
-<div class="banner">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan">
-</div>
 
-<!-- WELCOME TEXT BELOW BANNER -->
-<h1 class="welcome-text">Welcome, <?php echo htmlspecialchars($studentName); ?>!</h1>
 
-<!-- ACTIVE BOOKINGS -->
-<div class="section-title text-center text-3xl font-bold text-[#0b4d9d] mb-6">ACTIVE BOOKINGS</div>
+<!-- PAGE TITLE -->
+<h1 class="section-title">Booking History</h1>
+
+<!-- BOOKING TABLE -->
 <div class="table-wrapper">
 <table>
+<thead>
 <tr>
 <th>Facility</th>
-<th>Date / Time</th>
-<th>Action</th>
+<th>Start Time</th>
+<th>End Time</th>
+<th>Status</th>
 </tr>
-<tr>
-<td>Field D</td>
-<td>23 Nov 2025<br>09:00 – 11:00</td>
-<td>
-<button class="cancel-btn">Cancel</button>
-<button class="review-btn">Review</button>
-</td>
-</tr>
-<tr>
-<td>Squash Court</td>
-<td>23 Nov 2025<br>09:00 – 11:00</td>
-<td>
-<button class="cancel-btn">Cancel</button>
-<button class="review-btn">Review</button>
-</td>
-</tr>
+</thead>
+<tbody>
+<?php if(count($bookings) > 0): ?>
+    <?php foreach($bookings as $b): 
+        $statusClass = 'status-' . strtolower($b['Status']); ?>
+    <tr>
+        <td><?php echo htmlspecialchars($b['FacilityName']); ?></td>
+        <td><?php echo date("d M Y, H:i", strtotime($b['StartTime'])); ?></td>
+        <td><?php echo date("d M Y, H:i", strtotime($b['EndTime'])); ?></td>
+        <td class="<?php echo $statusClass; ?>"><?php echo htmlspecialchars($b['Status']); ?></td>
+    </tr>
+    <?php endforeach; ?>
+<?php else: ?>
+<tr><td colspan="4" class="text-center py-6 text-gray-500">No booking history found.</td></tr>
+<?php endif; ?>
+</tbody>
 </table>
-</div>
-
-<!-- COUNTERS -->
-<div class="counters">
-    <div class="counter">
-        <div class="counter-number" id="facility-counter">0</div>
-        <div class="counter-label">Facilities</div>
-    </div>
-    <div class="counter">
-        <div class="counter-number" id="staff-counter">0</div>
-        <div class="counter-label">Staffs</div>
-    </div>
-</div>
-
-<!-- INFO TEXT -->
-<div class="info-text">
-<h2>Let’s Get to Know UKM Sports Center</h2>
-<p>The UKM Sports Center started on 1 November 1974 with a Sports Officer from the Ministry of Education who managed sports activities for students and staff. In 1981 and 1982, UKM participated in the ASEAN University Games. In 2008, the Sports Unit was upgraded to the Sports Center, and in 2010, a director was appointed. Today, the center has 47 staff members.</p>
 </div>
 
 <!-- FOOTER -->
 <div class="footer">
-    <div class="footer-top">
-        <div class="footer-logo">
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
-        </div>
-        <div class="footer-info">
-            <strong class="footer-title">PEJABAT PENGARAH PUSAT SUKAN</strong>
-            Stadium Universiti<br>
-            Universiti Kebangsaan Malaysia<br>
-            43600 Bangi, Selangor Darul Ehsan<br>
-            No. Telefon : 03-8921-5306
-        </div>
-        <div class="footer-sdg">
-            <img src="../assets/img/sdg.png" alt="SDG Logo">
-        </div>
-    </div>
     <div class="footer-bottom">
         Hakcipta © 2025 Universiti Kebangsaan Malaysia
     </div>
 </div>
-
-<!-- COUNTER SCRIPT -->
-<script>
-let facilityCount = 0;
-let staffCount = 0;
-const facilityTarget = 15;
-const staffTarget = 47;
-const facilityElem = document.getElementById('facility-counter');
-const staffElem = document.getElementById('staff-counter');
-
-function incrementCounters() {
-    if(facilityCount < facilityTarget){ facilityCount++; facilityElem.textContent = facilityCount; }
-    if(staffCount < staffTarget){ staffCount++; staffElem.textContent = staffCount; }
-    if(facilityCount < facilityTarget || staffCount < staffTarget){
-        setTimeout(incrementCounters, 50);
-    }
-}
-incrementCounters();
-</script>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
