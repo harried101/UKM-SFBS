@@ -95,7 +95,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
             </a>
             
             <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
-            <a href="manage_bookings.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
+            <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
@@ -129,7 +129,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
              <a href="book_walkin.php" class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2 text-sm">
                 <i class="fa-solid fa-user-pen"></i> Walk-in
             </a>
-            <a href="manage_bookings.php" class="bg-[#0b4d9d] text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2 text-sm">
+            <a href="bookinglist.php" class="bg-[#0b4d9d] text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2 text-sm">
                 <i class="fa-solid fa-list-check"></i> Manage Requests
             </a>
         </div>
@@ -141,7 +141,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     <!-- STATS GRID -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <!-- Stat 1: Pending -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="window.location.href='manage_bookings.php?status=Pending'">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="window.location.href='bookinglist.php?status=Pending'">
             <div>
                 <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Pending Approvals</div>
                 <div class="text-4xl font-bold text-yellow-600 font-serif"><?php echo $countPending; ?></div>
@@ -178,7 +178,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <h3 class="font-bold text-gray-800 text-lg">Recent Bookings</h3>
-            <a href="manage_bookings.php" class="text-xs font-bold text-[#0b4d9d] hover:underline uppercase tracking-wide">View All</a>
+            <a href="bookinglist.php" class="text-xs font-bold text-[#0b4d9d] hover:underline uppercase tracking-wide">View All</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">

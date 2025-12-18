@@ -94,7 +94,7 @@ if (isset($_GET['get_slots'])) {
 
 // --- PROCESS BOOKING ---
 if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['facility_id'], $_POST['start_time'], $_POST['student_id'])){
-    $facilityID = $_POST['facility_id'];
+    $facilityID = trim($_POST['facility_id']); // TRIM ADDED
     $rawStart = $_POST['start_time'];
     $studentIdentifier = trim($_POST['student_id']);
 
@@ -152,9 +152,13 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['facility_id'], $_POST['s
     try{
         if(!$stmt->execute()){
             $errno=$stmt->errno;
+            $error=$conn->error;
             $conn->rollback();
+            // DEBUG LOGGING
+            file_put_contents("debug_log.txt", date('Y-m-d H:i:s')." - Error: $error | FacilityID: '$facilityID'\n", FILE_APPEND);
+            
             if($errno==1062) jres(["success"=>false,"message"=>"Slot already booked"]);
-            else jres(["success"=>false,"message"=>"Database error: " . $conn->error]);
+            else jres(["success"=>false,"message"=>"Database error: " . $error]);
         }else{
             $bookingID = $conn->insert_id;
             $conn->commit();
@@ -162,6 +166,8 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['facility_id'], $_POST['s
         }
     }catch(Exception $e){
         $conn->rollback();
+        // DEBUG LOGGING
+        file_put_contents("debug_log.txt", date('Y-m-d H:i:s')." - Exception: ".$e->getMessage()." | FacilityID: '$facilityID' | UserID: $userID\n", FILE_APPEND);
         jres(["success"=>false,"message"=>"Server error: " . $e->getMessage()]);
     }
 }
