@@ -98,6 +98,14 @@ try {
             // FIX: This creates the full datetime string for the DB
             $slotStartFull = date('Y-m-d H:i:s', $curr);
             
+            // NEW: Skip Past Times
+            // If the slot start time is in the past (compared to now), we skip it.
+            // This prevents users from booking 9:00 AM at 10:00 AM on the same day.
+            if ($curr < time()) {
+                $curr += ($dur * 60);
+                continue;
+            }
+
             // Check if this slot exceeds closing time
             if (($curr + ($dur * 60)) > $end) break;
 
