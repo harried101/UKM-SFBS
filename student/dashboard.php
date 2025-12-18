@@ -333,44 +333,7 @@ if ($conn->connect_error) {
 
 </main>
 
-<!-- FOOTER -->
-<footer class="bg-white border-t border-slate-200 py-12 mt-auto">
-    <div class="container mx-auto px-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <!-- Brand -->
-            <div class="space-y-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan" class="h-14">
-                <p class="text-xs text-slate-500 leading-relaxed max-w-xs">
-                    Empowering students through sports excellence and state-of-the-art facilities management.
-                </p>
-            </div>
-            
-            <!-- Quick Links -->
-            <div>
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm text-slate-600">
-                    <li><a href="dashboard.php" class="hover:text-[#8a0d19] transition">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#8a0d19] transition">Browse Facilities</a></li>
-                    <li><a href="dashboard.php?tab=history" class="hover:text-[#8a0d19] transition">My Bookings</a></li>
-                </ul>
-            </div>
 
-            <!-- Contact -->
-            <div>
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Contact Us</h4>
-                <div class="text-sm text-slate-600 space-y-2">
-                    <p class="font-medium">Stadium Universiti, UKM</p>
-                    <p>43600 Bangi, Selangor</p>
-                    <p class="text-[#8a0d19] font-bold mt-2"><i class="fa-solid fa-phone mr-2"></i> 03-8921 5306</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="border-t border-slate-100 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-[10px] text-slate-400">© 2025 Universiti Kebangsaan Malaysia. All rights reserved.</p>
-        </div>
-    </div>
-</footer>
 
 <!-- CUSTOM MODAL COMPONENT -->
 <div id="cancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
@@ -509,6 +472,8 @@ document.addEventListener('click', (e) => {
     }
 });
 </script>
+
+<?php include 'includes/footer.php'; ?>
 
 </body>
 </html>

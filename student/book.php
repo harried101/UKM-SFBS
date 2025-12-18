@@ -297,5 +297,8 @@ if ($facility_id) {
         document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
         renderCalendar(currMonth, currYear);
     </script>
+    
+    <?php include 'includes/footer.php'; ?>
+    
 </body>
 </html>
