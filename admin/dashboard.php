@@ -90,7 +90,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
         </div>
         <div class="flex items-center gap-6">
             <!-- Active Home (No Icon) -->
-            <a href="dashboard.php" class="text-[#0b4d9d] font-bold transition">
+            <a href="dashboard.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2 group">
                 Home
             </a>
             
@@ -106,7 +106,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
                     <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
                     <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                        <a href="../logout.php" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
+                       <a href="../logout.php" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
                             <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
                         </a>
                     </div>
@@ -116,33 +116,27 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     </div>
 </nav>
 
-<!-- HERO BANNER -->
-<div class="w-full h-64 md:h-72 overflow-hidden relative shadow-md group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-</div>
-
-<!-- WELCOME CARD -->
-<div class="container mx-auto px-6 -mt-12 relative z-20 mb-10">
-    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-gray-100">
+<!-- WELCOME HEADER (No Banner Image) -->
+<div class="bg-white border-b border-gray-200 py-10 shadow-sm">
+    <div class="container mx-auto px-6 max-w-6xl flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 font-serif mb-2">
-                Hello, <span class="text-[#0b4d9d]"><?php echo htmlspecialchars($adminName); ?></span>
+            <h1 class="text-3xl md:text-4xl font-bold text-[#0b4d9d] font-serif mb-2">
+                Welcome, <?php echo htmlspecialchars($adminName); ?>
             </h1>
-            <p class="text-gray-500">Here's what's happening at the Sports Center today.</p>
+            <p class="text-gray-500">Overview of facility operations and booking status.</p>
         </div>
         <div class="flex gap-3">
-             <a href="book_walkin.php" class="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2 text-sm">
+             <a href="book_walkin.php" class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2 text-sm">
                 <i class="fa-solid fa-user-pen"></i> Walk-in
             </a>
-            <a href="manage_bookings.php" class="bg-[#0b4d9d] text-white px-6 py-3 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2 text-sm">
+            <a href="manage_bookings.php" class="bg-[#0b4d9d] text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2 text-sm">
                 <i class="fa-solid fa-list-check"></i> Manage Requests
             </a>
         </div>
     </div>
 </div>
 
-<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl relative z-30 fade-in">
+<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl fade-in">
 
     <!-- STATS GRID -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -227,49 +221,28 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 </main>
 
-<!-- ✅ EXTENDED FOOTER -->
-<footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="container mx-auto px-6 py-12">
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-
-            <!-- About -->
-            <div>
-                <img src="../assets/img/pusatsukanlogo.png" class="h-14 mb-4">
-                <p class="text-sm text-gray-600 leading-relaxed">
-                    Pusat Sukan Universiti Kebangsaan Malaysia manages all university
-                    sports facilities, bookings, and athletic development programs.
+<!-- FOOTER (Exact Match to Student Facilities) -->
+<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Logo & Address -->
+            <div class="flex items-center gap-4">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
+                <div class="text-xs text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            
+            <!-- SDG Logo & Copyright -->
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
+                <p class="text-[10px] text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
                 </p>
             </div>
-
-            <!-- Links -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="dashboard.php" class="hover:text-[#0b4d9d]">Dashboard</a></li>
-                    <li><a href="addfacilities.php" class="hover:text-[#0b4d9d]">Facilities</a></li>
-                    <li><a href="manage_bookings.php" class="hover:text-[#0b4d9d]">Booking Management</a></li>
-                </ul>
-            </div>
-
-            <!-- Contact -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Contact</h4>
-                <p class="text-sm text-gray-600">
-                    Stadium Universiti, UKM<br>
-                    43600 Bangi, Selangor<br>
-                    <span class="text-[#0b4d9d] font-semibold">
-                        <i class="fa-solid fa-phone mr-1"></i> 03-8921 5306
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <div class="border-t pt-6 flex justify-between items-center">
-            <img src="../assets/img/sdg.png" class="h-14 opacity-90">
-            <p class="text-xs text-gray-400 text-right">
-                © 2025 Universiti Kebangsaan Malaysia<br>All rights reserved
-            </p>
         </div>
     </div>
 </footer>

@@ -184,9 +184,9 @@ input:focus, textarea:focus, select:focus {
                     <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
                         <div class="bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
-                            <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
-                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                            </a>
+                               <a href="../logout.php" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
+                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                        </a>
                         </div>
                     </div>
                 </div>
