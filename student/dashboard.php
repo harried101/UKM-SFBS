@@ -66,30 +66,26 @@ if ($db_numeric_id > 0) {
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        // Handle invalid StartTime (0000-00-00)
+        // StartTime logic
         if ($row['StartTime'] === '0000-00-00 00:00:00' || empty($row['StartTime'])) {
             $start = new DateTime($row['EndTime']);
         } else {
             $start = new DateTime($row['StartTime']);
         }
 
-        // Logic to reconstruct EndTime based on Start Date
-        $end = new DateTime($row['EndTime']);
-        if ($end->format('Y') === '-0001' || $end->format('Y') === '0000') {
-            $end = clone $start;
-            $end->setTime(
-                (int)date('H', strtotime($row['EndTime'])),
-                (int)date('i', strtotime($row['EndTime'])),
-                (int)date('s', strtotime($row['EndTime']))
-            );
-        }
+        // EndTime logic: combine StartTime date with EndTime clock components
+        $end = new DateTime($row['StartTime']);
+        $end->setTime(
+            (int)date('H', strtotime($row['EndTime'])),
+            (int)date('i', strtotime($row['EndTime'])),
+            (int)date('s', strtotime($row['EndTime']))
+        );
 
-        // Determine if the booking is in the past
-        // Logic: passed if the StartTime has already occurred
-        $is_past = ($start < $now);
+        // Determine if the booking session has ended
+        $is_passed = ($end < $now);
 
         $all_bookings[] = array_merge($row, [
-            'is_past'         => $is_past,
+            'is_passed'       => $is_passed,
             'formatted_start' => $start->format('d M Y'),
             'formatted_time'  => $start->format('h:i A') . ' - ' . $end->format('h:i A'),
             'day'             => $start->format('d'),
@@ -133,13 +129,6 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Disabled button style */
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed !important;
-    filter: grayscale(1);
-}
 </style>
 </head>
 <body>
@@ -153,7 +142,6 @@ button:disabled {
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-8">
-            <!-- Active Home -->
             <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative text-decoration-none">
                 <span>Home</span>
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
@@ -185,7 +173,7 @@ button:disabled {
     <div class="mb-12 fade-in">
         <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
         <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
-        <p class="text-slate-500 mt-4 max-w-2xl">Manage your sports schedule and facility bookings in one place.</p>
+        <p class="text-slate-500 mt-4 max-w-2xl">Check your schedule and provide feedback on completed activities.</p>
     </div>
 
     <!-- PAGE HEADER & ACTION -->
@@ -196,7 +184,7 @@ button:disabled {
         </a>
     </div>
 
-    <!-- BOOKINGS CONTAINER (Single List, No Tabs) -->
+    <!-- BOOKINGS CONTAINER -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden min-h-[400px] flex flex-col fade-in">
         <div class="p-8 flex-grow bg-slate-50/50">
             
@@ -227,12 +215,12 @@ button:disabled {
                     <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-center justify-between gap-6 group">
                         <div class="flex items-center gap-6 w-full">
                             <!-- Date Badge -->
-                            <div class="bg-slate-50 rounded-xl p-3 min-w-[70px] text-center border border-slate-100 <?php echo $bk['is_past'] ? 'opacity-50' : ''; ?>">
+                            <div class="bg-slate-50 rounded-xl p-3 min-w-[70px] text-center border border-slate-100 <?php echo $bk['is_passed'] ? 'opacity-50' : ''; ?>">
                                 <span class="block text-xl font-bold text-[#8a0d19] font-serif"><?php echo $bk['day']; ?></span>
                                 <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider"><?php echo $bk['month']; ?></span>
                             </div>
                             <!-- Info -->
-                            <div class="<?php echo $bk['is_past'] ? 'opacity-60' : ''; ?>">
+                            <div class="<?php echo $bk['is_passed'] ? 'opacity-60' : ''; ?>">
                                 <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#8a0d19] transition-colors"><?php echo htmlspecialchars($bk['FacilityName']); ?></h4>
                                 <div class="flex flex-wrap gap-4 text-sm text-slate-500 font-medium">
                                     <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-slate-400"></i> <?php echo $bk['formatted_time']; ?></span>
@@ -241,22 +229,27 @@ button:disabled {
                             </div>
                         </div>
                         
-                        <!-- Status & Action -->
-                        <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
+                        <!-- Status & Action Buttons -->
+                        <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
                             <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
                                 <?php echo $bk['Status']; ?>
                             </span>
                             
-                            <?php if ($bk['is_past']): ?>
-                                <button disabled class="text-slate-400 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                                    <i class="fa-solid fa-lock text-[10px]"></i> Cancel
-                                </button>
-                            <?php else: ?>
-                                <button onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)" 
-                                        class="text-red-500 hover:text-white border border-red-200 hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                                    Cancel
-                                </button>
-                            <?php endif; ?>
+                            <div class="flex gap-2">
+                                <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
+                                    <!-- CANCEL Button: Shown for active upcoming bookings -->
+                                    <button onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)" 
+                                            class="text-red-500 hover:text-white border border-red-200 hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                                        Cancel
+                                    </button>
+                                <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
+                                    <!-- FEEDBACK Button: Shown for completed approved bookings -->
+                                    <button onclick="openFeedback(<?php echo $bk['BookingID']; ?>)" 
+                                            class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                                        Feedback
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -337,6 +330,12 @@ function cancelBooking(id) {
         console.error(err);
         alert("Network error. Please try again.");
     });
+}
+
+function openFeedback(id) {
+    // Logic for feedback (e.g., redirect to feedback page or open modal)
+    // alert("Opening feedback for booking #" + id);
+    window.location.href = "feedback.php?booking_id=" + id;
 }
 </script>
 
