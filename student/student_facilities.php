@@ -58,7 +58,7 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
     box-shadow:0 4px 20px -1px rgba(0,0,0,0.08);
     border:1px solid #eee;
 }
-/* Ensure red buttons from fetch file work if needed */
+/* Red buttons */
 .bg-\[\#8a0d19\] { background-color: #8a0d19 !important; }
 .text-\[\#8a0d19\] { color: #8a0d19 !important; }
 .hover\:bg-\[\#6d0a13\]:hover { background-color: #6d0a13 !important; }
@@ -76,32 +76,29 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">
-                Home
-            </a>
-            <!-- Active Facilities -->
+            <a href="dashboard.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">Home</a>
             <a href="student_facilities.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative">
                 <span>Facilities</span>
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
             </a>
-            <a href="dashboard.php?tab=history" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">
-                History
-            </a>
+            <a href="dashboard.php?tab=history" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">History</a>
 
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
+            <!-- Profile / Logout -->
+            <div class="flex items-center gap-4 pl-6 border-l border-slate-200 relative">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($studentName) ?></p>
                     <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold"><?= htmlspecialchars($studentID) ?></p>
                 </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform group-hover:scale-105">
-                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 overflow-hidden">
+                <div class="relative" id="profileDropdown">
+                    <img id="profileBtn" src="../assets/img/user.png" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform hover:scale-105">
+                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden z-50 overflow-hidden">
                         <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </nav>
@@ -148,23 +145,6 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
     </div>
 </main>
 
-<!-- MODAL (POPUP) CODE -->
-<div id="calendarModal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center backdrop-blur-sm">
-    <div class="bg-white rounded-xl shadow-2xl w-[95%] max-w-4xl h-[90vh] md:h-[600px] relative flex flex-col overflow-hidden animate-fade-in">
-        
-        <button onclick="closeCalendar()" class="absolute top-4 right-4 z-10 bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-
-        <div id="calendarLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-0">
-            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#8a0d19] mb-3"></i>
-            <p class="text-gray-500 font-medium">Loading booking system...</p>
-        </div>
-
-        <iframe id="calendarFrame" class="w-full h-full border-none opacity-0 transition-opacity duration-300" src=""></iframe>
-    </div>
-</div>
-
 <!-- FOOTER -->
 <footer class="bg-white border-t border-slate-200 py-12 mt-auto">
     <div class="container mx-auto px-6">
@@ -205,61 +185,40 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
 </footer>
 
 <script>
-    const searchInput = document.getElementById('searchInput');
-    const typeSelect = document.getElementById('typeSelect');
-    const facilitiesContainer = document.getElementById('facilitiesContainer');
+const searchInput = document.getElementById('searchInput');
+const typeSelect = document.getElementById('typeSelect');
+const facilitiesContainer = document.getElementById('facilitiesContainer');
 
-    function fetchFacilities() {
-        const search = encodeURIComponent(searchInput.value);
-        const type = encodeURIComponent(typeSelect.value);
+function fetchFacilities() {
+    const search = encodeURIComponent(searchInput.value);
+    const type = encodeURIComponent(typeSelect.value);
 
-        fetch(`student_facilities_fetch.php?search=${search}&type=${type}`)
-            .then(res => res.text())
-            .then(html => facilitiesContainer.innerHTML = html)
-            .catch(err => console.error(err));
+    fetch(`student_facilities_fetch.php?search=${search}&type=${type}`)
+        .then(res => res.text())
+        .then(html => facilitiesContainer.innerHTML = html)
+        .catch(err => console.error(err));
+}
+
+searchInput.addEventListener('input', fetchFacilities);
+typeSelect.addEventListener('change', fetchFacilities);
+
+// Initial Load
+fetchFacilities();
+
+// --- PROFILE DROPDOWN ON CLICK ---
+const profileBtn = document.getElementById('profileBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
+
+profileBtn.addEventListener('click', () => {
+    dropdownMenu.classList.toggle('hidden');
+});
+
+// Close dropdown if clicked outside
+document.addEventListener('click', function(e){
+    if(!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)){
+        dropdownMenu.classList.add('hidden');
     }
-
-    searchInput.addEventListener('input', () => fetchFacilities());
-    typeSelect.addEventListener('change', () => fetchFacilities());
-
-    // Initial Load
-    fetchFacilities();
-
-    // --- MODAL FUNCTIONS ---
-    function openCalendar(facilityID) {
-        const modal = document.getElementById("calendarModal");
-        const loader = document.getElementById("calendarLoader");
-        const frame = document.getElementById("calendarFrame");
-
-        if(!modal || !frame) return;
-
-        modal.classList.remove("hidden");
-        loader.classList.remove("hidden");
-        frame.classList.add("opacity-0");
-        
-        // Loads book.php
-        frame.src = "book.php?facility_id=" + encodeURIComponent(facilityID);
-
-        frame.onload = () => {
-            loader.classList.add("hidden");
-            frame.classList.remove("opacity-0");
-        };
-    }
-
-    function closeCalendar() {
-        const modal = document.getElementById("calendarModal");
-        const frame = document.getElementById("calendarFrame");
-        if(modal) {
-            modal.classList.add("hidden");
-            if(frame) frame.src = "";
-        }
-    }
-
-    document.getElementById("calendarModal").addEventListener("click", function(e) {
-        if (e.target === this) {
-            closeCalendar();
-        }
-    });
+});
 </script>
 
 </body>
