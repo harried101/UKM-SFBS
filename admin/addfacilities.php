@@ -32,7 +32,7 @@ $dayMapRev = array_flip($dayMap);
 $facilityData = null;
 $isUpdate = false;
 $currentID = $_GET['id'] ?? '';
-$formTitle = "Add New Facility";
+$formTitle = "Add Facilities"; // Updated Title
 $existingSchedules = [];
 $existingClosures = [];
 $activeTab = $_GET['tab'] ?? 'details'; 
@@ -292,8 +292,23 @@ input:focus, textarea:focus, select:focus {
 <!-- MAIN CONTENT (No Banner) -->
 <main class="container mx-auto px-6 py-10 flex-grow max-w-6xl mt-8">
     
-    <!-- Filter Section (Search) -->
-    <div class="filter-bar max-w-5xl mx-auto">
+    <!-- Header & Actions -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+            <span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Facility Management</span>
+            <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1 font-serif"><?php echo $formTitle; ?></h1>
+            <p class="text-gray-500">Manage facility details, operating hours, and closures.</p>
+        </div>
+        
+        <?php if($isUpdate): ?>
+            <a href="addfacilities.php" class="bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium flex items-center gap-2">
+                <i class="fa-solid fa-plus text-[#0b4d9d]"></i> Add New
+            </a>
+        <?php endif; ?>
+    </div>
+
+    <!-- Search Box (Styled like Filter Bar) -->
+    <div class="filter-bar mb-8">
         <form method="POST" class="flex flex-col md:flex-row gap-4 items-center">
             <div class="flex-grow w-full relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -302,11 +317,6 @@ input:focus, textarea:focus, select:focus {
             <button type="submit" class="bg-[#0b4d9d] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#083a75] transition shadow-lg shadow-blue-900/20 whitespace-nowrap">
                 Load Facility
             </button>
-            <?php if($isUpdate): ?>
-                <a href="addfacilities.php" class="bg-white border border-gray-200 text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-50 transition shadow-sm font-bold whitespace-nowrap">
-                    + New
-                </a>
-            <?php endif; ?>
         </form>
     </div>
 
