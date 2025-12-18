@@ -365,25 +365,28 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 </main>
 
-<!-- FOOTER -->
-<footer class="bg-white border-t border-gray-200 py-10 mt-auto">
+<!-- FOOTER (Full Address) -->
+<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
     <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-            <div class="flex items-start gap-4 max-w-md">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-16 w-auto">
-                <div class="text-sm text-gray-600 leading-relaxed">
-                    <strong class="block text-gray-900 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Logo & Address -->
+            <div class="flex items-center gap-4">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
+                <div class="text-xs text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
                     Stadium Universiti, Universiti Kebangsaan Malaysia<br>
                     43600 Bangi, Selangor Darul Ehsan<br>
-                    <span class="mt-1 block"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
                 </div>
             </div>
-            <div>
-                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-20 w-auto opacity-90">
+            
+            <!-- SDG Logo & Copyright -->
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
+                <p class="text-[10px] text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
+                </p>
             </div>
-        </div>
-        <div class="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-500">
-            &copy; 2025 Universiti Kebangsaan Malaysia. All rights reserved.
         </div>
     </div>
 </footer>
