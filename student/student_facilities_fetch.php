@@ -45,25 +45,27 @@ if ($result->num_rows > 0) {
         $photo = $row['PhotoURL'];
         $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
                   ? "../admin/uploads/".$photo
-                  : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=merriweather";
+                  : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=sans";
 
         // --- STATUS LOGIC ---
         $isMaintenance = ($row['Status'] === 'Maintenance');
+        // Use Orange for Maintenance, Green for Active
         $statusClass = $isMaintenance ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
         $statusIcon = $isMaintenance ? '<i class="fa-solid fa-screwdriver-wrench mr-1"></i>' : '<i class="fa-solid fa-check-circle mr-1"></i>';
         
         // Button Logic
         if ($isMaintenance) {
-            $btnAttr = 'disabled class="w-full bg-gray-300 text-gray-500 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
+            // Disabled Grey Button
+            $btnAttr = 'disabled class="w-full bg-gray-100 text-gray-400 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
             $btnText = 'Under Maintenance';
         } else {
-            // UPDATED TO UKM BLUE (#0b4d9d)
-            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#0b4d9d] text-white py-2.5 rounded-lg font-bold hover:bg-[#083a75] transition shadow-md hover:shadow-lg transform active:scale-95"';
+            // Active UKM Blue Button
+            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#0b4d9d] text-white py-2.5 rounded-lg font-bold hover:bg-[#083a75] transition shadow-md hover:shadow-lg transform active:scale-[0.98]"';
             $btnText = 'Check Availability';
         }
 
         echo '
-        <div class="facility-card group bg-white rounded-xl overflow-hidden border border-blue-50 shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
+        <div class="facility-card group bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
             <div class="relative h-56 overflow-hidden">
                 <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 <div class="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#0b4d9d] shadow-sm uppercase tracking-wide border border-gray-100">
@@ -92,7 +94,7 @@ if ($result->num_rows > 0) {
                     '.htmlspecialchars($row['Description']).'
                 </p>
                 
-                <div class="mt-auto pt-4 border-t border-gray-50">
+                <div class="mt-auto pt-4 border-t border-gray-100">
                     <button '.$btnAttr.'>
                         '.$btnText.'
                     </button>
@@ -101,12 +103,14 @@ if ($result->num_rows > 0) {
         </div>';
     }
 } else {
+    // Empty State (Matches Dashboard Style)
     echo '
-    <div class="col-span-full py-16 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-            <i class="fa-solid fa-magnifying-glass text-gray-400 text-2xl"></i>
+    <div class="col-span-full py-16 text-center bg-white rounded-xl border border-dashed border-gray-300">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4 text-gray-300">
+            <i class="fa-solid fa-magnifying-glass text-3xl"></i>
         </div>
-        <h3 class="text-lg font-semibold text-gray-700 mb-1">No facilities found</h3>
+        <h3 class="text-lg font-bold text-gray-700 mb-1">No facilities found</h3>
+        <p class="text-gray-500 text-sm">Try adjusting your search or filters.</p>
     </div>';
 }
 
