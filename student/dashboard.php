@@ -51,7 +51,7 @@ if ($db_numeric_id > 0) {
     while ($row = $result->fetch_assoc()) {
         $start = new DateTime($row['StartTime']);
         
-        // Logic: Upcoming if future date AND Status is active
+        // Logic: Upcoming if future date AND Status is active (Pending/Approved)
         // Note: We use >= so bookings happening RIGHT NOW are still "Upcoming" until they pass
         if ($start >= $now && in_array($row['Status'], ['Pending', 'Approved'])) {
             $upcoming[] = $row;
@@ -62,6 +62,10 @@ if ($db_numeric_id > 0) {
     }
     $stmt->close();
 }
+
+// 3. Fetch Real Facility Count (Optional, for counters if needed)
+// $facCountResult = $conn->query("SELECT COUNT(*) FROM facilities WHERE Status='Active'");
+// $realFacilityCount = $facCountResult ? $facCountResult->fetch_row()[0] : 0;
 
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
@@ -224,6 +228,9 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
                         <?php foreach ($upcoming as $bk): 
                             $startObj = new DateTime($bk['StartTime']);
                             $endObj = new DateTime($bk['EndTime']);
+                            $duration = $startObj->diff($endObj);
+                            $hours = $duration->h + ($duration->i / 60);
+                            
                             $statusClass = ($bk['Status'] === 'Approved') 
                                 ? 'bg-green-100 text-green-700 border-green-200' 
                                 : 'bg-yellow-50 text-yellow-700 border-yellow-200';
