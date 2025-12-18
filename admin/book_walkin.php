@@ -27,28 +27,48 @@ if ($facility_id) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        ukm: {
+                            blue: '#0b4d9d',
+                            dark: '#063a75',
+                            light: '#e0f2fe'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body::-webkit-scrollbar { display: none; }
         body { 
             -ms-overflow-style: none; 
             scrollbar-width: none; 
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: #fff;
         }
-        .calendar-day:hover:not(.disabled):not(.selected) { background-color: #e0f2fe; color: #071239; cursor: pointer; transform: scale(1.05); }
-        .calendar-day.selected { background-color: #071239; color: white; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(7, 18, 57, 0.3); }
-        .calendar-day.today { border: 2px solid #071239; font-weight: bold; color: #071239; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .calendar-day:hover:not(.disabled):not(.selected) { background-color: #e0f2fe; color: #0b4d9d; cursor: pointer; transform: scale(1.05); }
+        .calendar-day.selected { background-color: #0b4d9d; color: white; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(11, 77, 157, 0.3); }
+        .calendar-day.today { border: 2px solid #0b4d9d; font-weight: bold; color: #0b4d9d; }
         .calendar-day.disabled { color: #d1d5db; cursor: default; }
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         .btn-primary-custom {
-            background-color: #071239;
+            background-color: #0b4d9d;
             color: white;
         }
         .btn-primary-custom:hover {
-            background-color: #0a1a52;
+            background-color: #083a75;
         }
     </style>
     <title>Walk-in Booking - <?php echo htmlspecialchars($facility_name); ?></title>

@@ -1,28 +1,5 @@
 <?php
-session_start();
-
-// 1. Auth Check
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
-    header("Location: ../index.php");
-    exit();
-}
-
-require_once '../includes/db_connect.php';
-
-// 2. Fetch Admin Details
-$adminIdentifier = $_SESSION['user_id'] ?? '';
-$adminName = 'Administrator';
-
-if ($adminIdentifier) {
-    $stmt = $conn->prepare("SELECT FirstName, LastName FROM users WHERE UserIdentifier = ?");
-    $stmt->bind_param("s", $adminIdentifier);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($r = $res->fetch_assoc()) {
-        $adminName = $r['FirstName'] . ' ' . $r['LastName'];
-    }
-    $stmt->close();
-}
+require_once 'includes/admin_auth.php'; // Standardized Auth & User Fetch
 
 // 3. Fetch Statistics
 // Pending Bookings
@@ -56,71 +33,48 @@ if ($conn->connect_error) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard – UKM Sports Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    body: ['Inter', 'sans-serif'],
+                },
+                colors: {
+                    ukm: {
+                        blue: '#0b4d9d',
+                        dark: '#063a75',
+                        light: '#e0f2fe'
+                    }
+                }
+            }
+        }
+    }
+</script>
 
 <style>
-:root {
-    --primary: #0b4d9d; /* UKM Blue */
-    --bg-light: #f8f9fa;
-}
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-light);
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-h1,h2,h3 { font-family: 'Playfair Display', serif; }
-.fade-in { animation: fadeIn 0.4s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
-<body>
+<body class="bg-slate-50 flex flex-col min-h-screen text-slate-800 font-sans">
 
-<!-- NAVBAR (Standard Admin) -->
-<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
-            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
-        </div>
-        <div class="flex items-center gap-6">
-            <!-- Active Home (No Icon) -->
-            <a href="dashboard.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2 group">
-                Home
-            </a>
-            
-            <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
-            <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
-
-            <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
-                </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
-                    <!-- Dropdown -->
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                       <a href="../logout.php" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</nav>
+<!-- NAVBAR -->
+<?php 
+$nav_active = 'home';
+include 'includes/navbar.php'; 
+?>
 
 <!-- WELCOME HEADER (No Banner Image) -->
 <div class="bg-white border-b border-gray-200 py-10 shadow-sm">
     <div class="container mx-auto px-6 max-w-6xl flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
-            <h1 class="text-3xl md:text-4xl font-bold text-[#0b4d9d] font-serif mb-2">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#0b4d9d] mb-2">
                 Welcome, <?php echo htmlspecialchars($adminName); ?>
             </h1>
             <p class="text-gray-500">Overview of facility operations and booking status.</p>
