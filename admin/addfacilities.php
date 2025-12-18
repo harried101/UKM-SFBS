@@ -263,7 +263,7 @@ input:focus, textarea:focus, select:focus {
                 Facilities
             </a>
             
-            <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
+            <a href="bookingslist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
