@@ -1,251 +1,370 @@
-<?php
-session_start();
-
-// 1. Auth Check
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
-    header("Location: ../index.php");
-    exit();
-}
-
-require_once '../includes/db_connect.php';
-
-// 2. Fetch Admin Details
-$adminIdentifier = $_SESSION['user_id'] ?? '';
-$adminName = 'Administrator';
-
-if ($adminIdentifier) {
-    $stmt = $conn->prepare("SELECT FirstName, LastName FROM users WHERE UserIdentifier = ?");
-    $stmt->bind_param("s", $adminIdentifier);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($r = $res->fetch_assoc()) {
-        $adminName = $r['FirstName'] . ' ' . $r['LastName'];
-    }
-    $stmt->close();
-}
-
-// 3. Fetch Statistics
-// Pending Bookings
-$sqlPending = "SELECT COUNT(*) FROM bookings WHERE Status = 'Pending'";
-$countPending = $conn->query($sqlPending)->fetch_row()[0] ?? 0;
-
-// Today's Bookings
-$sqlToday = "SELECT COUNT(*) FROM bookings WHERE DATE(StartTime) = CURDATE() AND Status IN ('Approved', 'Confirmed')";
-$countToday = $conn->query($sqlToday)->fetch_row()[0] ?? 0;
-
-// Active Facilities
-$sqlFacilities = "SELECT COUNT(*) FROM facilities WHERE Status = 'Active'";
-$countFacilities = $conn->query($sqlFacilities)->fetch_row()[0] ?? 0;
-
-// Recent Bookings (Limit 5)
-$sqlRecent = "SELECT b.BookingID, b.Status, b.StartTime, f.Name as FacilityName, u.UserIdentifier 
-              FROM bookings b
-              JOIN facilities f ON b.FacilityID = f.FacilityID
-              JOIN users u ON b.UserID = u.UserID
-              ORDER BY b.BookedAt DESC LIMIT 5";
-$resRecent = $conn->query($sqlRecent);
-
-if ($conn->connect_error) {
-    die("DB Connection failed: " . $conn->connect_error);
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard – UKM Sports Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<title>Student Dashboard – Pusat Sukan</title>
 
 <style>
-:root {
-    --primary: #0b4d9d; /* UKM Blue */
-    --bg-light: #f8f9fa;
-}
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-light);
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-h1,h2,h3 { font-family: 'Playfair Display', serif; }
-.fade-in { animation: fadeIn 0.4s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background: #f5f7fa;
+        color: #333;
+    }
+
+    /* ===== HEADER ===== */
+    .top-header {
+        width: 100%;
+        background: #0b4d9d;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        padding: 8px 0;
+    }
+
+    .top-header img {
+        height: 48px;
+    }
+
+    /* ===== NAVIGATION ===== */
+    .nav-bar {
+        width: 100%;
+        display: flex;
+        background: #6badce;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .nav-bar a {
+        flex: 1;
+        font-size: 14px;
+        padding: 10px 0;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: 0.3s;
+    }
+
+    .nav-bar a:hover {
+        background: #559fc4;
+    }
+
+    /* ===== BANNER IMAGE ===== */
+    .long-banner img {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* ===== INFO TEXT ===== */
+    .info-text {
+        width: 80%;
+        margin: 40px auto;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #004d7a;
+        text-align: center;
+    }
+
+    .info-text h2 {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #003b75;
+    }
+
+    /* ===== COUNTERS ===== */
+    .counters {
+        display: flex;
+        justify-content: center;
+        gap: 100px;
+        margin: 20px auto 30px auto;
+        text-align: center;
+    }
+
+    .counter {
+        font-size: 24px;
+        color: #004d7a;
+    }
+
+    .counter-number {
+        font-size: 48px;
+        font-weight: 700;
+        color: #0b4d9d;
+    }
+
+    .counter-label {
+        font-size: 18px;
+        margin-top: 5px;
+    }
+
+    /* ===== BROWSE FACILITIES BUTTON ===== */
+    .browse-btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        font-weight: bold;
+        font-size: 2rem;
+        text-transform: uppercase;
+        padding: 20px 60px;
+        border-radius: 15px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin: 20px auto 50px auto;
+        display: block;
+        width: max-content;
+        text-align: center;
+    }
+
+    .browse-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 20px rgba(30,60,114,0.5);
+    }
+
+    /* ===== BOOKING HISTORY ===== */
+    .section-title {
+        text-align: center;
+        font-size: 40px;
+        color: #0b4d9d;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-top: 35px;
+    }
+
+    table {
+        width: 70%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background: white;
+        font-size: 14px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    th {
+        background: #003b75;
+        color: white;
+        padding: 12px;
+    }
+
+    td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+    }
+
+    .cancel-btn {
+        background: #c91818;
+        padding: 6px 14px;
+        font-size: 12px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .review-btn {
+        background: #21b32d;
+        padding: 6px 14px;
+        font-size: 12px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+        background: #0b4d9d;
+        color: white;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .footer-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 30px 15px;
+    }
+
+    .footer-logo img {
+        height: 100px; /* slightly bigger left logo */
+    }
+
+    .footer-info {
+        text-align: center;
+        flex: 1;
+        line-height: 1.6;
+    }
+
+    .footer-title {
+        font-size: 22px;
+        display: block;
+        margin-bottom: 10px; /* space after title */
+    }
+
+    .footer-sdg img {
+        height: 180px;
+    }
+
+    .footer-bottom {
+        background: #003b75;
+        padding: 12px 15px;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    @media screen and (max-width: 768px) {
+        .footer-top {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-logo img,
+        .footer-sdg img {
+            height: 100px;
+        }
+    }
 </style>
 </head>
 <body>
 
-<!-- NAVBAR (Standard Admin) -->
-<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
-            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
-        </div>
-        <div class="flex items-center gap-6">
-            <!-- Active Home (No Icon) -->
-            <a href="dashboard.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2 group">
-                Home
-            </a>
-            
-            <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
-            <a href="manage_bookings.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
+<!-- HEADER -->
+<div class="top-header">
+    <img src="../assets/img/logo.png" alt="UKM Logo">
+    <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
+</div>
 
-            <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
-                </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
-                    <!-- Dropdown -->
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                       <a href="../logout.php" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- NAVIGATION -->
+<div class="nav-bar">
+    <a href="#">Home</a>
+    <a href="#">Info</a>
+    <a href="#">Book Facility</a>
+    <a href="#">Cancel Booking</a>
+    <a href="#">Review</a>
+    <a href="../logout.php">Logout</a>
+</div>
+
+<!-- BANNER IMAGE -->
+<div class="long-banner">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan">
+</div>
+
+<!-- INFO TEXT -->
+<div class="info-text">
+    <h2>Let’s Get to Know UKM Sports Center</h2>
+    <p>The UKM Sports Center started on 1 November 1974 with a Sports Officer from the Ministry of Education who managed sports activities for students and staff. In 1981 and 1982, UKM participated in the ASEAN University Games. In 2008, the Sports Unit was upgraded to the Sports Center, and in 2010, a director was appointed. Today, the center has 47 staff members.</p>
+</div>
+
+<!-- COUNTERS -->
+<div class="counters">
+    <div class="counter">
+        <div class="counter-number" id="facility-counter">0</div>
+        <div class="counter-label">Facilities</div>
     </div>
-</nav>
-
-<!-- WELCOME HEADER (No Banner Image) -->
-<div class="bg-white border-b border-gray-200 py-10 shadow-sm">
-    <div class="container mx-auto px-6 max-w-6xl flex flex-col md:flex-row justify-between items-center gap-6">
-        <div>
-            <h1 class="text-3xl md:text-4xl font-bold text-[#0b4d9d] font-serif mb-2">
-                Welcome, <?php echo htmlspecialchars($adminName); ?>
-            </h1>
-            <p class="text-gray-500">Overview of facility operations and booking status.</p>
-        </div>
-        <div class="flex gap-3">
-             <a href="book_walkin.php" class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2 text-sm">
-                <i class="fa-solid fa-user-pen"></i> Walk-in
-            </a>
-            <a href="manage_bookings.php" class="bg-[#0b4d9d] text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium flex items-center gap-2 text-sm">
-                <i class="fa-solid fa-list-check"></i> Manage Requests
-            </a>
-        </div>
+    <div class="counter">
+        <div class="counter-number" id="staff-counter">0</div>
+        <div class="counter-label">Staffs</div>
     </div>
 </div>
 
-<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl fade-in">
+<!-- BROWSE FACILITIES BUTTON -->
+<a href="student_facilities.php" class="browse-btn">BROWSE FACILITIES</a>
 
-    <!-- STATS GRID -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <!-- Stat 1: Pending -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="window.location.href='manage_bookings.php?status=Pending'">
-            <div>
-                <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Pending Approvals</div>
-                <div class="text-4xl font-bold text-yellow-600 font-serif"><?php echo $countPending; ?></div>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600 text-xl">
-                <i class="fa-solid fa-clock"></i>
-            </div>
+<!-- BOOKING HISTORY -->
+<div class="section-title">BOOKING HISTORY</div>
+
+<table>
+    <tr>
+        <th>FACILITY</th>
+        <th>DATE / TIME</th>
+        <th>ACTION</th>
+    </tr>
+    <tr>
+        <td>Field D</td>
+        <td>23 Nov 2025<br>09:00 – 11:00</td>
+        <td>
+            <span class="cancel-btn">Cancel</span>
+            &nbsp;
+            <span class="review-btn">Review</span>
+        </td>
+    </tr>
+    <tr>
+        <td>Squash Court</td>
+        <td>23 Nov 2025<br>09:00 – 11:00</td>
+        <td>
+            <span class="cancel-btn">Cancel</span>
+            &nbsp;
+            <span class="review-btn">Review</span>
+        </td>
+    </tr>
+    <tr>
+        <td>Netball Court</td>
+        <td>23 Nov 2025<br>09:00 – 11:00</td>
+        <td>
+            <span class="cancel-btn">Cancel</span>
+            &nbsp;
+            <span class="review-btn">Review</span>
+        </td>
+    </tr>
+</table>
+
+<!-- FOOTER -->
+<div class="footer">
+    <div class="footer-top">
+        <div class="footer-logo">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
         </div>
 
-        <!-- Stat 2: Today -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
-            <div>
-                <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Today's Bookings</div>
-                <div class="text-4xl font-bold text-[#0b4d9d] font-serif"><?php echo $countToday; ?></div>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0b4d9d] text-xl">
-                <i class="fa-regular fa-calendar-check"></i>
-            </div>
+        <div class="footer-info">
+            <strong class="footer-title">PEJABAT PENGARAH PUSAT SUKAN</strong>
+            Stadium Universiti<br>
+            Universiti Kebangsaan Malaysia<br>
+            43600 Bangi, Selangor Darul Ehsan<br>
+            No. Telefon : 03-8921-5306
         </div>
 
-        <!-- Stat 3: Facilities -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="window.location.href='addfacilities.php'">
-            <div>
-                <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Active Facilities</div>
-                <div class="text-4xl font-bold text-green-700 font-serif"><?php echo $countFacilities; ?></div>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-700 text-xl">
-                <i class="fa-solid fa-building-circle-check"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- RECENT ACTIVITY TABLE -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 class="font-bold text-gray-800 text-lg">Recent Bookings</h3>
-            <a href="manage_bookings.php" class="text-xs font-bold text-[#0b4d9d] hover:underline uppercase tracking-wide">View All</a>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-white text-gray-500 border-b border-gray-100">
-                    <tr>
-                        <th class="p-5 font-semibold">Student ID</th>
-                        <th class="p-5 font-semibold">Facility</th>
-                        <th class="p-5 font-semibold">Date</th>
-                        <th class="p-5 font-semibold text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50 text-gray-700">
-                    <?php if ($resRecent && $resRecent->num_rows > 0): ?>
-                        <?php while ($row = $resRecent->fetch_assoc()): 
-                            $statusClass = match($row['Status']) {
-                                'Pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                                'Approved', 'Confirmed' => 'bg-green-100 text-green-800 border-green-200',
-                                'Cancelled', 'Rejected' => 'bg-red-100 text-red-800 border-red-200',
-                                default => 'bg-gray-100 text-gray-800 border-gray-200'
-                            };
-                        ?>
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-5 font-medium text-gray-900"><?php echo htmlspecialchars($row['UserIdentifier']); ?></td>
-                            <td class="p-5 text-gray-600"><?php echo htmlspecialchars($row['FacilityName']); ?></td>
-                            <td class="p-5 text-gray-500"><?php echo date('d M, h:i A', strtotime($row['StartTime'])); ?></td>
-                            <td class="p-5 text-center">
-                                <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
-                                    <?php echo $row['Status']; ?>
-                                </span>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No recent booking activity found.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+        <div class="footer-sdg">
+            <img src="../assets/img/sdg.png" alt="SDG Logo">
         </div>
     </div>
 
-</main>
-
-<!-- FOOTER (Exact Match to Student Facilities) -->
-<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <!-- Logo & Address -->
-            <div class="flex items-center gap-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
-                <div class="text-xs text-gray-600 leading-snug">
-                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
-                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
-                    43600 Bangi, Selangor Darul Ehsan<br>
-                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
-                </div>
-            </div>
-            
-            <!-- SDG Logo & Copyright -->
-            <div class="flex items-center gap-6">
-                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
-                <p class="text-[10px] text-gray-400 text-right">
-                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
-                </p>
-            </div>
-        </div>
+    <div class="footer-bottom">
+        Hakcipta © 2022 Universiti Kebangsaan Malaysia
     </div>
-</footer>
+</div>
+
+<script>
+    // Animate counters
+    let facilityCount = 0;
+    let staffCount = 0;
+    const facilityTarget = 15;
+    const staffTarget = 47;
+    const facilityElem = document.getElementById('facility-counter');
+    const staffElem = document.getElementById('staff-counter');
+
+    const increment = () => {
+        if(facilityCount <= facilityTarget){
+            facilityElem.textContent = facilityCount;
+            facilityCount++;
+        }
+        if(staffCount <= staffTarget){
+            staffElem.textContent = staffCount;
+            staffCount++;
+        }
+        if(facilityCount <= facilityTarget || staffCount <= staffTarget){
+            setTimeout(increment, 50);
+        }
+    };
+    increment();
+</script>
 
 </body>
 </html>
