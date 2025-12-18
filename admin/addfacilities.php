@@ -47,7 +47,7 @@ if ($currentID) {
     if ($res->num_rows > 0) {
         $facilityData = $res->fetch_assoc();
         $isUpdate = true;
-        $formTitle = "Edit Facility: " . htmlspecialchars($facilityData['Name']);
+        $formTitle = "Edit: " . htmlspecialchars($facilityData['Name']);
         
         // Schedules
         $stmtS = $conn->prepare("SELECT DayOfWeek, OpenTime, CloseTime, SlotDuration FROM facilityschedules WHERE FacilityID = ?");
@@ -78,49 +78,34 @@ if ($currentID) {
     $stmt->close();
 }
 
-// --- 3. PROCESS ACTIONS ---
+// --- 3. PROCESS POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // SEARCH (BY ID OR NAME)
+    // Search
     if (isset($_POST['search_term'])) {
         $term = trim($_POST['search_term']);
         $targetID = 0;
-
-        // 1. Try exact ID match if numeric
         if (is_numeric($term)) {
             $stmt = $conn->prepare("SELECT FacilityID FROM facilities WHERE FacilityID = ?");
             $idInt = intval($term);
             $stmt->bind_param("i", $idInt);
             $stmt->execute();
-            if ($stmt->get_result()->num_rows > 0) {
-                $targetID = $idInt;
-            }
+            if ($stmt->get_result()->num_rows > 0) $targetID = $idInt;
             $stmt->close();
         }
-
-        // 2. If not found, try Name search (Partial match)
         if ($targetID === 0) {
             $stmt = $conn->prepare("SELECT FacilityID FROM facilities WHERE Name LIKE ? LIMIT 1");
             $likeTerm = "%" . $term . "%";
             $stmt->bind_param("s", $likeTerm);
             $stmt->execute();
             $res = $stmt->get_result();
-            if ($row = $res->fetch_assoc()) {
-                $targetID = $row['FacilityID'];
-            }
+            if ($row = $res->fetch_assoc()) $targetID = $row['FacilityID'];
             $stmt->close();
         }
-
-        if ($targetID > 0) {
-            header("Location: addfacilities.php?id=$targetID");
-            exit();
-        } else {
-            echo "<script>alert('Facility not found!'); window.location='addfacilities.php';</script>";
-            exit();
-        }
+        if ($targetID > 0) { header("Location: addfacilities.php?id=$targetID"); exit(); }
+        else { echo "<script>alert('Facility not found!'); window.location='addfacilities.php';</script>"; exit(); }
     }
 
-    // SAVE FACILITY DETAILS & SCHEDULE
+    // Save Facility
     if (isset($_POST['save_facility'])) {
         $name = $_POST['Name'];
         $desc = $_POST['Description'];
@@ -129,7 +114,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = $_POST['Status'];
         $fid = $_POST['FacilityIDHidden'] ?? null;
 
-        // Photo
         $photoName = $facilityData['PhotoURL'] ?? NULL;
         if (!empty($_FILES['PhotoURL']['name'])) {
             $ext = pathinfo($_FILES['PhotoURL']['name'], PATHINFO_EXTENSION);
@@ -152,7 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->execute()) {
             $targetID = $isUpdate ? $fid : $stmt->insert_id;
             
-            // Save Schedule
             $conn->query("DELETE FROM facilityschedules WHERE FacilityID = $targetID");
             $ins = $conn->prepare("INSERT INTO facilityschedules (FacilityID, DayOfWeek, OpenTime, CloseTime, SlotDuration) VALUES (?, ?, ?, ?, ?)");
             
@@ -172,13 +155,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ADD CLOSURE
+    // Add Closure
     if (isset($_POST['add_closure'])) {
         $fid = $_POST['facility_id'];
         $start = $_POST['start_date'] . ' 00:00:00';
         $end = $_POST['end_date'] . ' 23:59:59';
         $reason = $_POST['reason'];
-
         $stmt = $conn->prepare("INSERT INTO scheduleoverrides (FacilityID, StartTime, EndTime, Reason) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("isss", $fid, $start, $end, $reason);
         if ($stmt->execute()) {
@@ -189,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// DELETE CLOSURE (GET)
+// Delete Closure
 if (isset($_GET['del_closure'])) {
     $oid = intval($_GET['del_closure']);
     $fid = intval($_GET['id']);
@@ -201,46 +183,69 @@ if (isset($_GET['del_closure'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Facility - UKM Sports Center</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --primary: #0b4d9d; /* UKM Blue */
-            --bg-light: #f8f9fa;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        h1, h2, h3 { font-family: 'Playfair Display', serif; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Facilities - UKM Sports Center</title>
 
-        /* Form Inputs */
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #0b4d9d;
-            box-shadow: 0 0 0 1px #0b4d9d;
-        }
-    </style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+:root {
+    --primary: #0b4d9d; /* UKM Blue */
+    --bg-light: #f8f9fa;
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+/* Custom Scrollbar */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Filter Bar */
+.filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px -1px rgba(0,0,0,0.08);
+    margin-top: -60px;
+    margin-bottom: 40px;
+    border: 1px solid #eee;
+    position: relative;
+    z-index: 10;
+}
+
+/* Tabs */
+.tab-btn { position: relative; color: #6b7280; transition: all 0.3s; }
+.tab-btn::after {
+    content: ''; position: absolute; bottom: -2px; left: 0; width: 0%; height: 3px;
+    background-color: var(--primary); transition: width 0.3s;
+}
+.tab-btn.active { color: var(--primary); font-weight: 700; }
+.tab-btn.active::after { width: 100%; }
+
+/* Fade Animation */
+.fade-in { animation: fadeIn 0.4s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Inputs */
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #0b4d9d;
+    box-shadow: 0 0 0 1px #0b4d9d;
+}
+</style>
 </head>
 <body>
 
-<!-- NAVBAR -->
+<!-- NAVBAR (Clean White Style) -->
 <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -249,37 +254,35 @@ if (isset($_GET['del_closure'])) {
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2">
-                Home
+            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2 group">
+                <span class="p-2 rounded-full bg-gray-100 group-hover:bg-[#0b4d9d] group-hover:text-white transition shadow-sm">
+                    <i class="fa-solid fa-house"></i>
+                </span>
+                <span class="hidden md:inline">Home</span>
             </a>
             
-            <!-- Active State -->
+            <!-- Active State for Facilities -->
             <a href="addfacilities.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2">
                 <span class="p-2 rounded-full bg-[#0b4d9d] text-white shadow-sm">
-                    <i class="fa-solid fa-building-circle-check"></i>
+                    <i class="fa-solid fa-building"></i>
                 </span>
                 Facilities
             </a>
             
             <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
-            
+
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
                     <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
                 </div>
-                <!-- Profile Dropdown Container -->
                 <div class="relative group">
-                    <button class="flex items-center focus:outline-none">
-                        <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition">
-                    </button>
-                    <!-- Dropdown Menu (Fixed hover issue with pt-2 padding bridge) -->
-                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
-                        <div class="bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
-                            <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
-                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                            </a>
-                        </div>
+                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <!-- Dropdown -->
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50 pt-1">
+                        <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
+                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                        </a>
                     </div>
                 </div>
             </div>
@@ -287,38 +290,40 @@ if (isset($_GET['del_closure'])) {
     </div>
 </nav>
 
-<!-- MAIN CONTENT -->
-<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl">
-
-    <!-- Header & Actions -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1 font-serif"><?php echo $formTitle; ?></h1>
-            <p class="text-gray-500">Manage facility details, operating hours, and closures.</p>
-        </div>
-        
-        <?php if($isUpdate): ?>
-            <a href="addfacilities.php" class="bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium flex items-center gap-2">
-                <i class="fa-solid fa-plus text-[#0b4d9d]"></i> Add New
-            </a>
-        <?php endif; ?>
+<!-- HERO BANNER -->
+<div class="w-full h-64 md:h-80 overflow-hidden relative shadow-md group">
+    <img src="../court.jpg" alt="Sports Court" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg font-serif">Manage Facilities</h1>
+        <p class="text-lg md:text-xl opacity-90 max-w-2xl font-light leading-relaxed">
+            Create, update, and manage sports facilities and schedules.
+        </p>
     </div>
+</div>
 
-    <!-- Search Box (Styled like Filter Bar) -->
-    <div class="filter-bar mb-8">
+<main class="container mx-auto px-6 pb-20 flex-grow relative z-20">
+    
+    <!-- Filter Section (Search) -->
+    <div class="filter-bar max-w-5xl mx-auto">
         <form method="POST" class="flex flex-col md:flex-row gap-4 items-center">
             <div class="flex-grow w-full relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="search_term" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] transition" placeholder="Enter Facility ID (e.g. 12) or Name (e.g. Badminton)" required>
+                <input type="text" name="search_term" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] transition" placeholder="Enter Facility ID (e.g. 12) or Name" required>
             </div>
             <button type="submit" class="bg-[#0b4d9d] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#083a75] transition shadow-lg shadow-blue-900/20 whitespace-nowrap">
                 Load Facility
             </button>
+            <?php if($isUpdate): ?>
+                <a href="addfacilities.php" class="bg-white border border-gray-200 text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-50 transition shadow-sm font-bold whitespace-nowrap">
+                    + New
+                </a>
+            <?php endif; ?>
         </form>
     </div>
 
     <!-- MAIN FORM CARD -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden min-h-[600px]">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden min-h-[600px] fade-in">
         
         <!-- Tabs -->
         <div class="flex border-b border-gray-200 px-8 pt-6 bg-white gap-8">
@@ -514,51 +519,30 @@ if (isset($_GET['del_closure'])) {
         </div>
     </div>
 
-</div>
+</main>
 
-<!-- ✅ EXTENDED FOOTER -->
-<footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="container mx-auto px-6 py-12">
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-
-            <!-- About -->
-            <div>
-                <img src="../assets/img/pusatsukanlogo.png" class="h-14 mb-4">
-                <p class="text-sm text-gray-600 leading-relaxed">
-                    Pusat Sukan Universiti Kebangsaan Malaysia manages all university
-                    sports facilities, bookings, and athletic development programs.
+<!-- FOOTER (Exact Match to Student Facilities) -->
+<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Logo & Address -->
+            <div class="flex items-center gap-4">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
+                <div class="text-xs text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            
+            <!-- SDG Logo & Copyright -->
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
+                <p class="text-[10px] text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
                 </p>
             </div>
-
-            <!-- Links -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="dashboard.php" class="hover:text-[#0b4d9d]">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#0b4d9d]">Facilities</a></li>
-                    <li><a href="dashboard.php?tab=history" class="hover:text-[#0b4d9d]">Booking History</a></li>
-                </ul>
-            </div>
-
-            <!-- Contact -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Contact</h4>
-                <p class="text-sm text-gray-600">
-                    Stadium Universiti, UKM<br>
-                    43600 Bangi, Selangor<br>
-                    <span class="text-[#0b4d9d] font-semibold">
-                        <i class="fa-solid fa-phone mr-1"></i> 03-8921 5306
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <div class="border-t pt-6 flex justify-between items-center">
-            <img src="../assets/img/sdg.png" class="h-14 opacity-90">
-            <p class="text-xs text-gray-400 text-right">
-                © 2025 Universiti Kebangsaan Malaysia<br>All rights reserved
-            </p>
         </div>
     </div>
 </footer>
