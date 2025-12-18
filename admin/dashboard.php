@@ -33,36 +33,43 @@ if ($conn->connect_error) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard – UKM Sports Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                fontFamily: {
-                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                    body: ['Inter', 'sans-serif'],
-                },
-                colors: {
-                    ukm: {
-                        blue: '#0b4d9d',
-                        dark: '#063a75',
-                        light: '#e0f2fe'
-                    }
-                }
-            }
-        }
-    }
-</script>
-
 <style>
-    .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    :root {
+        --primary: #0b4d9d;
+        --primary-hover: #063a75;
+        --bg-light: #f8fafc;
+    }
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-light);
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    h1, h2, h3, .font-serif {
+        font-family: 'Playfair Display', serif;
+    }
+
+    /* Animations */
+    .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Card Hover */
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); }
 </style>
 </head>
-<body class="bg-slate-50 flex flex-col min-h-screen text-slate-800 font-sans">
+
+<body class="bg-[#f8fafc] flex flex-col min-h-screen text-slate-800 font-sans">
+
 
 <!-- NAVBAR -->
 <?php 

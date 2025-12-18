@@ -129,10 +129,13 @@ include 'includes/navbar.php';
                 <i class="fa-solid fa-chevron-right text-[10px]"></i>
                 <span class="text-ukm-blue">Bookings</span>
             </div>
-            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                Booking Management
-            </h1>
-            <p class="text-slate-500 mt-2 text-lg">Monitor, approve, and manage all facility reservations.</p>
+           <h1 class="text-3xl md:text-4xl font-extrabold text-ukm-blue tracking-tight" style="font-family: 'Playfair Display', serif;">
+    Booking Management
+</h1>
+<p class="text-slate-500 mt-2 text-lg" style="font-family: 'Playfair Display', serif;">
+    Monitor, approve, and manage all facility reservations.
+</p>
+
         </div>
         <button onclick="openNewBookingModal()" class="bg-ukm-blue text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:bg-ukm-dark transition transform active:scale-95 flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> New Booking
