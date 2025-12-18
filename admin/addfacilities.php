@@ -499,7 +499,17 @@ h1 {
             <h5 class="section-title mb-3" style="border-color:#071239ff; color:#071239ff;">Update Existing Facility</h5>
             <form method="POST" class="row g-2 align-items-center">
                 <div class="col-md-5">
-                    <input type="text" class="form-control" name="search_id" id="searchIDInput" placeholder="Enter Facility ID (e.g., ID001 or OD005)" required>
+                    <select class="form-select" name="search_id" required>
+                        <option value="" selected disabled>Select Facility to Edit...</option>
+                        <?php 
+                        $facListParams = $conn->query("SELECT FacilityID, Name FROM facilities ORDER BY FacilityID");
+                        while($fl = $facListParams->fetch_assoc()): 
+                        ?>
+                            <option value="<?php echo $fl['FacilityID']; ?>">
+                                <?php echo htmlspecialchars($fl['Name']) . " (" . $fl['FacilityID'] . ")"; ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-search w-100">Search & Load</button>
