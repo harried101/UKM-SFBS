@@ -1,12 +1,6 @@
 <?php
 session_start();
-
-// PREVENT CACHING (Fixes "Too Many Redirects" loop issues)
-header("Cache-Control: no-cache, no-store, must-revalidate"); // HTTP 1.1.
-header("Pragma: no-cache"); // HTTP 1.0.
-header("Expires: 0"); // Proxies.
-
-// If already logged in, redirect immediately
+// If already logged in, redirect immediately based on role
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     if ($_SESSION['role'] === 'Admin') {
         header("Location: admin/dashboard.php");
@@ -23,228 +17,158 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UKM Sports Booking Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        body { 
-            margin: 0; 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f4f4f4;
-            /* Optional: Subtle background image or color */
-            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('court.jpg');
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f4f4f4; }
+        .container { display: flex; height: 100vh; }
+        @media (max-width: 900px) {
+            .container { flex-direction: column; height: auto; min-height: 100vh; }
+            .left-panel { display: none; }
+            .right-panel { width: 100%; border-radius: 0; padding: 40px 20px; }
+            .login-box { width: 90%; }
+        }
+        .left-panel {
+            width: 50%;
+            background-image: url('court.jpg'); 
             background-size: cover;
             background-position: center;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .login-card {
-            background: white;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            text-align: center;
-            position: relative;
-            z-index: 10;
-        }
-
-        .logos {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        .logos img { height: 50px; width: auto; }
-
-        h1 {
-            font-family: "Playfair Display", serif;
-            font-size: 28px;
-            color: #8a0d19;
-            margin: 0 0 5px 0;
-            font-weight: 700;
-        }
-        
-        p.subtitle {
-            color: #666;
-            margin: 0 0 30px 0;
-            font-size: 14px;
-        }
-
-        .input-group {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            transition: all 0.2s;
-        }
-        .input-group:focus-within {
-            border-color: #8a0d19;
-            box-shadow: 0 0 0 3px rgba(138, 13, 25, 0.1);
-        }
-        .input-group input {
-            border: none;
-            background: transparent;
-            width: 100%;
-            margin-left: 10px;
-            outline: none;
-            font-size: 15px;
-            color: #333;
-        }
-        .icon { opacity: 0.5; font-size: 18px; }
-
-        .login-btn {
-            background: #8a0d19;
             color: white;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
+            padding: 50px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
         }
-        .login-btn:hover { background: #6d0a13; }
-        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        .message-box {
-            background: #fef2f2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            text-align: left;
-            display: none;
-        }
-
-        /* Spinner */
-        .loading-spinner {
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-            display: none;
-            margin: 0 auto;
-        }
+        .left-panel .logos { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 15px; width: 100%; }
+        .left-panel img { background-color: rgba(255, 255, 255, 0.2); padding: 5px; border-radius: 5px; }
+        .left-panel h1 { font-family: "Playfair Display", serif; font-size: 45px; font-weight: 700; margin-top: 100px; line-height: 1.2; }
+        .right-panel { width: 50%; background: #dce7ea; border-radius: 0 50px 50px 0; display: flex; justify-content: center; align-items: center; }
+        .login-box { width: 75%; text-align: center; }
+        .login-title { font-family: "Playfair Display", serif; font-size: 50px; color: #8a0d19; margin-bottom: 30px; }
+        .message-box { background: #ffebeb; color: #b30e22; border: 1px solid #b30e22; padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: left; display: none; }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #b30e22; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .input-group { background: white; border-radius: 30px; display: flex; align-items: center; padding: 10px 20px; margin: 15px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .input-group input { border: none; outline: none; width: 100%; padding-left: 10px; font-size: 16px; }
+        .forgot { display: block; margin-top: 5px; margin-bottom: 25px; text-align: right; font-size: 14px; color: #555; cursor: pointer; }
+        .login-btn { background: #b30e22; color: white; border: none; width: 100%; padding: 14px; border-radius: 30px; font-size: 20px; cursor: pointer; transition: background 0.3s ease; margin-top: 30px; }
+        .login-btn:hover { background: #8a0d19; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="logos">
+                <img src="assets/img/logo.png" width="120" 
+                     onerror="this.src='https://placehold.co/120x120/8a0d19/FFFFFF?text=UKM'">
 
-    <div class="login-card">
-        <div class="logos">
-            <img src="assets/img/ukm.png" alt="UKM">
-            <img src="assets/img/pusatsukanlogo.png" alt="Pusat Sukan">
+                <img src="assets/img/pusatsukanlogo.png" width="120" 
+                     onerror="this.src='https://placehold.co/120x120/004c99/FFFFFF?text=Pusat+Sukan'">
+            </div>
+
+            <h1><b>UKM Sport<br>Facilities Booking<br>System</b></h1>
         </div>
 
-        <h1>Welcome Back</h1>
-        <p class="subtitle">UKM Sports Facility Booking System</p>
+        <div class="right-panel">
+            <div class="login-box">
+                <div class="login-title">LOG IN</div>
+                <div id="messageBox" class="message-box"></div>
 
-        <div id="messageBox" class="message-box"></div>
+                <form id="loginForm"> 
+                    <div class="input-group">
+                        <i>👤</i>
+                        <input type="text" id="userIdentifier" name="userIdentifier" placeholder="Matric/Staff Number" required>
+                    </div>
 
-        <form id="loginForm">
-            <div class="input-group">
-                <span class="icon">👤</span>
-                <input type="text" id="userIdentifier" name="userIdentifier" placeholder="Matric / Staff ID" required>
+                    <div class="input-group">
+                        <i>🔒</i>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        <i id="togglePassword" style="margin-left:10px; cursor: pointer;">👁️</i>
+                    </div>
+
+                    <button type="submit" id="loginBtn" class="login-btn">
+                        <span id="loginText">Log in</span>
+                        <div id="spinner" class="loading-spinner"></div>
+                    </button>
+                </form>
             </div>
-
-            <div class="input-group">
-                <span class="icon">🔒</span>
-                <input type="password" id="password" name="password" placeholder="Password" required>
-                <span class="icon" id="togglePassword" style="cursor: pointer;">👁️</span>
-            </div>
-
-            <button type="submit" id="loginBtn" class="login-btn">
-                <span id="loginText">Log In</span>
-                <div id="spinner" class="loading-spinner"></div>
-            </button>
-        </form>
+        </div>
     </div>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('loginForm');
+            const identifierInput = document.getElementById('userIdentifier');
+            const passwordInput = document.getElementById('password');
             const messageBox = document.getElementById('messageBox');
             const loginBtn = document.getElementById('loginBtn');
             const loginText = document.getElementById('loginText');
             const spinner = document.getElementById('spinner');
             const togglePassword = document.getElementById('togglePassword');
-            const passwordInput = document.getElementById('password');
+            const LOGIN_ENDPOINT = 'login_processor.php'; 
 
-            // Toggle Password
-            togglePassword.addEventListener('click', () => {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
-            });
+            const showMessage = (message, isError = true) => {
+                messageBox.textContent = message;
+                messageBox.style.display = 'block';
+                messageBox.style.backgroundColor = isError ? '#ffebeb' : '#e6ffe6';
+                messageBox.style.color = isError ? '#b30e22' : '#006400';
+                messageBox.style.borderColor = isError ? '#b30e22' : '#006400';
+            };
 
-            // Login Logic
             form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                // UI Loading State
+                e.preventDefault(); 
                 loginText.style.display = 'none';
                 spinner.style.display = 'block';
                 loginBtn.disabled = true;
                 messageBox.style.display = 'none';
 
-                const formData = {
-                    userIdentifier: document.getElementById('userIdentifier').value,
+                const credentials = {
+                    userIdentifier: identifierInput.value,
                     password: passwordInput.value
                 };
-
+                
                 try {
-                    const response = await fetch('login_processor.php', {
+                    const response = await fetch(LOGIN_ENDPOINT, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
+                        body: JSON.stringify(credentials)
                     });
 
+                    if (!response.ok) { throw new Error('Server error'); }
                     const result = await response.json();
 
-                    if (result.status === 'success') {
-                        // Success Color
-                        messageBox.style.backgroundColor = '#f0fdf4';
-                        messageBox.style.color = '#166534';
-                        messageBox.style.borderColor = '#bbf7d0';
-                        messageBox.textContent = "Login successful! Redirecting...";
-                        messageBox.style.display = 'block';
-                        
-                        setTimeout(() => {
-                            if (result.role === 'Admin') window.location.href = 'admin/dashboard.php';
-                            else window.location.href = 'student/dashboard.php';
-                        }, 1000);
-                    } else {
-                        throw new Error(result.message);
-                    }
-
-                } catch (error) {
-                    // Reset UI
                     loginText.style.display = 'inline';
                     spinner.style.display = 'none';
                     loginBtn.disabled = false;
                     
-                    // Show Error
-                    messageBox.style.backgroundColor = '#fef2f2';
-                    messageBox.style.color = '#991b1b';
-                    messageBox.style.borderColor = '#fecaca';
-                    messageBox.textContent = error.message || 'Login failed. Please check your credentials.';
-                    messageBox.style.display = 'block';
+                    if (result.status === 'success') {
+                        showMessage(result.message, false); 
+                        setTimeout(() => {
+                            if (result.role === 'Admin') {
+                                window.location.href = 'admin/dashboard.php'; 
+                            } else if (result.role === 'Student') {
+                                window.location.href = 'student/dashboard.php'; 
+                            }
+                        }, 1000); 
+                    } else {
+                        showMessage(result.message, true);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    loginText.style.display = 'inline';
+                    spinner.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showMessage('An unexpected server or network error occurred.', true);
                 }
+            });
+            
+            togglePassword.addEventListener('click', () => {
+                passwordInput.type =
+                    passwordInput.type === 'password' ? 'text' : 'password';
+                togglePassword.textContent =
+                    passwordInput.type === 'password' ? '👁️' : '🙈';
             });
         });
     </script>
-
 </body>
 </html>
