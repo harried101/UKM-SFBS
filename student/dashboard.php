@@ -431,9 +431,7 @@ function processCancellation(id) {
     });
 }
 
-function openFeedback(id) {
-    window.location.href = "feedback.php?booking_id=" + id;
-}
+
 
 // Dropdown Interactions
 const profileBtn = document.getElementById('profileBtn');
