@@ -62,10 +62,6 @@ if ($db_numeric_id > 0) {
     $stmt->close();
 }
 
-// 3. Fetch Real Facility Count
-$facCountResult = $conn->query("SELECT COUNT(*) FROM facilities WHERE Status='Active'");
-$realFacilityCount = $facCountResult ? $facCountResult->fetch_row()[0] : 0;
-
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
@@ -166,66 +162,20 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     </div>
 </nav>
 
-<!-- HERO BANNER & HEADER -->
-<div class="w-full h-64 overflow-hidden relative shadow-lg group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-[#8a0d19]/90 via-[#8a0d19]/40 to-transparent"></div>
-    
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10 translate-y-2">
-        <h1 class="text-3xl md:text-5xl font-bold mb-3 tracking-tight font-serif drop-shadow-sm">Welcome Back, <?php echo htmlspecialchars($studentName); ?></h1>
-        <div class="w-24 h-1 bg-white/50 rounded-full mb-6"></div>
-        <p class="text-lg text-white/90 font-light max-w-2xl mb-6">
-            Ready to get moving? Check availability and book your next session.
-        </p>
-    </div>
-</div>
-
 <!-- MAIN CONTENT -->
 <main class="container mx-auto px-6 py-12 flex-grow max-w-7xl relative z-20">
 
-    <!-- PAGE HEADER & ACTION -->
-    <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-bold text-slate-800">Overview</h2>
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-[#8a0d19] font-serif mb-1">
+                Welcome back, <?php echo htmlspecialchars($studentName); ?>
+            </h1>
+            <p class="text-gray-500">Overview of your bookings and activities.</p>
+        </div>
         <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
             <i class="fa-solid fa-plus-circle"></i> New Booking
         </a>
-    </div>
-
-    <!-- STATS OVERVIEW -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <!-- Stat 1 -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-lg hover-card flex items-center justify-between relative overflow-hidden">
-            <div class="relative z-10">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Facilities</p>
-                <p class="text-4xl font-bold text-slate-800 font-serif" id="facility-counter">0</p>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-[#8a0d19] text-xl relative z-10">
-                <i class="fa-solid fa-dumbbell"></i>
-            </div>
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-red-50/50 rounded-full blur-2xl"></div>
-        </div>
-        <!-- Stat 2 -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-lg hover-card flex items-center justify-between relative overflow-hidden">
-             <div class="relative z-10">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Staff</p>
-                <p class="text-4xl font-bold text-slate-800 font-serif" id="staff-counter">0</p>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl relative z-10">
-                <i class="fa-solid fa-users"></i>
-            </div>
-             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl"></div>
-        </div>
-        <!-- Stat 3 -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-lg hover-card flex items-center justify-between relative overflow-hidden">
-             <div class="relative z-10">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">My Bookings</p>
-                <p class="text-4xl font-bold text-slate-800 font-serif"><?php echo count($upcoming) + count($history); ?></p>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-600 text-xl relative z-10">
-                <i class="fa-solid fa-calendar-check"></i>
-            </div>
-             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-green-50/50 rounded-full blur-2xl"></div>
-        </div>
     </div>
 
     <!-- BOOKINGS CARD -->
@@ -425,34 +375,7 @@ if (urlParams.get('tab') === 'history') {
     switchTab('history');
 }
 
-// 2. Counter Logic
-const facilityTarget = <?php echo $realFacilityCount > 0 ? $realFacilityCount : 15; ?>;
-const staffTarget = 47; 
-let facilityCount = 0;
-let staffCount = 0;
-
-const facilityElem = document.getElementById('facility-counter');
-const staffElem = document.getElementById('staff-counter');
-
-function incrementCounters() {
-    let done = true;
-    if(facilityCount < facilityTarget){ 
-        facilityCount++; 
-        facilityElem.textContent = facilityCount; 
-        done = false; 
-    }
-    if(staffCount < staffTarget){ 
-        staffCount++; 
-        staffElem.textContent = staffCount; 
-        done = false; 
-    }
-    if(!done){
-        setTimeout(incrementCounters, 30);
-    }
-}
-window.onload = incrementCounters;
-
-// 3. Cancel Booking Logic
+// 2. Cancel Booking Logic
 function cancelBooking(id) {
     if(!confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) return;
 
