@@ -49,10 +49,13 @@ $nav_active = $nav_active ?? '';
                 </div>
                 <div class="relative group">
                     <img src="../assets/img/user.png" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover cursor-pointer transition hover:scale-105">
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 overflow-hidden">
-                        <a href="../logout.php" onclick="return confirm('Logout?')" class="block px-4 py-3 text-sm text-red-600 hover:bg-slate-50 transition font-medium">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
+                    <!-- Dropdown with Bridge -->
+                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                        <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
+                            <a href="../logout.php" onclick="return confirm('Logout?')" class="block px-4 py-3 text-sm text-red-600 hover:bg-slate-50 transition font-medium">
+                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

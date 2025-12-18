@@ -469,5 +469,9 @@ include 'includes/navbar.php';
     });
 </script>
 
+
+<!-- FOOTER -->
+<?php include 'includes/footer.php'; ?>
+
 </body>
 </html>

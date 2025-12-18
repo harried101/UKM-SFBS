@@ -299,5 +299,9 @@ include 'includes/navbar.php';
 
 </main>
 
+
+<!-- FOOTER -->
+<?php include 'includes/footer.php'; ?>
+
 </body>
 </html>
