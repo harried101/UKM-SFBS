@@ -221,49 +221,28 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 </main>
 
-<!-- ✅ EXTENDED FOOTER -->
-<footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="container mx-auto px-6 py-12">
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-
-            <!-- About -->
-            <div>
-                <img src="../assets/img/pusatsukanlogo.png" class="h-14 mb-4">
-                <p class="text-sm text-gray-600 leading-relaxed">
-                    Pusat Sukan Universiti Kebangsaan Malaysia manages all university
-                    sports facilities, bookings, and athletic development programs.
+<!-- FOOTER (Exact Match to Student Facilities) -->
+<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Logo & Address -->
+            <div class="flex items-center gap-4">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
+                <div class="text-xs text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            
+            <!-- SDG Logo & Copyright -->
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
+                <p class="text-[10px] text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
                 </p>
             </div>
-
-            <!-- Links -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="dashboard.php" class="hover:text-[#0b4d9d]">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#0b4d9d]">Facilities</a></li>
-                    <li><a href="dashboard.php?tab=history" class="hover:text-[#0b4d9d]">Booking History</a></li>
-                </ul>
-            </div>
-
-            <!-- Contact -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Contact</h4>
-                <p class="text-sm text-gray-600">
-                    Stadium Universiti, UKM<br>
-                    43600 Bangi, Selangor<br>
-                    <span class="text-[#0b4d9d] font-semibold">
-                        <i class="fa-solid fa-phone mr-1"></i> 03-8921 5306
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <div class="border-t pt-6 flex justify-between items-center">
-            <img src="../assets/img/sdg.png" class="h-14 opacity-90">
-            <p class="text-xs text-gray-400 text-right">
-                © 2025 Universiti Kebangsaan Malaysia<br>All rights reserved
-            </p>
         </div>
     </div>
 </footer>
