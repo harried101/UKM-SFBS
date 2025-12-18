@@ -8,7 +8,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit();
 }
 
-$page_title = "Booking Management";
+$page_title = "ALL BOOKINGS MANAGEMENT";
 
 // Fetch Admin Details
 $adminIdentifier = $_SESSION['user_id'] ?? '';
@@ -22,7 +22,7 @@ if ($adminIdentifier) {
     $resAdmin = $stmtAdmin->get_result();
     if ($rowAdmin = $resAdmin->fetch_assoc()) {
         $adminName = $rowAdmin['FirstName'] . ' ' . $rowAdmin['LastName'];
-        $adminID = $rowAdmin['UserIdentifier'];
+        // $adminID already set
     }
     $stmtAdmin->close();
 }
@@ -107,7 +107,7 @@ function getStatusClass($status) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - UKM Sports Center</title>
+    <title><?php echo $page_title; ?> - UKM-SFBS Admin</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -115,7 +115,7 @@ function getStatusClass($status) {
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <!-- Bootstrap CSS for Modals (kept for compatibility with existing modals) -->
+    <!-- Bootstrap CSS for Modals -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
@@ -132,16 +132,31 @@ function getStatusClass($status) {
             min-height: 100vh;
         }
         h1, h2, h3 { font-family: 'Playfair Display', serif; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Overriding Bootstrap for consistent look */
+        .btn-primary-custom {
+            background-color: #0b4d9d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .btn-primary-custom:hover {
+            background-color: #083a75;
+            color: white;
+        }
 
         /* Form Inputs */
-        input:focus, textarea:focus, select:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #0b4d9d;
             box-shadow: 0 0 0 1px #0b4d9d;
         }
+        
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 
@@ -172,8 +187,6 @@ function getStatusClass($status) {
                 Bookings
             </a>
             
-            <a href="manage_closures.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Closures</a>
-
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
@@ -208,7 +221,7 @@ function getStatusClass($status) {
             <p class="text-gray-500">View, filter, and manage student facility bookings.</p>
         </div>
         
-        <button class="bg-[#0b4d9d] text-white px-5 py-2.5 rounded-lg hover:bg-[#083a75] transition shadow-sm font-medium flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal">
+        <button type="button" class="bg-[#0b4d9d] text-white px-5 py-2.5 rounded-lg hover:bg-[#083a75] transition shadow-sm font-medium flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal">
             <i class="fas fa-plus"></i> Walk-in Booking
         </button>
     </div>
@@ -217,8 +230,7 @@ function getStatusClass($status) {
     <?php if (isset($_GET['msg'])): ?>
         <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-2">
-                <i class="fas fa-check-circle"></i>
-                <span><?php echo htmlspecialchars($_GET['msg']); ?></span>
+                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($_GET['msg']); ?>
             </div>
             <button onclick="this.parentElement.remove()" class="text-green-500 hover:text-green-700"><i class="fas fa-times"></i></button>
         </div>
@@ -227,8 +239,7 @@ function getStatusClass($status) {
     <?php if (isset($_GET['err'])): ?>
         <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-2">
-                <i class="fas fa-exclamation-circle"></i>
-                <span><?php echo htmlspecialchars($_GET['err']); ?></span>
+                <i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($_GET['err']); ?>
             </div>
             <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
         </div>
@@ -240,12 +251,12 @@ function getStatusClass($status) {
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Search</label>
-                <input type="search" name="search" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="ID, Name, Facility..." value="<?php echo htmlspecialchars($searchQuery); ?>">
+                <input type="search" name="search" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d]" placeholder="ID, Name, Facility..." value="<?php echo htmlspecialchars($searchQuery); ?>">
             </div>
             
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
-                <select name="status" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white">
+                <select name="status" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] bg-white">
                     <option value="all" <?php echo ($statusFilter == 'all') ? 'selected' : ''; ?>>All Statuses</option>
                     <option value="Pending" <?php echo ($statusFilter == 'Pending') ? 'selected' : ''; ?>>Pending</option>
                     <option value="Confirmed" <?php echo ($statusFilter == 'Confirmed') ? 'selected' : ''; ?>>Confirmed/Approved</option>
@@ -255,7 +266,7 @@ function getStatusClass($status) {
             
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
-                <input type="date" name="date" class="w-full p-2 border border-gray-300 rounded-lg text-sm" value="<?php echo htmlspecialchars($dateFilter); ?>">
+                <input type="date" name="date" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d]" value="<?php echo htmlspecialchars($dateFilter); ?>">
             </div>
             
             <div class="flex gap-2">
@@ -269,7 +280,7 @@ function getStatusClass($status) {
     <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs border-b border-gray-200">
+                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs">
                     <tr>
                         <th class="py-4 px-6">ID</th>
                         <th class="py-4 px-6">Facility</th>
@@ -300,7 +311,7 @@ function getStatusClass($status) {
                             <td class="px-6 py-4 text-[#0b4d9d] font-bold"><?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown Facility'); ?></td>
                             <td class="px-6 py-4">
                                 <?php if (!empty($fullName)): ?>
-                                    <div class="font-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
+                                    <div class="fw-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
                                 <?php endif; ?>
                                 <div class="text-xs text-gray-500 flex items-center">
                                     <span class="font-mono bg-gray-50 px-1 rounded text-[11px]"><?php echo htmlspecialchars($userId); ?></span> 
@@ -308,7 +319,7 @@ function getStatusClass($status) {
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-bold text-gray-700"><?php echo $start->format('d M Y'); ?></div>
+                                <div class="fw-bold text-gray-700"><?php echo $start->format('d M Y'); ?></div>
                                 <small class="text-gray-500 font-medium"><?php echo $start->format('h:i A') . ' - ' . $end->format('h:i A'); ?></small>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -338,49 +349,25 @@ function getStatusClass($status) {
     </div>
 </main>
 
-<!-- ✅ EXTENDED FOOTER -->
-<footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="container mx-auto px-6 py-12">
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-
-            <!-- About -->
-            <div>
-                <img src="../assets/img/pusatsukanlogo.png" class="h-14 mb-4">
-                <p class="text-sm text-gray-600 leading-relaxed">
-                    Pusat Sukan Universiti Kebangsaan Malaysia manages all university
-                    sports facilities, bookings, and athletic development programs.
+<!-- FOOTER (Matches addfacilities.php) -->
+<footer class="bg-white border-t border-gray-200 py-8 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-5">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-14 w-auto">
+                <div class="text-sm text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-1 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-16 w-auto opacity-90">
+                <p class="text-xs text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
                 </p>
             </div>
-
-            <!-- Links -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="dashboard.php" class="hover:text-[#0b4d9d]">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#0b4d9d]">Facilities</a></li>
-                    <li><a href="dashboard.php?tab=history" class="hover:text-[#0b4d9d]">Booking History</a></li>
-                </ul>
-            </div>
-
-            <!-- Contact -->
-            <div>
-                <h4 class="text-sm font-bold uppercase mb-4">Contact</h4>
-                <p class="text-sm text-gray-600">
-                    Stadium Universiti, UKM<br>
-                    43600 Bangi, Selangor<br>
-                    <span class="text-[#0b4d9d] font-semibold">
-                        <i class="fa-solid fa-phone mr-1"></i> 03-8921 5306
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <div class="border-t pt-6 flex justify-between items-center">
-            <img src="../assets/img/sdg.png" class="h-14 opacity-90">
-            <p class="text-xs text-gray-400 text-right">
-                © 2025 Universiti Kebangsaan Malaysia<br>All rights reserved
-            </p>
         </div>
     </div>
 </footer>
@@ -388,9 +375,9 @@ function getStatusClass($status) {
 <!-- VIEW/EDIT MODAL -->
 <div class="modal fade" id="viewEditModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-xl rounded-lg overflow-hidden">
-            <div class="modal-header bg-[#f8f9fa] border-bottom">
-                <h5 class="modal-title fw-bold text-[#0b4d9d]"><i class="fas fa-edit me-2"></i>Manage Booking #<span id="bookingIdDisplay"></span></h5>
+        <div class="modal-content border-0 shadow-xl rounded-lg">
+            <div class="modal-header bg-gray-50 border-bottom">
+                <h5 class="modal-title fw-bold text-[#0b4d9d]">Manage Booking #<span id="bookingIdDisplay"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
@@ -398,33 +385,33 @@ function getStatusClass($status) {
                     <input type="hidden" name="booking_id" id="modalBookingId">
                     <input type="hidden" name="action" id="modalAction">
                     
-                    <div class="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-blue-200">
-                            <span class="text-xs font-bold text-blue-800 uppercase tracking-wide">Facility</span>
-                            <span class="fw-bold text-dark text-end" id="modalFacility"></span>
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small uppercase fw-bold">Facility</span>
+                            <span class="fw-bold text-dark" id="modalFacility"></span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-blue-200">
-                            <span class="text-xs font-bold text-blue-800 uppercase tracking-wide">User</span>
-                            <span class="fw-bold text-dark text-end" id="modalUser"></span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small uppercase fw-bold">User</span>
+                            <span class="fw-bold text-dark" id="modalUser"></span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-xs font-bold text-blue-800 uppercase tracking-wide">Time</span>
-                            <span class="fw-bold text-dark text-end" id="modalTime"></span>
+                            <span class="text-muted small uppercase fw-bold">Time</span>
+                            <span class="fw-bold text-dark" id="modalTime"></span>
                         </div>
                     </div>
 
-                    <div id="actionButtons" class="d-grid gap-2 mb-4">
-                        <button type="button" class="btn btn-success fw-bold py-2 shadow-sm" onclick="submitAction('approve')">
+                    <div id="actionButtons" class="d-grid gap-2 mb-3">
+                        <button type="button" class="btn btn-success fw-bold py-2" onclick="submitAction('approve')">
                             <i class="fas fa-check me-2"></i>Approve Request
                         </button>
-                        <button type="button" class="btn btn-danger fw-bold py-2 shadow-sm" onclick="submitAction('reject')">
+                        <button type="button" class="btn btn-danger fw-bold py-2" onclick="submitAction('reject')">
                             <i class="fas fa-times me-2"></i>Reject / Cancel
                         </button>
                     </div>
 
-                    <div class="mb-2">
-                        <label for="adminNotes" class="form-label small fw-bold text-gray-500 uppercase tracking-wide">Admin Notes (Reason)</label>
-                        <textarea class="form-control" name="admin_notes" id="adminNotes" rows="2" placeholder="Reason for rejection or internal note..." style="font-size:0.9rem;"></textarea>
+                    <div class="mb-3">
+                        <label for="adminNotes" class="form-label small fw-bold text-gray-500 uppercase">Admin Notes (Reason)</label>
+                        <textarea class="form-control" name="admin_notes" id="adminNotes" rows="2" placeholder="Reason for rejection or internal note..."></textarea>
                     </div>
                 </form>
             </div>
@@ -435,7 +422,7 @@ function getStatusClass($status) {
 <!-- WALK-IN BOOKING MODAL -->
 <div class="modal fade" id="newBookingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-2xl rounded-lg overflow-hidden" style="height: 85vh;">
+        <div class="modal-content border-0 shadow-2xl rounded-lg" style="height: 85vh;">
             <div class="modal-header bg-[#0b4d9d] text-white">
                 <h5 class="modal-title fw-bold"><i class="fas fa-calendar-plus me-2"></i>New Walk-in Booking</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -452,7 +439,7 @@ function getStatusClass($status) {
                                 <option value="<?php echo $fac['FacilityID']; ?>"><?php echo htmlspecialchars($fac['Name']); ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="bg-[#0b4d9d] text-white px-4 py-2 rounded-lg hover:bg-[#083a75] transition font-bold" onclick="loadBookingFrame()">Load Schedule</button>
+                        <button class="btn btn-primary-custom" onclick="loadBookingFrame()">Load Schedule</button>
                     </div>
                 </div>
 
