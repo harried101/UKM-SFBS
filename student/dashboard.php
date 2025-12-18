@@ -66,15 +66,12 @@ if ($db_numeric_id > 0) {
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        // StartTime logic: handle invalid data
         if ($row['StartTime'] === '0000-00-00 00:00:00' || empty($row['StartTime'])) {
             $start = new DateTime($row['EndTime']);
         } else {
             $start = new DateTime($row['StartTime']);
         }
 
-        // EndTime logic: combine StartTime date with EndTime clock components
-        // This ensures the comparison against $now is accurate for today's sessions
         $end = new DateTime($start->format('Y-m-d H:i:s'));
         $end->setTime(
             (int)date('H', strtotime($row['EndTime'])),
@@ -82,7 +79,6 @@ if ($db_numeric_id > 0) {
             (int)date('s', strtotime($row['EndTime']))
         );
 
-        // Determine if the booking session has ended
         $is_passed = ($end < $now);
 
         $all_bookings[] = array_merge($row, [
@@ -113,7 +109,7 @@ if ($conn->connect_error) {
 
 <style>
 :root {
-    --primary: #8a0d19; /* UKM Red */
+    --primary: #8a0d19; 
     --primary-hover: #6d0a13;
     --bg-light: #f8fafc;
 }
@@ -125,9 +121,7 @@ body {
     flex-direction: column;
     min-height: 100vh;
 }
-
 h1, h2, h3 { font-family: 'Playfair Display', serif; }
-
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -143,22 +137,22 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-8">
-            <!-- Navigation Links -->
             <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative text-decoration-none">
                 <span>Home</span>
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
             </a>
             <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Facilities</a>
-            <a href="booking_history.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Booking History</a>
+            <a href="booking_history.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">History</a>
 
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
+            <!-- Profile / Logout Dropdown -->
+            <div class="flex items-center gap-4 pl-6 border-l border-slate-200 relative">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-slate-800"><?php echo htmlspecialchars($studentName); ?></p>
                     <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold"><?php echo htmlspecialchars($studentID); ?></p>
                 </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform group-hover:scale-105">
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 overflow-hidden">
+                <div class="relative" id="profileDropdown">
+                    <img id="profileBtn" src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform hover:scale-105">
+                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden z-50 overflow-hidden">
                         <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2 text-decoration-none">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>
@@ -171,109 +165,99 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 <!-- MAIN CONTENT -->
 <main class="container mx-auto px-6 py-12 flex-grow max-w-7xl relative z-20">
+<!-- WELCOME GREETING -->
+<div class="mb-12 fade-in">
+    <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
+    <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
+    <p class="text-slate-500 mt-4 max-w-2xl">Manage your active sessions and provide feedback on completed activities.</p>
+</div>
 
-    <!-- WELCOME GREETING -->
-    <div class="mb-12 fade-in">
-        <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
-        <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
-        <p class="text-slate-500 mt-4 max-w-2xl">Manage your active sessions and provide feedback on completed activities.</p>
-    </div>
+<!-- PAGE HEADER & ACTION -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">My Bookings</h2>
+    <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none">
+        <i class="fa-solid fa-plus-circle"></i> New Booking
+    </a>
+</div>
 
-    <!-- PAGE HEADER & ACTION -->
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-slate-800">My Bookings</h2>
-        <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none">
-            <i class="fa-solid fa-plus-circle"></i> New Booking
-        </a>
-    </div>
-
-    <!-- BOOKINGS CONTAINER -->
-    <div class="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden min-h-[400px] flex flex-col fade-in">
-        <div class="p-8 flex-grow bg-slate-50/50">
-            
-            <?php if (empty($all_bookings)): ?>
-                <div class="flex flex-col items-center justify-center h-80 text-center">
-                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm text-slate-300">
-                        <i class="fa-regular fa-calendar-xmark text-3xl"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800 mb-2">No Bookings Found</h3>
-                    <p class="text-slate-500 mb-6 max-w-xs text-sm">You haven't made any bookings yet.</p>
-                    <a href="student_facilities.php" class="text-[#8a0d19] text-sm font-bold hover:underline flex items-center gap-2 group text-decoration-none">
-                        Browse Facilities <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </a>
+<!-- BOOKINGS CONTAINER -->
+<div class="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden min-h-[400px] flex flex-col fade-in">
+    <div class="p-8 flex-grow bg-slate-50/50">
+        <?php if (empty($all_bookings)): ?>
+            <div class="flex flex-col items-center justify-center h-80 text-center">
+                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm text-slate-300">
+                    <i class="fa-regular fa-calendar-xmark text-3xl"></i>
                 </div>
-            <?php else: ?>
-                <div class="space-y-4">
-                    <?php foreach ($all_bookings as $bk): 
-                        // Determine badge color
-                        $statusClass = 'bg-slate-100 text-slate-500 border-slate-200';
-                        if (in_array($bk['Status'], ['Approved', 'Confirmed'])) {
-                            $statusClass = 'bg-green-100 text-green-700 border-green-200';
-                        } elseif ($bk['Status'] === 'Pending') {
-                            $statusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                        } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
-                            $statusClass = 'bg-red-50 text-red-700 border-red-200';
-                        }
-                    ?>
-                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-center justify-between gap-6 group">
-                        <div class="flex items-center gap-6 w-full">
-                            <!-- Date Badge -->
-                            <div class="bg-slate-50 rounded-xl p-3 min-w-[70px] text-center border border-slate-100 <?php echo $bk['is_passed'] ? 'opacity-50' : ''; ?>">
-                                <span class="block text-xl font-bold text-[#8a0d19] font-serif"><?php echo $bk['day']; ?></span>
-                                <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider"><?php echo $bk['month']; ?></span>
-                            </div>
-                            <!-- Info -->
-                            <div class="<?php echo $bk['is_passed'] ? 'opacity-60' : ''; ?>">
-                                <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#8a0d19] transition-colors"><?php echo htmlspecialchars($bk['FacilityName']); ?></h4>
-                                <div class="flex flex-wrap gap-4 text-sm text-slate-500 font-medium">
-                                    <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-slate-400"></i> <?php echo $bk['formatted_time']; ?></span>
-                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-slate-400"></i> <?php echo htmlspecialchars($bk['Location']); ?></span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Status & Action Buttons -->
-                        <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
-                                <?php echo $bk['Status']; ?>
-                            </span>
-                            
-                            <div class="flex gap-2">
-                                <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
-                                    <!-- CANCEL Button: Shown for active upcoming bookings -->
-                                    <button onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)" 
-                                            class="text-red-500 hover:text-white border border-red-200 hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                                        Cancel
-                                    </button>
-                                <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
-                                    <!-- FEEDBACK Button: Shown for completed approved bookings -->
-                                    <button onclick="openFeedback(<?php echo $bk['BookingID']; ?>)" 
-                                            class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                                        Feedback
-                                    </button>
-                                <?php endif; ?>
-                            </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">No Bookings Found</h3>
+                <p class="text-slate-500 mb-6 max-w-xs text-sm">You haven't made any bookings yet.</p>
+                <a href="student_facilities.php" class="text-[#8a0d19] text-sm font-bold hover:underline flex items-center gap-2 group text-decoration-none">
+                    Browse Facilities <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                </a>
+            </div>
+        <?php else: ?>
+            <div class="space-y-4">
+            <?php foreach ($all_bookings as $bk): 
+                $statusClass = 'bg-slate-100 text-slate-500 border-slate-200';
+                if (in_array($bk['Status'], ['Approved', 'Confirmed'])) {
+                    $statusClass = 'bg-green-100 text-green-700 border-green-200';
+                } elseif ($bk['Status'] === 'Pending') {
+                    $statusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
+                    $statusClass = 'bg-red-50 text-red-700 border-red-200';
+                }
+            ?>
+            <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-center justify-between gap-6 group">
+                <div class="flex items-center gap-6 w-full">
+                    <div class="bg-slate-50 rounded-xl p-3 min-w-[70px] text-center border border-slate-100 <?php echo $bk['is_passed'] ? 'opacity-50' : ''; ?>">
+                        <span class="block text-xl font-bold text-[#8a0d19] font-serif"><?php echo $bk['day']; ?></span>
+                        <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider"><?php echo $bk['month']; ?></span>
+                    </div>
+                    <div class="<?php echo $bk['is_passed'] ? 'opacity-60' : ''; ?>">
+                        <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#8a0d19] transition-colors"><?php echo htmlspecialchars($bk['FacilityName']); ?></h4>
+                        <div class="flex flex-wrap gap-4 text-sm text-slate-500 font-medium">
+                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-slate-400"></i> <?php echo $bk['formatted_time']; ?></span>
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-slate-400"></i> <?php echo htmlspecialchars($bk['Location']); ?></span>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
-            <?php endif; ?>
-        </div>
+                <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
+                        <?php echo $bk['Status']; ?>
+                    </span>
+                    <div class="flex gap-2">
+                        <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
+                        <button onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)" 
+                            class="text-red-500 hover:text-white border border-red-200 hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                            Cancel
+                        </button>
+                        <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
+                        <button onclick="openFeedback(<?php echo $bk['BookingID']; ?>)" 
+                            class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                            Feedback
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
+</div>
 
-    <!-- ABOUT SECTION -->
-    <div class="mt-12 bg-white rounded-2xl border border-slate-100 p-8 shadow-lg flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
-        <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#8a0d19]"></div>
-        <div class="flex-1 relative z-10">
-            <h2 class="text-2xl font-bold font-serif mb-3 text-slate-800">About UKM Sports Center</h2>
-            <p class="text-slate-600 text-sm leading-relaxed max-w-3xl">
-                Established on 1 November 1974, the UKM Sports Center began with a single Sports Officer. Today, it has evolved into a fully equipped center managing sports activities for students and staff, participating in major events like the ASEAN University Games. We are committed to fostering athletic excellence and student well-being.
-            </p>
-        </div>
-        <div class="flex-shrink-0 opacity-10 group-hover:opacity-20 transition-opacity">
-            <i class="fa-solid fa-medal text-8xl text-slate-800"></i>
-        </div>
+<!-- ABOUT SECTION -->
+<div class="mt-12 bg-white rounded-2xl border border-slate-100 p-8 shadow-lg flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
+    <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#8a0d19]"></div>
+    <div class="flex-1 relative z-10">
+        <h2 class="text-2xl font-bold font-serif mb-3 text-slate-800">About UKM Sports Center</h2>
+        <p class="text-slate-600 text-sm leading-relaxed max-w-3xl">
+            Established on 1 November 1974, the UKM Sports Center began with a single Sports Officer. Today, it has evolved into a fully equipped center managing sports activities for students and staff, participating in major events like the ASEAN University Games. We are committed to fostering athletic excellence and student well-being.
+        </p>
     </div>
+    <div class="flex-shrink-0 opacity-10 group-hover:opacity-20 transition-opacity">
+        <i class="fa-solid fa-medal text-8xl text-slate-800"></i>
+    </div>
+</div>
 
 </main>
 
@@ -338,6 +322,22 @@ function cancelBooking(id) {
 function openFeedback(id) {
     window.location.href = "feedback.php?booking_id=" + id;
 }
+
+// Profile dropdown click toggle
+const profileBtn = document.getElementById('profileBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
+
+profileBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevents immediate close
+    dropdownMenu.classList.toggle('hidden');
+});
+
+// Close dropdown if clicked outside
+document.addEventListener('click', (e) => {
+    if(!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        dropdownMenu.classList.add('hidden');
+    }
+});
 </script>
 
 </body>
