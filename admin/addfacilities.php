@@ -129,30 +129,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Admin - <?php echo $formTitle; ?></title>
     
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        body: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        ukm: {
-                            blue: '#0b4d9d',
-                            dark: '#063a75',
-                            light: '#e0f2fe'
-                        }
-                    }
+tailwind.config = {
+    theme: {
+        extend: {
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],       // Body text
+                serif: ['Playfair Display', 'serif'], // Headings
+            },
+            colors: {
+                ukm: {
+                    blue: '#0b4d9d',
+                    dark: '#063a75',
+                    light: '#e0f2fe'
                 }
             }
         }
-    </script>
+    }
+}
+</script>
+
     <style>
+        
+body { font-family: 'Inter', sans-serif; }
+h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
+
+
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -172,7 +178,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col font-body text-slate-800">
+<body class="font-sans">
+
 
 <!-- NAVBAR (Preserved from Dashboard) -->
 <?php 
@@ -191,8 +198,8 @@ include 'includes/navbar.php';
                 <i class="fa-solid fa-chevron-right text-[10px]"></i>
                 <span class="text-ukm-blue">Facilities Management</span>
             </div>
-            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                <?php echo $isUpdate ? 'Edit Facility' : 'Create New Facility'; ?>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-[#0b4d9d] tracking-tight">
+    <?php echo $isUpdate ? 'Edit Facility' : 'Create New Facility'; ?>
             </h1>
             <p class="text-slate-500 mt-2 text-lg">Manage facility details, availability, and scheduling.</p>
         </div>
