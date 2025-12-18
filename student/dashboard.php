@@ -129,6 +129,32 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Tab link styles */
+.tab-link {
+    position: relative;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.tab-link.active {
+    color: var(--primary);
+}
+.tab-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary);
+}
+.tab-link:not(.active) {
+    color: #64748b;
+}
+.tab-link:not(.active):hover {
+    color: var(--primary);
+}
 </style>
 </head>
 <body>
@@ -173,12 +199,15 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     <div class="mb-12 fade-in">
         <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
         <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
-        <p class="text-slate-500 mt-4 max-w-2xl">Check your schedule and provide feedback on completed activities.</p>
+        <p class="text-slate-500 mt-4 max-w-2xl">Manage your sports activities and track your bookings below.</p>
     </div>
 
     <!-- PAGE HEADER & ACTION -->
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-slate-800">My Bookings</h2>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+        <div class="flex items-center gap-8 border-b border-slate-200 w-full md:w-auto">
+            <a href="dashboard.php" class="tab-link active text-decoration-none text-sm uppercase tracking-wider">Active Bookings</a>
+            <a href="booking_history.php" class="tab-link text-decoration-none text-sm uppercase tracking-wider">Booking History</a>
+        </div>
         <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none">
             <i class="fa-solid fa-plus-circle"></i> New Booking
         </a>
@@ -333,8 +362,6 @@ function cancelBooking(id) {
 }
 
 function openFeedback(id) {
-    // Logic for feedback (e.g., redirect to feedback page or open modal)
-    // alert("Opening feedback for booking #" + id);
     window.location.href = "feedback.php?booking_id=" + id;
 }
 </script>
