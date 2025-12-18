@@ -110,7 +110,7 @@ if ($conn->connect_error) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard – UKM Sports Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -153,11 +153,12 @@ button:disabled {
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative">
+            <!-- Active Home -->
+            <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative text-decoration-none">
                 <span>Home</span>
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
             </a>
-            <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">Facilities</a>
+            <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Facilities</a>
 
             <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
                 <div class="text-right hidden sm:block">
@@ -167,7 +168,7 @@ button:disabled {
                 <div class="relative group">
                     <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform group-hover:scale-105">
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 overflow-hidden">
-                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2">
+                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2 text-decoration-none">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>
                     </div>
@@ -177,27 +178,20 @@ button:disabled {
     </div>
 </nav>
 
-<!-- HERO BANNER -->
-<div class="w-full h-64 overflow-hidden relative shadow-lg group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-[#8a0d19]/90 via-[#8a0d19]/40 to-transparent"></div>
-    
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10 translate-y-2">
-        <h1 class="text-3xl md:text-5xl font-bold mb-3 tracking-tight font-serif drop-shadow-sm">Welcome Back, <?php echo htmlspecialchars($studentName); ?></h1>
-        <div class="w-24 h-1 bg-white/50 rounded-full mb-6"></div>
-        <p class="text-lg text-white/90 font-light max-w-2xl">
-            Manage your sports schedule and facility bookings.
-        </p>
-    </div>
-</div>
-
 <!-- MAIN CONTENT -->
 <main class="container mx-auto px-6 py-12 flex-grow max-w-7xl relative z-20">
 
-    <!-- PAGE HEADER -->
-    <div class="flex justify-between items-center mb-10">
+    <!-- WELCOME GREETING -->
+    <div class="mb-12 fade-in">
+        <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
+        <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
+        <p class="text-slate-500 mt-4 max-w-2xl">Manage your sports schedule and facility bookings in one place.</p>
+    </div>
+
+    <!-- PAGE HEADER & ACTION -->
+    <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-slate-800">My Bookings</h2>
-        <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
+        <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none">
             <i class="fa-solid fa-plus-circle"></i> New Booking
         </a>
     </div>
@@ -213,7 +207,7 @@ button:disabled {
                     </div>
                     <h3 class="text-lg font-bold text-slate-800 mb-2">No Bookings Found</h3>
                     <p class="text-slate-500 mb-6 max-w-xs text-sm">You haven't made any bookings yet.</p>
-                    <a href="student_facilities.php" class="text-[#8a0d19] text-sm font-bold hover:underline flex items-center gap-2 group">
+                    <a href="student_facilities.php" class="text-[#8a0d19] text-sm font-bold hover:underline flex items-center gap-2 group text-decoration-none">
                         Browse Facilities <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
                     </a>
                 </div>
@@ -300,8 +294,8 @@ button:disabled {
             <div>
                 <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Quick Access</h4>
                 <ul class="space-y-2 text-sm text-slate-600">
-                    <li><a href="dashboard.php" class="hover:text-[#8a0d19] transition">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#8a0d19] transition">Browse Facilities</a></li>
+                    <li><a href="dashboard.php" class="hover:text-[#8a0d19] transition text-decoration-none">Dashboard</a></li>
+                    <li><a href="student_facilities.php" class="hover:text-[#8a0d19] transition text-decoration-none">Browse Facilities</a></li>
                 </ul>
             </div>
             <div>
