@@ -164,11 +164,17 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['facility_id'], $_POST['s
             $conn->commit();
             jres(["success"=>true,"message"=>"Walk-in booking confirmed!","booking_id"=>$bookingID]);
         }
-    }catch(Exception $e){
+    } catch (Exception $e) {
         $conn->rollback();
         // DEBUG LOGGING
         file_put_contents("debug_log.txt", date('Y-m-d H:i:s')." - Exception: ".$e->getMessage()." | FacilityID: '$facilityID' | UserID: $userID\n", FILE_APPEND);
-        jres(["success"=>false,"message"=>"Server error: " . $e->getMessage()]);
+        
+        // Check for duplicate entry error (code 1062)
+        if ($e->getCode() === 1062 || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            jres(["success"=>false,"message"=>"This slot has already been booked. Please choose another time."]);
+        } else {
+            jres(["success"=>false,"message"=>"Server error: " . $e->getMessage()]);
+        }
     }
 }
 

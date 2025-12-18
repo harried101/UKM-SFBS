@@ -37,7 +37,7 @@ try {
                         AND ? BETWEEN DATE(StartTime) AND DATE(EndTime) 
                         LIMIT 1";
         $stmt = $conn->prepare($closure_sql);
-        $stmt->bind_param("is", $facilityID, $selectedDate);
+        $stmt->bind_param("ss", $facilityID, $selectedDate);
         $stmt->execute();
         
         if ($row = $stmt->get_result()->fetch_assoc()) {
@@ -57,7 +57,7 @@ try {
                       WHERE FacilityID = ? AND DayOfWeek = ? 
                       LIMIT 1";
         $stmt = $conn->prepare($sched_sql);
-        $stmt->bind_param("ii", $facilityID, $dayIndex);
+        $stmt->bind_param("si", $facilityID, $dayIndex);
         $stmt->execute();
         $res = $stmt->get_result();
 
@@ -77,7 +77,7 @@ try {
                    AND DATE(StartTime) = ? 
                    AND Status IN ('Approved', 'Pending', 'Confirmed')";
         $stmt = $conn->prepare($bk_sql);
-        $stmt->bind_param("is", $facilityID, $selectedDate);
+        $stmt->bind_param("ss", $facilityID, $selectedDate);
         $stmt->execute();
         $bk_res = $stmt->get_result();
         
@@ -146,7 +146,7 @@ try {
         // 2. Get Duration for End Time
         $dayIndex = date('w', strtotime($startTime));
         $stmt = $conn->prepare("SELECT SlotDuration FROM facilityschedules WHERE FacilityID=? AND DayOfWeek=?");
-        $stmt->bind_param("ii", $facilityID, $dayIndex);
+        $stmt->bind_param("si", $facilityID, $dayIndex);
         $stmt->execute();
         $dur = $stmt->get_result()->fetch_assoc()['SlotDuration'] ?? 60;
         $stmt->close();
@@ -155,7 +155,7 @@ try {
 
         // 3. Double Check Availability
         $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID=? AND StartTime=? AND Status IN ('Approved','Pending','Confirmed')");
-        $check->bind_param("is", $facilityID, $startTime);
+        $check->bind_param("ss", $facilityID, $startTime);
         $check->execute();
         if ($check->get_result()->num_rows > 0) jsonResponse(false, 'Slot taken');
         $check->close();
@@ -172,6 +172,12 @@ try {
     }
 
 } catch (Exception $e) {
+    // Check for MySQL Duplicate Entry Error (Code 1062)
+    if ($e->getCode() === 1062 || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+        jsonResponse(false, 'This slot has already been booked. Please choose another time.');
+    }
+    
+    // Generic Error
     jsonResponse(false, 'Server Error: ' . $e->getMessage());
 }
 ?>
