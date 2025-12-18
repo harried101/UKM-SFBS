@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// SECURITY CHECK
+// SECURITY CHECK: Redirect if not logged in or role is not Student
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
@@ -9,7 +9,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
-// Student Details
+// 1. Fetch Student Details (For Navbar consistency)
 $studentIdentifier = $_SESSION['user_id'] ?? '';
 $studentName = 'Student';
 $studentID = $studentIdentifier;
@@ -26,10 +26,16 @@ if ($studentIdentifier) {
     $stmtStudent->close();
 }
 
-// Fetch Types
-$typesResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status IN ('Active','Maintenance')");
+// 2. Fetch Filter Options
+$typesResult = $conn->query("SELECT DISTINCT Type FROM facilities WHERE Status IN ('Active', 'Maintenance')");
 $types = [];
-while($t = $typesResult->fetch_assoc()) $types[] = $t['Type'];
+while($t = $typesResult->fetch_assoc()) {
+    $types[] = $t['Type'];
+}
+
+if ($conn->connect_error) {
+    die("DB Connection failed: " . $conn->connect_error);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,80 +49,115 @@ while($t = $typesResult->fetch_assoc()) $types[] = $t['Type'];
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-:root { --primary:#0b4d9d; --bg-light:#f8f9fa; }
+:root {
+    --primary: #0b4d9d; /* UKM Blue */
+    --bg-light: #f8f9fa;
+}
 body {
-    font-family:'Inter',sans-serif;
-    background-color:var(--bg-light);
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
-h1,h2,h3{font-family:'Playfair Display',serif;}
-.filter-bar{
-    background:white;padding:20px;border-radius:12px;
-    box-shadow:0 4px 20px -1px rgba(0,0,0,0.08);
-    border:1px solid #eee;
+h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
 }
-/* Ensure blue buttons from fetch file work */
-.bg-\[\#8a0d19\] { background-color: #0b4d9d !important; }
-.text-\[\#8a0d19\] { color: #0b4d9d !important; }
-.hover\:bg-\[\#6d0a13\]:hover { background-color: #083a75 !important; }
+
+/* Custom Scrollbar */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Filter Bar */
+.filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px -1px rgba(0,0,0,0.08);
+    margin-top: -60px;
+    margin-bottom: 40px;
+    border: 1px solid #eee;
+    position: relative;
+    z-index: 10;
+}
+
+/* Fade Animation */
+.fade-in { animation: fadeIn 0.4s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
-
 <body>
 
-<!-- NAVBAR -->
-<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
+<!-- NAVBAR (Blue Gradient Theme) -->
+<nav class="bg-gradient-to-r from-[#0b4d9d] to-[#052c5c] shadow-lg sticky top-0 z-50">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" class="h-12">
-            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" class="h-12 hidden sm:block">
+            <!-- Logos with inversion filter for white text on blue bg -->
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto brightness-0 invert">
+            <div class="h-8 w-px bg-white/30 hidden sm:block"></div>
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto brightness-0 invert hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">
-                Home
+            <a href="dashboard.php" class="text-white/80 hover:text-white font-medium transition flex items-center gap-2 group">
+                <span class="p-2 rounded-full bg-white/10 group-hover:bg-white/20 transition shadow-sm">
+                    <i class="fa-solid fa-house"></i>
+                </span>
+                <span class="hidden md:inline">Home</span>
             </a>
-            <a href="student_facilities.php" class="text-[#0b4d9d] font-bold transition">
+            
+            <!-- Active State for Facilities (White Pill) -->
+            <a href="student_facilities.php" class="bg-white text-[#0b4d9d] px-4 py-2 rounded-full font-bold transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-dumbbell"></i>
                 Facilities
             </a>
-            <a href="dashboard.php?tab=history" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">
-                History
-            </a>
+            
+            <!-- History Link -->
+            <a href="dashboard.php?tab=history" class="text-white/80 hover:text-white font-medium transition">History</a>
 
-            <div class="flex items-center gap-3 pl-6 border-l">
-                <div class="hidden sm:block text-right">
-                    <p class="text-sm font-bold"><?= htmlspecialchars($studentName) ?></p>
-                    <p class="text-xs text-gray-500"><?= htmlspecialchars($studentID) ?></p>
+            <div class="flex items-center gap-3 pl-6 border-l border-white/20">
+                <div class="text-right hidden sm:block text-white">
+                    <p class="text-sm font-bold"><?php echo htmlspecialchars($studentName); ?></p>
+                    <p class="text-xs uppercase tracking-wider opacity-80"><?php echo htmlspecialchars($studentID); ?></p>
                 </div>
-                <img src="../assets/img/user.png" class="w-10 h-10 rounded-full border shadow">
+                <div class="relative group">
+                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white/50 shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <!-- Dropdown -->
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
+                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
+                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </nav>
 
-<!-- MAIN CONTENT (No Banner) -->
-<main class="container mx-auto px-6 py-10 flex-grow">
-
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1 font-serif">Browse Facilities</h1>
-            <p class="text-gray-500">Find and book world-class sports facilities at UKM.</p>
-        </div>
+<!-- HERO BANNER -->
+<div class="w-full h-64 md:h-80 overflow-hidden relative shadow-md group">
+    <img src="../court.jpg" alt="Sports Court" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+    <div class="absolute inset-0 bg-gradient-to-t from-[#0b4d9d]/80 to-black/20 mix-blend-multiply"></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg font-serif">Browse Facilities</h1>
+        <p class="text-lg md:text-xl opacity-90 max-w-2xl font-light leading-relaxed">
+            Find and book world-class sports facilities at UKM.
+        </p>
     </div>
+</div>
 
-    <!-- FILTER -->
-    <div class="filter-bar mb-8">
-        <form class="flex flex-col md:flex-row gap-4" onsubmit="return false;">
-            <div class="flex-grow relative">
+<main class="container mx-auto px-6 pb-20 flex-grow relative z-20">
+    
+    <!-- Filter Section -->
+    <div class="filter-bar max-w-5xl mx-auto">
+        <form id="searchForm" class="flex flex-col md:flex-row gap-4 items-center" onsubmit="return false;">
+            <div class="flex-grow w-full relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input id="searchInput" placeholder="Search facilities..."
-                    class="w-full p-3 pl-10 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] transition">
+                <input type="text" id="searchInput" name="search" placeholder="Search facilities..." 
+                        class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] transition">
             </div>
-            <div class="relative w-full md:w-56">
-                 <i class="fa-solid fa-layer-group absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <select id="typeSelect" class="w-full p-3 pl-10 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:border-[#0b4d9d] appearance-none cursor-pointer">
+            <div class="w-full md:w-56 relative">
+                <i class="fa-solid fa-layer-group absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <select id="typeSelect" name="type" class="w-full pl-10 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-[#0b4d9d] cursor-pointer">
                     <option value="">All Categories</option>
                     <?php foreach($types as $t): ?>
                         <option value="<?= $t ?>"><?= $t ?></option>
@@ -127,14 +168,42 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
         </form>
     </div>
 
-    <!-- GRID -->
-    <div id="facilitiesContainer" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- Facilities Grid -->
+    <div id="facilitiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 fade-in">
+        <!-- Facilities will be loaded here via AJAX -->
         <div class="col-span-full text-center py-12 text-gray-400">
-            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[#0b4d9d]"></i>
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[#0b4d9d] mb-3"></i>
             <p>Loading facilities...</p>
         </div>
     </div>
+
 </main>
+
+<!-- FOOTER (Correct Full Address) -->
+<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Logo & Address -->
+            <div class="flex items-center gap-4">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
+                <div class="text-xs text-gray-600 leading-snug">
+                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
+                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
+                    43600 Bangi, Selangor Darul Ehsan<br>
+                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                </div>
+            </div>
+            
+            <!-- SDG Logo & Copyright -->
+            <div class="flex items-center gap-6">
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
+                <p class="text-[10px] text-gray-400 text-right">
+                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
 
 <!-- MODAL (POPUP) CODE -->
 <div id="calendarModal" class="fixed inset-0 bg-black/50 hidden z-[9999] flex items-center justify-center backdrop-blur-sm">
@@ -152,43 +221,6 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
         <iframe id="calendarFrame" class="w-full h-full border-none opacity-0 transition-opacity duration-300" src=""></iframe>
     </div>
 </div>
-
-<!-- FOOTER -->
-<footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="container mx-auto px-6 py-12">
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-8">
-
-            <!-- About -->
-            <div>
-                <img src="../assets/img/pusatsukanlogo.png" class="h-14 mb-4">
-                <p class="text-sm text-gray-600 leading-relaxed">
-                    Pusat Sukan Universiti Kebangsaan Malaysia manages all university
-                    sports facilities, bookings, and athletic development programs.
-                </p>
-            </div>
-
-            <!-- Contact -->
-            <div class="md:text-right">
-                <h4 class="text-sm font-bold uppercase mb-4">Contact</h4>
-                <p class="text-sm text-gray-600">
-                    Stadium Universiti, UKM<br>
-                    43600 Bangi, Selangor<br>
-                    <span class="text-[#0b4d9d] font-semibold">
-                        <i class="fa-solid fa-phone mr-1"></i> 03-8921 5306
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <div class="border-t pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <img src="../assets/img/sdg.png" class="h-12 opacity-90">
-            <p class="text-xs text-gray-400 text-right">
-                © 2025 Universiti Kebangsaan Malaysia<br>All rights reserved
-            </p>
-        </div>
-    </div>
-</footer>
 
 <script>
     const searchInput = document.getElementById('searchInput');
