@@ -168,7 +168,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     <!-- PAGE HEADER -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-200 pb-6">
         <div>
-            <h1 class="text-3xl font-bold text-[#8a0d19] font-serif mb-1">
+            <h1 class="text-4xl font-bold text-[#8a0d19] font-serif mb-1">
                 Welcome back, <?php echo htmlspecialchars($studentName); ?>
             </h1>
             <p class="text-gray-500">Overview of your bookings and activities.</p>
