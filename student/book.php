@@ -2,243 +2,189 @@
 session_start();
 require_once '../includes/db_connect.php';
 
-$facility_id = $_GET['facility_id'] ?? '';
-$facility_name = "Facility";
+// Set Timezone to ensure day calculations match Malaysia time
+date_default_timezone_set('Asia/Kuala_Lumpur');
 
-if ($facility_id) {
-    $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
-    $stmt->bind_param("s", $facility_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($row = $res->fetch_assoc()) {
-        $facility_name = $row['Name'];
+// --- 1. GET REQUEST: Fetch Dynamic Slots ---
+if (isset($_GET['get_slots'])) {
+    header('Content-Type: application/json');
+    
+    $date = $_GET['date'] ?? '';
+    $facilityID = $_GET['facility_id'] ?? '';
+
+    if (!$date || !$facilityID) {
+        echo json_encode(['success' => false, 'message' => 'Missing date or ID']);
+        exit;
     }
+
+    $selectedDate = date('Y-m-d', strtotime($date));
+
+    // A. CHECK CLOSURES (Maintenance/Events from scheduleoverrides)
+    $closure_sql = "SELECT Reason FROM scheduleoverrides 
+                    WHERE FacilityID = ? 
+                    AND ? BETWEEN DATE(StartTime) AND DATE(EndTime) 
+                    LIMIT 1";
+    $stmt = $conn->prepare($closure_sql);
+    $stmt->bind_param("is", $facilityID, $selectedDate);
+    $stmt->execute();
+    $closure_res = $stmt->get_result();
+    
+    if ($closure_row = $closure_res->fetch_assoc()) {
+        echo json_encode([
+            'success' => true, 
+            'slots' => [], 
+            'message' => 'Facility Closed: ' . $closure_row['Reason'],
+            'is_closed' => true
+        ]);
+        exit;
+    }
+    $stmt->close();
+
+    // B. FETCH WEEKLY SCHEDULE (facilityschedules)
+    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    $dayIndex = date('w', strtotime($selectedDate)); 
+    $dayName = date('l', strtotime($selectedDate)); // e.g., "Saturday"
+    
+    $sched_sql = "SELECT OpenTime, CloseTime, SlotDuration 
+                  FROM facilityschedules 
+                  WHERE FacilityID = ? AND DayOfWeek = ?";
+    $stmt = $conn->prepare($sched_sql);
+    $stmt->bind_param("ii", $facilityID, $dayIndex);
+    $stmt->execute();
+    $sched_res = $stmt->get_result();
+    
+    // --- CRITICAL FIX: IF NO ROW FOUND, RETURN CLOSED ---
+    if ($sched_res->num_rows === 0) {
+        echo json_encode([
+            'success' => true, 
+            'slots' => [], 
+            'message' => "Facility is closed on {$dayName}s.", // Message shown to student
+            'is_closed' => true
+        ]);
+        exit;
+    }
+
+    $schedule = $sched_res->fetch_assoc();
+    $openTime = $schedule['OpenTime'];
+    $closeTime = $schedule['CloseTime'];
+    $slotDuration = intval($schedule['SlotDuration']);
+    $stmt->close();
+
+    // C. FETCH EXISTING BOOKINGS (To gray out taken slots)
+    $bk_sql = "SELECT TIME(StartTime) as booked_time 
+               FROM bookings 
+               WHERE FacilityID = ? 
+               AND DATE(StartTime) = ? 
+               AND Status IN ('Approved', 'Pending', 'Confirmed')";
+    $stmt = $conn->prepare($bk_sql);
+    $stmt->bind_param("is", $facilityID, $selectedDate);
+    $stmt->execute();
+    $bk_res = $stmt->get_result();
+    
+    $booked_times = [];
+    while ($row = $bk_res->fetch_assoc()) {
+        // Store just the HH:MM (e.g. "09:00")
+        $booked_times[] = substr($row['booked_time'], 0, 5); 
+    }
+    $stmt->close();
+
+    // D. GENERATE TIME SLOTS
+    $slots = [];
+    $current = strtotime($selectedDate . ' ' . $openTime);
+    $end = strtotime($selectedDate . ' ' . $closeTime);
+
+    while ($current < $end) {
+        $startTimeStr = date('H:i:s', $current);
+        $compareTime = date('H:i', $current); // 09:00
+        $labelTime = date('h:i A', $current); // 09:00 AM
+        
+        $slotEndTime = $current + ($slotDuration * 60);
+        
+        // Stop if the slot exceeds closing time
+        if ($slotEndTime > $end) break;
+
+        $isBooked = in_array($compareTime, $booked_times);
+
+        $slots[] = [
+            'start' => $startTimeStr,
+            'label' => $labelTime,
+            'status' => $isBooked ? 'booked' : 'available'
+        ];
+
+        $current = $slotEndTime;
+    }
+
+    echo json_encode(['success' => true, 'slots' => $slots, 'is_closed' => false]);
+    $conn->close();
+    exit;
+}
+
+// --- 2. POST REQUEST: Submit Booking ---
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Session expired.']);
+        exit;
+    }
+
+    $userIdentifier = $_SESSION['user_id'];
+    $facilityID = $_POST['facility_id'];
+    $startTime = $_POST['start_time']; // "YYYY-MM-DD HH:MM:SS"
+    
+    // 1. Get Slot Duration from DB to calculate End Time
+    $dayIndex = date('w', strtotime($startTime));
+    $dur_sql = "SELECT SlotDuration FROM facilityschedules WHERE FacilityID = ? AND DayOfWeek = ?";
+    $d_stmt = $conn->prepare($dur_sql);
+    $d_stmt->bind_param("ii", $facilityID, $dayIndex);
+    $d_stmt->execute();
+    $dur_res = $d_stmt->get_result();
+    
+    $durationMinutes = 60; // Default
+    if ($dur_row = $dur_res->fetch_assoc()) {
+        $durationMinutes = intval($dur_row['SlotDuration']);
+    }
+    $d_stmt->close();
+
+    // 2. Calculate End Time
+    $endTime = date('Y-m-d H:i:s', strtotime($startTime . " +$durationMinutes minutes"));
+
+    // 3. Get User ID (Integer)
+    $u_stmt = $conn->prepare("SELECT UserID FROM users WHERE UserIdentifier = ?");
+    $u_stmt->bind_param("s", $userIdentifier);
+    $u_stmt->execute();
+    $res = $u_stmt->get_result();
+    $userID = ($row = $res->fetch_assoc()) ? $row['UserID'] : 0;
+    $u_stmt->close();
+
+    if ($userID === 0) {
+        echo json_encode(['success' => false, 'message' => 'User profile not found.']);
+        exit;
+    }
+
+    // 4. Double Booking Check
+    $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID = ? AND StartTime = ? AND Status IN ('Approved', 'Pending', 'Confirmed')");
+    $check->bind_param("is", $facilityID, $startTime);
+    $check->execute();
+    
+    if ($check->get_result()->num_rows > 0) {
+        echo json_encode(['success' => false, 'message' => 'Sorry, this slot was just taken.']);
+        exit;
+    }
+    $check->close();
+
+    // 5. Insert Booking
+    $status = 'Pending';
+    $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status, BookedAt) VALUES (?, ?, ?, ?, ?, NOW())");
+    $ins->bind_param("iisss", $userID, $facilityID, $startTime, $endTime, $status);
+
+    if ($ins->execute()) {
+        echo json_encode(['success' => true, 'booking_id' => $ins->insert_id]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'DB Error: ' . $conn->error]);
+    }
+
+    $ins->close();
+    $conn->close();
+    exit;
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body::-webkit-scrollbar { display: none; }
-        body { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Blue Theme Classes */
-        .calendar-day:hover:not(.disabled):not(.selected) { background-color: #e0f2fe; color: #0b4d9d; cursor: pointer; transform: scale(1.05); }
-        .calendar-day.selected { background-color: #0b4d9d; color: white; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(11, 77, 157, 0.3); }
-        .calendar-day.today { border: 2px solid #0b4d9d; font-weight: bold; color: #0b4d9d; }
-        .calendar-day.disabled { color: #d1d5db; cursor: default; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body class="bg-white p-4 font-sans select-none">
-
-    <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-[#0b4d9d]"><?php echo htmlspecialchars($facility_name); ?></h2>
-        <p class="text-gray-500 text-sm mt-1">Select a date to check availability</p>
-    </div>
-
-    <div class="max-w-xl mx-auto bg-white rounded-xl">
-        <!-- Month Navigation -->
-        <div class="flex justify-between items-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <button id="prevMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#0b4d9d] transition"><i class="fa-solid fa-chevron-left text-sm"></i></button>
-            <h3 id="monthYear" class="text-lg font-bold text-gray-800"></h3>
-            <button id="nextMonth" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white text-gray-600 hover:text-[#0b4d9d] transition"><i class="fa-solid fa-chevron-right text-sm"></i></button>
-        </div>
-
-        <!-- Calendar -->
-        <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm mb-8"></div>
-
-        <!-- Legend -->
-        <div id="legend" class="hidden flex justify-center gap-4 text-xs text-gray-500 mb-4 border-t border-gray-100 pt-4">
-            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-white border border-green-500 mr-1.5"></span> Available</div>
-            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 mr-1.5"></span> Booked</div>
-            <div class="flex items-center"><span class="w-3 h-3 rounded-sm bg-[#0b4d9d] mr-1.5"></span> Selected</div>
-        </div>
-
-        <!-- Slots -->
-        <div id="timeSlotsSection" class="hidden fade-in">
-            <h4 class="font-bold text-gray-800 mb-4 flex items-center justify-between">
-                <span><i class="fa-regular fa-clock mr-2 text-[#0b4d9d]"></i> Available Slots</span>
-                <span id="selectedDateDisplay" class="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded"></span>
-            </h4>
-            <div id="slotsLoader" class="flex flex-col items-center justify-center py-8 text-gray-400">
-                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-[#0b4d9d]"></i> Checking schedule...
-            </div>
-            <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
-        </div>
-
-        <!-- Form -->
-        <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
-            <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
-            <input type="hidden" name="start_time" id="hiddenStartTime">
-            <div class="flex justify-between items-center mb-4 text-sm">
-                <span class="text-gray-500">Selected Time:</span>
-                <span id="summaryTime" class="font-bold text-[#0b4d9d] text-lg">--:--</span>
-            </div>
-            <button type="submit" class="w-full bg-[#0b4d9d] text-white py-3.5 rounded-xl font-bold hover:bg-[#083a75] transition shadow-lg">Confirm Booking</button>
-        </form>
-    </div>
-
-    <script>
-        const facilityId = "<?php echo $facility_id; ?>";
-        let currDate = new Date();
-        let currMonth = currDate.getMonth();
-        let currYear = currDate.getFullYear();
-
-        const calendarGrid = document.getElementById('calendarGrid');
-        const monthYear = document.getElementById('monthYear');
-        const slotsSection = document.getElementById('timeSlotsSection');
-        const slotsContainer = document.getElementById('slotsContainer');
-        const slotsLoader = document.getElementById('slotsLoader');
-        const bookingForm = document.getElementById('bookingForm');
-        const legend = document.getElementById('legend');
-
-        function renderCalendar(month, year) {
-            calendarGrid.innerHTML = "";
-            monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
-            let firstDay = new Date(year, month, 1).getDay();
-            let daysInMonth = new Date(year, month + 1, 0).getDate();
-            for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateDiv = document.createElement('div');
-                dateDiv.innerText = day;
-                dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
-                
-                const checkDate = new Date(year, month, day);
-                const today = new Date();
-                today.setHours(0,0,0,0);
-
-                if (checkDate < today) {
-                    dateDiv.classList.add('disabled');
-                } else {
-                    dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
-                }
-                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateDiv.classList.add('today');
-                calendarGrid.appendChild(dateDiv);
-            }
-        }
-
-        function selectDate(day, month, year, element) {
-            document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            document.getElementById('selectedDateDisplay').innerText = new Date(year, month, day).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
-            
-            legend.classList.remove('hidden');
-            slotsSection.classList.remove('hidden');
-            bookingForm.classList.add('hidden');
-            slotsSection.scrollIntoView({ behavior: 'smooth' });
-            fetchSlots(dateStr);
-        }
-
-        function fetchSlots(dateStr) {
-            slotsContainer.innerHTML = '';
-            slotsLoader.classList.remove('hidden');
-
-            fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
-                .then(res => res.json())
-                .then(data => {
-                    slotsLoader.classList.add('hidden');
-                    
-                    if (!data.success && data.is_closed) {
-                        slotsContainer.innerHTML = `<div class="col-span-full text-red-500 font-medium text-center py-4 bg-red-50 rounded-lg border border-red-100"><i class="fa-solid fa-triangle-exclamation mr-2"></i>${data.message}</div>`;
-                        return;
-                    }
-
-                    data.slots.forEach(slot => {
-                        const btn = document.createElement('button');
-                        const isBooked = slot.status === 'booked';
-                        btn.className = `py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
-                            isBooked 
-                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-75' 
-                            : 'bg-white text-green-700 border-green-200 hover:border-green-500 hover:shadow-md'
-                        }`;
-                        
-                        btn.innerHTML = `${slot.label} ${isBooked ? '<i class="fa-solid fa-ban ml-1 opacity-50"></i>' : ''}`;
-                        
-                        if(isBooked) {
-                            btn.disabled = true;
-                            btn.setAttribute("aria-disabled", "true");
-                        } else {
-                            btn.onclick = () => selectSlot(slot.start, slot.label, dateStr, btn);
-                        }
-                        slotsContainer.appendChild(btn);
-                    });
-                })
-                .catch(err => {
-                    slotsLoader.classList.add('hidden');
-                    slotsContainer.innerHTML = '<div class="col-span-full text-red-400 text-center text-sm">Connection Error</div>';
-                });
-        }
-
-        function selectSlot(startTime, label, dateStr, btn) {
-            document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-green-700 border-green-200 transition-all');
-            btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#0b4d9d] border-[#0b4d9d] text-white shadow-md transform scale-105';
-            
-            // Fix: Combine date and time properly for the database
-            document.getElementById('hiddenStartTime').value = `${dateStr} ${startTime}`;
-            document.getElementById('summaryTime').innerText = label;
-            bookingForm.classList.remove('hidden');
-            setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
-        }
-
-        // AJAX form submit to avoid raw JSON response showing in browser
-        const form = document.getElementById('bookingForm');
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(form);
-
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => {
-                // Check if response is JSON, otherwise throw error (e.g., PHP warnings)
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return response.text().then(text => {
-                        // Sometimes PHP errors are printed before JSON
-                        // Extract JSON if possible
-                        try {
-                            const jsonStart = text.indexOf('{');
-                            if (jsonStart !== -1) {
-                                return JSON.parse(text.substring(jsonStart));
-                            }
-                        } catch (e) {}
-                        throw new Error('Server returned non-JSON response: ' + text);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    alert('Booking Submitted Successfully!');
-                    // Reload parent window (student_facilities.php) to update status/history
-                    if (window.parent) {
-                        window.parent.location.reload();
-                    } else {
-                        window.location.reload();
-                    }
-                } else {
-                    alert('Error: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(err => {
-                console.error('Fetch error:', err);
-                alert('An error occurred while submitting the booking.');
-            });
-        });
-
-        document.getElementById('prevMonth').onclick = () => { currMonth--; if(currMonth<0){currMonth=11;currYear--}; renderCalendar(currMonth,currYear); };
-        document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
-        renderCalendar(currMonth, currYear);
-    </script>
-</body>
-</html>
