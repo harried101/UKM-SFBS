@@ -34,9 +34,10 @@ if ($studentIdentifier) {
 // 2. Fetch All Bookings (Separated into Upcoming & History)
 $upcoming = [];
 $history = [];
-$now = new DateTime(); // Current time in KL (due to timezone set above)
+$now = new DateTime(); // Current time in KL
 
 if ($db_numeric_id > 0) {
+    // Fetch all bookings for this user
     $sql = "SELECT b.BookingID, b.StartTime, b.EndTime, b.Status, f.Name as FacilityName, f.Type, f.Location
             FROM bookings b
             JOIN facilities f ON b.FacilityID = f.FacilityID
@@ -50,12 +51,15 @@ if ($db_numeric_id > 0) {
     
     while ($row = $result->fetch_assoc()) {
         $start = new DateTime($row['StartTime']);
+        $end = new DateTime($row['EndTime']);
         
-        // Logic: Upcoming if future date AND Status is active
-        if ($start > $now && in_array($row['Status'], ['Pending', 'Approved'])) {
+        // REFINED LOGIC: 
+        // 1. A booking is UPCOMING if its EndTime has not passed yet AND it is an active status.
+        // 2. We include 'Confirmed' as a valid active status.
+        if ($end > $now && in_array($row['Status'], ['Pending', 'Approved', 'Confirmed'])) {
             $upcoming[] = $row;
         } else {
-            // Everything else (Past, Cancelled, Rejected) goes to history
+            // Everything else (Past bookings, Cancelled, Rejected) goes to history
             $history[] = $row;
         }
     }
@@ -222,9 +226,9 @@ button.review-btn:hover { background: #1a8b23; }
     </div>
 
     <div class="d-flex align-items-center gap-4">
-        <a class="nav-link active" href="#">Home</a>
+        <a class="nav-link active" href="dashboard.php">Home</a>
         <a class="nav-link" href="student_facilities.php">Facilities</a>
-        <!-- Booking History link triggers tab switch via JS if on same page -->
+        <!-- Booking History link triggers tab switch -->
         <button onclick="switchTab('history')" class="nav-link bg-transparent border-0">Booking History</button>
 
         <div class="dropdown">
@@ -288,7 +292,11 @@ button.review-btn:hover { background: #1a8b23; }
                             <small class="text-muted"><?php echo $startObj->format('h:i A') . ' - ' . $endObj->format('h:i A'); ?></small>
                         </td>
                         <td>
-                            <span class="badge <?php echo ($bk['Status']=='Approved') ? 'bg-success' : 'bg-warning text-dark'; ?>">
+                            <?php 
+                                $badgeClass = 'bg-warning text-dark';
+                                if ($bk['Status'] === 'Approved' || $bk['Status'] === 'Confirmed') $badgeClass = 'bg-success';
+                            ?>
+                            <span class="badge <?php echo $badgeClass; ?>">
                                 <?php echo $bk['Status']; ?>
                             </span>
                         </td>
@@ -320,10 +328,9 @@ button.review-btn:hover { background: #1a8b23; }
                 <?php else: ?>
                     <?php foreach ($history as $bk): 
                         $startObj = new DateTime($bk['StartTime']);
-                        $endObj = new DateTime($bk['EndTime']);
                         $statusColor = 'bg-secondary';
-                        if($bk['Status']=='Approved') $statusColor='bg-success';
-                        if($bk['Status']=='Rejected') $statusColor='bg-danger';
+                        if($bk['Status']=='Approved' || $bk['Status']=='Confirmed') $statusColor='bg-success';
+                        if($bk['Status']=='Rejected' || $bk['Status']=='Cancelled' || $bk['Status']=='Canceled') $statusColor='bg-danger';
                     ?>
                     <tr>
                         <td class="fw-bold text-muted"><?php echo htmlspecialchars($bk['FacilityName']); ?></td>
