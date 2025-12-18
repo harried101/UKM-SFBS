@@ -43,8 +43,8 @@ if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         
         $photo = $row['PhotoURL'];
-        $imgSrc = (!empty($photo) && file_exists("../admin/uploads/".$photo))
-                  ? "../admin/uploads/".$photo
+        $imgSrc = (!empty($photo) && file_exists("../uploads/facilities/".$photo))
+                  ? "../uploads/facilities/".$photo
                   : "https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image&font=sans";
 
         // --- STATUS LOGIC ---
