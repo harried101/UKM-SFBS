@@ -166,6 +166,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $fileTmp = $_FILES['PhotoURL']['tmp_name'];
+                
+                // SECURITY: Verify it is an image
+                $check = getimagesize($fileTmp);
+                if($check === false) {
+                    echo "<script>alert('Error: File is not a valid image.'); window.history.back();</script>";
+                    exit();
+                }
                 // sanitize filename
                 $originalName = basename($_FILES['PhotoURL']['name']);
                 $ext = pathinfo($originalName, PATHINFO_EXTENSION);
