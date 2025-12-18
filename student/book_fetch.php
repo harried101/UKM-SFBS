@@ -1,7 +1,10 @@
 <?php
-// DISABLE HTML ERROR OUTPUT (Crucial for AJAX)
-error_reporting(E_ALL);
+// 1. START BUFFERING: Catches any unwanted whitespace or errors
+ob_start();
+
+// 2. DISABLE ERROR DISPLAY: Prevents PHP warnings from breaking JSON
 ini_set('display_errors', 0); 
+error_reporting(E_ALL);
 
 session_start();
 require_once '../includes/db_connect.php';
@@ -11,8 +14,10 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 
 header('Content-Type: application/json');
 
-// HELPER FUNCTION TO RETURN JSON AND EXIT
+// HELPER: Returns JSON and stops script
 function jsonResponse($success, $message, $data = []) {
+    // Clear any previous output (warnings, whitespace)
+    ob_clean(); 
     echo json_encode(array_merge(['success' => $success, 'message' => $message], $data));
     exit;
 }
