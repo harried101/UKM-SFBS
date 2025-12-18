@@ -52,7 +52,8 @@ if ($db_numeric_id > 0) {
         $start = new DateTime($row['StartTime']);
         
         // Logic: Upcoming if future date AND Status is active
-        if ($start > $now && in_array($row['Status'], ['Pending', 'Approved'])) {
+        // Note: We use >= so bookings happening RIGHT NOW are still "Upcoming" until they pass
+        if ($start >= $now && in_array($row['Status'], ['Pending', 'Approved'])) {
             $upcoming[] = $row;
         } else {
             // Everything else (Past, Cancelled, Rejected) goes to history
@@ -162,17 +163,26 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     </div>
 </nav>
 
+<!-- HERO BANNER & HEADER -->
+<div class="w-full h-64 overflow-hidden relative shadow-lg group">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-105">
+    <div class="absolute inset-0 bg-gradient-to-t from-[#8a0d19]/90 via-[#8a0d19]/40 to-transparent"></div>
+    
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10 translate-y-2">
+        <h1 class="text-3xl md:text-5xl font-bold mb-3 tracking-tight font-serif drop-shadow-sm">Welcome Back, <?php echo htmlspecialchars($studentName); ?></h1>
+        <div class="w-24 h-1 bg-white/50 rounded-full mb-6"></div>
+        <p class="text-lg text-white/90 font-light max-w-2xl mb-6">
+            Ready to get moving? Check availability and book your next session.
+        </p>
+    </div>
+</div>
+
 <!-- MAIN CONTENT -->
 <main class="container mx-auto px-6 py-12 flex-grow max-w-7xl relative z-20">
 
-    <!-- PAGE HEADER -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-200 pb-6">
-        <div>
-            <h1 class="text-4xl font-bold text-[#8a0d19] font-serif mb-1">
-                Welcome back, <?php echo htmlspecialchars($studentName); ?>
-            </h1>
-            <p class="text-gray-500">Overview of your bookings and activities.</p>
-        </div>
+    <!-- PAGE HEADER & ACTION -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-slate-800">Your Schedule</h2>
         <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
             <i class="fa-solid fa-plus-circle"></i> New Booking
         </a>
