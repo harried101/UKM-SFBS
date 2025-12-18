@@ -201,7 +201,7 @@ input:focus, textarea:focus, select:focus {
     <!-- Header & Actions -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-            <span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Facility Management</span>
+            
             <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1 font-serif">Booking Management</h1>
             <p class="text-gray-500">View, filter, and manage student facility bookings.</p>
         </div>
