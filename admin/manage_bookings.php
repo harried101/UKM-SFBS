@@ -2,29 +2,27 @@
 session_start();
 require_once '../includes/db_connect.php';
 
-// Auth Check
+// 1. Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
     header("Location: ../index.php");
     exit();
 }
 
-$page_title = "ALL BOOKINGS MANAGEMENT";
+$page_title = "Booking Management";
 
 // Fetch Admin Details
-$adminIdentifier = $_SESSION['user_id'] ?? '';
 $adminName = 'Admin';
-$adminID = $adminIdentifier;
+$adminIdentifier = $_SESSION['user_id'] ?? '';
 
 if ($adminIdentifier) {
-    $stmtAdmin = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
-    $stmtAdmin->bind_param("s", $adminIdentifier);
-    $stmtAdmin->execute();
-    $resAdmin = $stmtAdmin->get_result();
-    if ($rowAdmin = $resAdmin->fetch_assoc()) {
-        $adminName = $rowAdmin['FirstName'] . ' ' . $rowAdmin['LastName'];
-        // $adminID already set
+    $stmt = $conn->prepare("SELECT FirstName, LastName FROM users WHERE UserIdentifier = ?");
+    $stmt->bind_param("s", $adminIdentifier);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($r = $res->fetch_assoc()) {
+        $adminName = $r['FirstName'] . ' ' . $r['LastName'];
     }
-    $stmtAdmin->close();
+    $stmt->close();
 }
 
 // Fetch Facilities for Dropdown (New Booking Modal)
@@ -64,10 +62,11 @@ if (!empty($dateFilter)) {
 
 if (!empty($searchQuery)) {
     $searchTerm = "%" . $searchQuery . "%";
-    $sql .= " AND (b.BookingID LIKE ? OR u.UserIdentifier LIKE ? OR u.FirstName LIKE ? OR u.LastName LIKE ? OR f.Name LIKE ?)";
-    // 5 search params
-    $params[] = $searchTerm; $params[] = $searchTerm; $params[] = $searchTerm; $params[] = $searchTerm; $params[] = $searchTerm;
-    $types .= "sssss";
+    $sql .= " AND (b.BookingID LIKE ? OR u.UserIdentifier LIKE ? OR f.Name LIKE ?)";
+    $params[] = $searchTerm; 
+    $params[] = $searchTerm; 
+    $params[] = $searchTerm;
+    $types .= "sss";
 }
 
 $sql .= " ORDER BY b.BookedAt DESC";
@@ -96,6 +95,7 @@ function getStatusClass($status) {
         case 'Approved': return 'bg-green-100 text-green-800 border-green-200';
         case 'Canceled': return 'bg-red-100 text-red-800 border-red-200';
         case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+        case 'Rejected': return 'bg-red-100 text-red-800 border-red-200';
         case 'Complete': return 'bg-gray-100 text-gray-800 border-gray-200';
         default: return 'bg-blue-100 text-blue-800 border-blue-200';
     }
@@ -105,61 +105,51 @@ function getStatusClass($status) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - UKM-SFBS Admin</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <!-- Bootstrap CSS for Modals -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking Management - UKM Sports Center</title>
 
-    <style>
-        :root {
-            --primary: #0b4d9d; /* UKM Blue */
-            --bg-light: #f8f9fa;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!-- Bootstrap CSS for Modals -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-        /* Overriding Bootstrap for consistent look */
-        .btn-primary-custom {
-            background-color: #0b4d9d;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-        .btn-primary-custom:hover {
-            background-color: #083a75;
-            color: white;
-        }
+<style>
+:root {
+    --primary: #0b4d9d; /* UKM Blue */
+    --bg-light: #f8f9fa;
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
-        /* Form Inputs */
-        input:focus, select:focus {
-            outline: none;
-            border-color: #0b4d9d;
-            box-shadow: 0 0 0 1px #0b4d9d;
-        }
-        
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+/* Filter Bar Style */
+.filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px -1px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+}
+
+.fade-in { animation: fadeIn 0.4s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Inputs matching addfacilities */
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #0b4d9d;
+    box-shadow: 0 0 0 1px #0b4d9d;
+}
+</style>
 </head>
-
 <body>
 
 <!-- NAVBAR -->
@@ -171,33 +161,28 @@ function getStatusClass($status) {
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2">
+            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">
                 Home
             </a>
             
-            <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2">
+            <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">
                 Facilities
             </a>
             
             <!-- Active State -->
-            <a href="bookinglist.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2">
-                <span class="p-2 rounded-full bg-[#0b4d9d] text-white shadow-sm">
-                    Bookings
-                </span>
+            <a href="manage_bookings.php" class="text-[#0b4d9d] font-bold transition">
+                Bookings
             </a>
-            
+
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminID); ?></p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
                 </div>
-                <!-- Profile Dropdown Container -->
                 <div class="relative group">
-                    <button class="flex items-center focus:outline-none">
-                        <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition">
-                    </button>
-                    <!-- Dropdown Menu -->
-                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <!-- Dropdown -->
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
                         <div class="bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
                             <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
                                 <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
@@ -216,126 +201,93 @@ function getStatusClass($status) {
     <!-- Header & Actions -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1">Booking Management</h1>
+            <span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Facility Management</span>
+            <h1 class="text-3xl font-bold text-[#0b4d9d] mb-1 font-serif">Booking Management</h1>
             <p class="text-gray-500">View, filter, and manage student facility bookings.</p>
         </div>
         
-        <button type="button" class="bg-[#0b4d9d] text-white px-5 py-2.5 rounded-lg hover:bg-[#083a75] transition shadow-sm font-medium flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal">
-            <i class="fas fa-plus"></i> Walk-in Booking
+        <button class="bg-[#0b4d9d] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#083a75] transition shadow-lg shadow-blue-900/20 whitespace-nowrap flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#newBookingModal">
+            <i class="fa-solid fa-plus-circle"></i> Walk-in Booking
         </button>
     </div>
 
-    <!-- Alert Messages -->
-    <?php if (isset($_GET['msg'])): ?>
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($_GET['msg']); ?>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-green-500 hover:text-green-700"><i class="fas fa-times"></i></button>
-        </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['err'])): ?>
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($_GET['err']); ?>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
-        </div>
-    <?php endif; ?>
-
-    <!-- Search & Filter Box -->
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-        <h5 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide"><i class="fa-solid fa-filter text-[#0b4d9d]"></i> Filters</h5>
+    <!-- Filter Bar -->
+    <div class="filter-bar mb-8">
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Search</label>
-                <input type="search" name="search" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d]" placeholder="ID, Name, Facility..." value="<?php echo htmlspecialchars($searchQuery); ?>">
+                <input type="text" name="search" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm" placeholder="ID or Name..." value="<?php echo htmlspecialchars($searchQuery); ?>">
             </div>
-            
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
-                <select name="status" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d] bg-white">
-                    <option value="all" <?php echo ($statusFilter == 'all') ? 'selected' : ''; ?>>All Statuses</option>
-                    <option value="Pending" <?php echo ($statusFilter == 'Pending') ? 'selected' : ''; ?>>Pending</option>
-                    <option value="Confirmed" <?php echo ($statusFilter == 'Confirmed') ? 'selected' : ''; ?>>Confirmed/Approved</option>
-                    <option value="Canceled" <?php echo ($statusFilter == 'Canceled') ? 'selected' : ''; ?>>Canceled</option>
+                <select name="status" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                    <option value="all">All Statuses</option>
+                    <option value="Pending" <?php if($statusFilter=='Pending') echo 'selected'; ?>>Pending</option>
+                    <option value="Approved" <?php if($statusFilter=='Approved') echo 'selected'; ?>>Approved</option>
+                    <option value="Confirmed" <?php if($statusFilter=='Confirmed') echo 'selected'; ?>>Confirmed</option>
+                    <option value="Canceled" <?php if($statusFilter=='Canceled') echo 'selected'; ?>>Canceled</option>
                 </select>
             </div>
-            
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
-                <input type="date" name="date" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-[#0b4d9d] focus:ring-1 focus:ring-[#0b4d9d]" value="<?php echo htmlspecialchars($dateFilter); ?>">
+                <input type="date" name="date" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm" value="<?php echo htmlspecialchars($dateFilter); ?>">
             </div>
-            
             <div class="flex gap-2">
-                <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition text-sm font-bold flex-grow">Apply</button>
-                <a href="bookinglist.php" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-bold text-center">Reset</a>
+                <button type="submit" class="bg-gray-800 text-white px-4 py-2.5 rounded-lg hover:bg-gray-900 transition text-sm font-bold flex-grow uppercase">Apply</button>
+                <a href="manage_bookings.php" class="bg-white border border-gray-300 text-gray-600 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm font-bold text-center flex-grow uppercase">Reset</a>
             </div>
         </form>
     </div>
 
     <!-- Bookings Table -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden min-h-[500px] fade-in">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs">
+                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase text-xs border-b border-gray-200">
                     <tr>
-                        <th class="py-4 px-6">ID</th>
-                        <th class="py-4 px-6">Facility</th>
-                        <th class="py-4 px-6">User</th>
-                        <th class="py-4 px-6">Schedule</th>
-                        <th class="py-4 px-6 text-center">Status</th>
-                        <th class="py-4 px-6 text-end">Action</th>
+                        <th class="p-4 px-6">ID</th>
+                        <th class="p-4 px-6">Facility</th>
+                        <th class="p-4 px-6">User</th>
+                        <th class="p-4 px-6">Schedule</th>
+                        <th class="p-4 px-6 text-center">Status</th>
+                        <th class="p-4 px-6 text-end">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-sm">
-                    <?php if (empty($bookings)): ?>
-                        <tr><td colspan="6" class="text-center py-8 text-gray-400">No bookings found matching your criteria.</td></tr>
+                <tbody class="divide-y divide-gray-100 text-sm bg-white">
+                    <?php if (count($bookings) === 0): ?>
+                        <tr><td colspan="6" class="p-12 text-center text-gray-400 italic">No bookings found matching your criteria.</td></tr>
                     <?php else: ?>
-                        <?php foreach ($bookings as $booking): 
-                            // User Display Logic
-                            $fullName = trim(($booking['FirstName'] ?? '') . ' ' . ($booking['LastName'] ?? ''));
-                            $userId = $booking['UserIdentifier'] ?? 'Unknown';
-                            
-                            // Created By Logic
-                            $createdBy = !empty($booking['CreatedByAdminID']) ? '<span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] border border-gray-200 ml-1 font-mono">STAFF</span>' : '';
-                            
-                            // Dates
-                            $start = new DateTime($booking['StartTime']);
-                            $end = new DateTime($booking['EndTime']);
+                        <?php foreach ($bookings as $bk): 
+                            $startObj = new DateTime($bk['StartTime']);
+                            $endObj = new DateTime($bk['EndTime']);
+                            $fullName = trim(($bk['FirstName'] ?? '') . ' ' . ($bk['LastName'] ?? ''));
+                            if(empty($fullName)) $fullName = $bk['UserIdentifier'];
                         ?>
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 font-bold text-gray-700">#<?php echo $booking['BookingID']; ?></td>
-                            <td class="px-6 py-4 text-[#0b4d9d] font-bold"><?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown Facility'); ?></td>
-                            <td class="px-6 py-4">
-                                <?php if (!empty($fullName)): ?>
-                                    <div class="fw-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
-                                <?php endif; ?>
-                                <div class="text-xs text-gray-500 flex items-center">
-                                    <span class="font-mono bg-gray-50 px-1 rounded text-[11px]"><?php echo htmlspecialchars($userId); ?></span> 
-                                    <?php echo $createdBy; ?>
-                                </div>
+                            <td class="p-4 px-6 font-bold text-gray-700">#<?php echo $bk['BookingID']; ?></td>
+                            <td class="p-4 px-6 text-[#0b4d9d] font-bold"><?php echo htmlspecialchars($bk['FacilityName'] ?? 'Unknown'); ?></td>
+                            <td class="p-4 px-6">
+                                <div class="font-bold text-gray-800"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="text-xs text-gray-500 font-mono"><?php echo htmlspecialchars($bk['UserIdentifier'] ?? ''); ?></div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="fw-bold text-gray-700"><?php echo $start->format('d M Y'); ?></div>
-                                <small class="text-gray-500 font-medium"><?php echo $start->format('h:i A') . ' - ' . $end->format('h:i A'); ?></small>
+                            <td class="p-4 px-6">
+                                <div class="font-bold text-gray-700"><?php echo $startObj->format('d M Y'); ?></div>
+                                <div class="text-xs text-gray-500"><?php echo $startObj->format('h:i A') . ' - ' . $endObj->format('h:i A'); ?></div>
                             </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="px-2.5 py-1 rounded text-xs font-bold border <?php echo getStatusClass($booking['Status']); ?>">
-                                    <?php echo $booking['Status']; ?>
+                            <td class="p-4 px-6 text-center">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo getStatusClass($bk['Status']); ?>">
+                                    <?php echo $bk['Status']; ?>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-end">
-                                <button class="text-[#0b4d9d] hover:text-[#083a75] font-semibold text-xs border border-[#0b4d9d] hover:bg-blue-50 px-3 py-1.5 rounded transition" 
-                                        data-bs-toggle="modal" data-bs-target="#viewEditModal"
-                                        data-id="<?php echo $booking['BookingID']; ?>"
-                                        data-facility="<?php echo htmlspecialchars($booking['FacilityName'] ?? 'Unknown'); ?>"
-                                        data-user="<?php echo htmlspecialchars($fullName ?: $userId); ?>"
-                                        data-start="<?php echo $booking['StartTime']; ?>"
-                                        data-end="<?php echo $booking['EndTime']; ?>"
-                                        data-status="<?php echo $booking['Status']; ?>"
-                                        data-booked-at="<?php echo $booking['BookedAt']; ?>">
+                            <td class="p-4 px-6 text-end">
+                                <button class="text-[#0b4d9d] hover:text-[#083a75] font-semibold text-xs border border-[#0b4d9d] hover:bg-blue-50 px-4 py-2 rounded-lg transition"
+                                        data-bs-toggle="modal" data-bs-target="#actionModal"
+                                        data-id="<?php echo $bk['BookingID']; ?>"
+                                        data-facility="<?php echo htmlspecialchars($bk['FacilityName'] ?? 'Unknown'); ?>"
+                                        data-user="<?php echo htmlspecialchars($fullName); ?>"
+                                        data-start="<?php echo $bk['StartTime']; ?>"
+                                        data-end="<?php echo $bk['EndTime']; ?>"
+                                        data-status="<?php echo $bk['Status']; ?>">
                                     Manage
                                 </button>
                             </td>
@@ -348,72 +300,80 @@ function getStatusClass($status) {
     </div>
 </main>
 
-<!-- FOOTER (Exact Match to Student Facilities) -->
-<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <!-- Logo & Address -->
-            <div class="flex items-center gap-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
-                <div class="text-xs text-gray-600 leading-snug">
-                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
-                    Stadium Universiti, Universiti Kebangsaan Malaysia<br>
-                    43600 Bangi, Selangor Darul Ehsan<br>
-                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
-                </div>
-            </div>
-            
-            <!-- SDG Logo & Copyright -->
-            <div class="flex items-center gap-6">
-                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
-                <p class="text-[10px] text-gray-400 text-right">
-                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
+<!-- EXTENDED FOOTER -->
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="container mx-auto px-6 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            <!-- About -->
+            <div>
+                <img src="../assets/img/pusatsukanlogo.png" class="h-14 mb-4">
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    Pusat Sukan Universiti Kebangsaan Malaysia manages all university
+                    sports facilities, bookings, and athletic development programs.
                 </p>
             </div>
+            <!-- Links -->
+            <div>
+                <h4 class="text-sm font-bold uppercase mb-4">Quick Access</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="dashboard.php" class="hover:text-[#0b4d9d]">Dashboard</a></li>
+                    <li><a href="addfacilities.php" class="hover:text-[#0b4d9d]">Facilities</a></li>
+                    <li><a href="manage_bookings.php" class="hover:text-[#0b4d9d]">Booking Management</a></li>
+                </ul>
+            </div>
+            <!-- Contact -->
+            <div>
+                <h4 class="text-sm font-bold uppercase mb-4">Contact</h4>
+                <p class="text-sm text-gray-600">
+                    Stadium Universiti, UKM<br>
+                    43600 Bangi, Selangor<br>
+                    <span class="text-[#0b4d9d] font-semibold">
+                        <i class="fa-solid fa-phone mr-1"></i> 03-8921 5306
+                    </span>
+                </p>
+            </div>
+        </div>
+        <div class="border-t pt-6 flex justify-between items-center">
+            <img src="../assets/img/sdg.png" class="h-14 opacity-90">
+            <p class="text-xs text-gray-400 text-right">
+                © 2025 Universiti Kebangsaan Malaysia<br>All rights reserved
+            </p>
         </div>
     </div>
 </footer>
 
-<!-- VIEW/EDIT MODAL -->
-<div class="modal fade" id="viewEditModal" tabindex="-1" aria-hidden="true">
+<!-- ACTION MODAL -->
+<div class="modal fade" id="actionModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-xl rounded-lg">
+        <div class="modal-content border-0 shadow-2xl rounded-xl overflow-hidden">
             <div class="modal-header bg-gray-50 border-bottom">
-                <h5 class="modal-title fw-bold text-[#0b4d9d]">Manage Booking #<span id="bookingIdDisplay"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold text-[#0b4d9d]">Manage Booking #<span id="displayId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4">
-                <form id="processBookingForm" action="process.php" method="POST">
+            <div class="modal-body p-6">
+                <form id="actionForm" action="process.php" method="POST">
                     <input type="hidden" name="booking_id" id="modalBookingId">
                     <input type="hidden" name="action" id="modalAction">
                     
-                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small uppercase fw-bold">Facility</span>
-                            <span class="fw-bold text-dark" id="modalFacility"></span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small uppercase fw-bold">User</span>
-                            <span class="fw-bold text-dark" id="modalUser"></span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted small uppercase fw-bold">Time</span>
-                            <span class="fw-bold text-dark" id="modalTime"></span>
-                        </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6 space-y-2">
+                        <div class="flex justify-between text-sm"><span class="font-bold text-blue-800 uppercase text-[10px]">Facility</span><span class="font-semibold" id="modalFacility"></span></div>
+                        <div class="flex justify-between text-sm"><span class="font-bold text-blue-800 uppercase text-[10px]">User</span><span class="font-semibold" id="modalUser"></span></div>
+                        <div class="flex justify-between text-sm"><span class="font-bold text-blue-800 uppercase text-[10px]">Schedule</span><span class="font-semibold text-end" id="modalTime"></span></div>
                     </div>
-
-                    <div id="actionButtons" class="d-grid gap-2 mb-3">
-                        <button type="button" class="btn btn-success fw-bold py-2" onclick="submitAction('approve')">
-                            <i class="fas fa-check me-2"></i>Approve Request
+                    
+                    <div id="actionButtons" class="grid gap-3">
+                        <button type="submit" onclick="setAction('approve')" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check"></i> Approve Booking
                         </button>
-                        <button type="button" class="btn btn-danger fw-bold py-2" onclick="submitAction('reject')">
-                            <i class="fas fa-times me-2"></i>Reject / Cancel
+                        <button type="button" onclick="rejectBooking()" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-times"></i> Reject Booking
                         </button>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="adminNotes" class="form-label small fw-bold text-gray-500 uppercase">Admin Notes (Reason)</label>
-                        <textarea class="form-control" name="admin_notes" id="adminNotes" rows="2" placeholder="Reason for rejection or internal note..."></textarea>
+                    <div id="rejectSection" class="mt-4 d-none">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Reason for Rejection</label>
+                        <textarea name="admin_notes" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white" rows="2" placeholder="Explain why the booking is being rejected..."></textarea>
+                        <button type="submit" onclick="setAction('reject')" class="w-full mt-3 bg-gray-800 text-white py-2 rounded-lg font-bold text-sm">Confirm Rejection</button>
                     </div>
                 </form>
             </div>
@@ -422,156 +382,97 @@ function getStatusClass($status) {
 </div>
 
 <!-- WALK-IN BOOKING MODAL -->
-<div class="modal fade" id="newBookingModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="newBookingModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-2xl rounded-lg" style="height: 85vh;">
+        <div class="modal-content border-0 shadow-2xl rounded-xl overflow-hidden" style="height: 85vh;">
             <div class="modal-header bg-[#0b4d9d] text-white">
-                <h5 class="modal-title fw-bold"><i class="fas fa-calendar-plus me-2"></i>New Walk-in Booking</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold">New Walk-in Booking</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0 d-flex flex-column bg-light">
-                
-                <!-- Step 1: Select Facility -->
-                <div id="facilitySelector" class="p-4 bg-white border-bottom shadow-sm">
-                    <div class="d-flex justify-content-center align-items-center gap-3">
-                        <label class="fw-bold text-secondary">Select Facility:</label>
-                        <select id="newBookingFacility" class="form-select w-auto" style="min-width: 250px;">
-                            <option value="">-- Choose Facility --</option>
-                            <?php foreach($facilitiesList as $fac): ?>
-                                <option value="<?php echo $fac['FacilityID']; ?>"><?php echo htmlspecialchars($fac['Name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button class="btn btn-primary-custom" onclick="loadBookingFrame()">Load Schedule</button>
-                    </div>
+                <div class="p-4 bg-white border-bottom shadow-sm flex justify-center gap-3 align-items-center">
+                    <label class="fw-bold text-secondary">Select Facility:</label>
+                    <select id="newBookingFacility" class="form-select w-auto" style="min-width: 250px;">
+                        <option value="">-- Choose Facility --</option>
+                        <?php foreach($facilitiesList as $fac): ?>
+                            <option value="<?php echo $fac['FacilityID']; ?>"><?php echo htmlspecialchars($fac['Name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button class="bg-[#0b4d9d] text-white px-6 py-2 rounded-lg font-bold" onclick="loadBookingFrame()">Next</button>
                 </div>
-
-                <!-- Step 2: Iframe Container -->
-                <div class="flex-grow-1 position-relative w-100">
-                    <div id="frameLoader" class="position-absolute top-50 start-50 translate-middle text-center d-none">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="mt-2 text-muted small">Loading schedule...</p>
-                    </div>
-                    
+                <div class="flex-grow-1 relative w-100">
                     <iframe id="bookingFrame" src="" class="w-100 h-100 border-0 d-none"></iframe>
-                    
-                    <div id="framePlaceholder" class="d-flex align-items-center justify-content-center h-100 text-muted">
-                        <div class="text-center">
-                            <i class="fas fa-arrow-up fa-2x mb-3 text-secondary opacity-50"></i>
-                            <p>Please select a facility above to view availability.</p>
-                        </div>
-                    </div>
+                    <div id="framePlaceholder" class="flex items-center justify-center h-100 text-gray-400 italic">Please select a facility above to start.</div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // View/Edit Modal Logic
-    const viewEditModal = document.getElementById('viewEditModal');
-    viewEditModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        
-        // Extract info
-        const id = button.getAttribute('data-id');
-        const status = button.getAttribute('data-status');
-        
-        // Populate fields
-        document.getElementById('bookingIdDisplay').textContent = id;
-        document.getElementById('modalBookingId').value = id;
-        document.getElementById('modalFacility').textContent = button.getAttribute('data-facility');
-        document.getElementById('modalUser').textContent = button.getAttribute('data-user');
-        
-        // Format time
-        const start = new Date(button.getAttribute('data-start'));
-        const end = new Date(button.getAttribute('data-end'));
-        const timeStr = start.toLocaleDateString() + ' (' + 
-                        start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' - ' + 
-                        end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ')';
-        document.getElementById('modalTime').textContent = timeStr;
-        
-        // Toggle Buttons based on status
-        const actionButtons = document.getElementById('actionButtons');
-        const adminNotes = document.getElementById('adminNotes');
-        
-        if (status === 'Pending') {
-            actionButtons.style.display = 'grid';
-            adminNotes.readOnly = false;
+const actionModal = document.getElementById('actionModal');
+actionModal.addEventListener('show.bs.modal', event => {
+    const btn = event.relatedTarget;
+    const id = btn.getAttribute('data-id');
+    const status = btn.getAttribute('data-status');
+    
+    document.getElementById('modalBookingId').value = id;
+    document.getElementById('displayId').textContent = id;
+    document.getElementById('modalFacility').textContent = btn.getAttribute('data-facility');
+    document.getElementById('modalUser').textContent = btn.getAttribute('data-user');
+    
+    const start = new Date(btn.getAttribute('data-start'));
+    const end = new Date(btn.getAttribute('data-end'));
+    const timeStr = start.toLocaleDateString() + ' (' + 
+                    start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' - ' + 
+                    end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ')';
+    document.getElementById('modalTime').textContent = timeStr;
+    
+    document.getElementById('rejectSection').classList.add('d-none');
+    
+    const btns = document.getElementById('actionButtons');
+    if (status !== 'Pending') {
+        if (status === 'Approved' || status === 'Confirmed') {
+            btns.innerHTML = '<button type="submit" onclick="setAction(\'cancel\')" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition shadow-sm w-full">Cancel Booking</button>';
         } else {
-            // Allow cancelling existing bookings
-            if (status === 'Approved' || status === 'Confirmed') {
-                actionButtons.innerHTML = '<button type="button" class="btn btn-danger w-100 fw-bold py-2" onclick="submitAction(\'cancel\')">Cancel Booking</button>';
-                actionButtons.style.display = 'block';
-                adminNotes.readOnly = false;
-            } else {
-                actionButtons.style.display = 'none';
-                adminNotes.readOnly = true;
-                adminNotes.placeholder = "Booking is " + status + ". No actions available.";
-            }
+            btns.innerHTML = '<p class="text-center text-gray-400 py-4 italic">No actions available for ' + status + ' bookings.</p>';
         }
-    });
+    } else {
+        btns.innerHTML = `
+            <button type="submit" onclick="setAction('approve')" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check"></i> Approve Booking
+            </button>
+            <button type="button" onclick="rejectBooking()" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-times"></i> Reject Booking
+            </button>
+        `;
+    }
 });
 
-function submitAction(action) {
-    const form = document.getElementById('processBookingForm');
-    const notes = document.getElementById('adminNotes').value.trim();
-    
-    document.getElementById('modalAction').value = action;
-    
-    if ((action === 'reject' || action === 'cancel') && notes === '') {
-        if(!confirm("Are you sure you want to " + action + " without a note? It's better to provide a reason.")) return;
-    }
-    
-    form.submit();
+function setAction(act) {
+    document.getElementById('modalAction').value = act;
 }
 
-// --- WALK-IN MODAL LOGIC ---
+function rejectBooking() {
+    document.getElementById('rejectSection').classList.remove('d-none');
+}
+
 function loadBookingFrame() {
-    const facilityID = document.getElementById('newBookingFacility').value;
+    const fid = document.getElementById('newBookingFacility').value;
     const frame = document.getElementById('bookingFrame');
-    const loader = document.getElementById('frameLoader');
-    const placeholder = document.getElementById('framePlaceholder');
-
-    if (!facilityID) {
-        alert("Please select a facility first.");
-        return;
-    }
-
-    placeholder.classList.add('d-none');
-    loader.classList.remove('d-none');
-    frame.classList.add('d-none');
+    const ph = document.getElementById('framePlaceholder');
+    if (!fid) { alert("Please select a facility."); return; }
     
-    // Ensure book_walkin.php exists in the same directory
-    frame.src = "book_walkin.php?facility_id=" + encodeURIComponent(facilityID);
-    
-    frame.onload = function() {
-        loader.classList.add('d-none');
-        frame.classList.remove('d-none');
-    };
+    ph.classList.add('d-none');
+    frame.classList.remove('d-none');
+    frame.src = "book_walkin.php?facility_id=" + encodeURIComponent(fid);
 }
 
-// Listen for success message from iframe
 window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'booking_success') {
-        const modalEl = document.getElementById('newBookingModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if(modal) modal.hide();
-        
-        // Reload to show new booking
-        window.location.href = "bookinglist.php?msg=" + encodeURIComponent(event.data.message);
+        window.location.href = "manage_bookings.php?msg=" + encodeURIComponent(event.data.message);
     }
-});
-
-// Reset Walk-in Modal on Close
-document.getElementById('newBookingModal').addEventListener('hidden.bs.modal', function () {
-    const frame = document.getElementById('bookingFrame');
-    frame.src = "";
-    frame.classList.add('d-none');
-    document.getElementById('framePlaceholder').classList.remove('d-none');
-    document.getElementById('newBookingFacility').value = "";
 });
 </script>
 </body>
