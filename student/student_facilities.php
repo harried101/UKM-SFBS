@@ -43,7 +43,7 @@ while($t = $typesResult->fetch_assoc()) $types[] = $t['Type'];
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-:root { --primary:#8a0d19; --bg-light:#f8fafc; }
+:root { --primary:#0b4d9d; --bg-light:#f8fafc; }
 body {
     font-family:'Inter',sans-serif;
     background-color:var(--bg-light);
@@ -106,18 +106,20 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
     </div>
 </nav>
 
-<!-- MAIN CONTENT (No Banner) -->
+<!-- HERO -->
+<div class="w-full h-64 md:h-80 relative overflow-hidden shadow-md">
+    <img src="../court.jpg" class="w-full h-full object-cover">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
+        <h1 class="text-5xl font-bold mb-3">Browse Facilities</h1>
+        <p class="opacity-90">Find and book world-class sports facilities at UKM</p>
+    </div>
+</div>
+
 <main class="container mx-auto px-6 py-12 flex-grow max-w-7xl">
 
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-200 pb-6">
-        <div>
-            <h1 class="text-3xl font-bold text-[#8a0d19] mb-1 font-serif">Browse Facilities</h1>
-            <p class="text-gray-500">Find and book world-class sports facilities at UKM.</p>
-        </div>
-    </div>
-
     <!-- FILTER -->
-    <div class="filter-bar mb-8">
+    <div class="filter-bar mb-8 mt-[-60px] relative z-10">
         <form class="flex flex-col md:flex-row gap-4" onsubmit="return false;">
             <div class="flex-grow relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
