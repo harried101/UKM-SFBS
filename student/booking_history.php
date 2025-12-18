@@ -40,7 +40,7 @@ if ($studentIdentifier) {
 $bookings = [];
 if ($userID > 0) {
     $stmt = $conn->prepare("
-        SELECT f.Name AS FacilityName, b.StartTime, b.EndTime, b.Status
+        SELECT f.Name AS FacilityName, b.StartTime, b.EndTime, b.Status AS BookingStatus
         FROM bookings b
         JOIN facilities f ON b.FacilityID = f.FacilityID
         WHERE b.UserID = ?
@@ -144,13 +144,13 @@ tr:hover { background:#f8fafc; }
 <tbody>
 <?php if(!empty($bookings)): ?>
     <?php foreach($bookings as $b):
-        $statusClass = 'status-' . strtolower($b['Status']);
+        $statusClass = 'status-' . strtolower($b['BookingStatus']);
     ?>
     <tr>
         <td><?= htmlspecialchars($b['FacilityName']) ?></td>
         <td><?= date("d M Y, h:i A", strtotime($b['StartTime'])) ?></td>
         <td><?= date("d M Y, h:i A", strtotime($b['EndTime'])) ?></td>
-        <td class="<?= $statusClass ?>"><?= htmlspecialchars($b['Status']) ?></td>
+        <td class="<?= $statusClass ?>"><?= htmlspecialchars($b['BookingStatus']) ?></td>
     </tr>
     <?php endforeach; ?>
 <?php else: ?>

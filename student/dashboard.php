@@ -56,7 +56,9 @@ if ($db_numeric_id > 0) {
             f.Location
         FROM bookings b
         JOIN facilities f ON b.FacilityID = f.FacilityID
-        WHERE b.UserID = ?
+       WHERE b.UserID = ?
+AND b.Status IN ('Pending','Approved','Confirmed')
+
         ORDER BY b.StartTime DESC
     ";
 

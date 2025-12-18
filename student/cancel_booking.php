@@ -1,44 +1,68 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 require_once '../includes/db_connect.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Student') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+// Security check
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Unauthorized access'
+    ]);
     exit();
 }
 
+// Validate booking ID
 if (!isset($_POST['booking_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Missing booking ID']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Missing booking ID'
+    ]);
     exit();
 }
 
-$booking_id = intval($_POST['booking_id']);
-$userIdentifier = $_SESSION['user_id'];
+$booking_id = (int) $_POST['booking_id'];
 
-// Get numeric UserID
-$stmt = $conn->prepare("SELECT UserID FROM users WHERE UserIdentifier = ?");
-$stmt->bind_param("s", $userIdentifier);
+// Correct ENUM value
+$sql = "UPDATE bookings SET Status = 'Canceled' WHERE BookingID = ?";
+
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'SQL prepare error: ' . $conn->error
+    ]);
+    exit();
+}
+
+$stmt->bind_param("i", $booking_id);
 $stmt->execute();
-$res = $stmt->get_result();
 
-if (!$row = $res->fetch_assoc()) {
-    echo json_encode(['success' => false, 'message' => 'User not found']);
-    exit();
-}
-
-$userID = $row['UserID'];
-$stmt->close();
-
-// DELETE booking
-$stmt = $conn->prepare("DELETE FROM bookings WHERE BookingID = ? AND UserID = ?");
-$stmt->bind_param("ii", $booking_id, $userID);
-
-if ($stmt->execute()) {
+// Check result
+if ($stmt->affected_rows > 0) {
     echo json_encode(['success' => true]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Delete failed']);
+    // Check if the booking exists and what the current status is
+    $check = $conn->prepare("SELECT Status FROM bookings WHERE BookingID = ?");
+    $check->bind_param("i", $booking_id);
+    $check->execute();
+    $res = $check->get_result();
+    if ($row = $res->fetch_assoc()) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Booking already Canceled or cannot update. Current status: ' . $row['Status']
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Booking not found'
+        ]);
+    }
+    $check->close();
 }
 
 $stmt->close();
