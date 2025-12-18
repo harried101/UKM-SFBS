@@ -84,7 +84,7 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
                 <span>Facilities</span>
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
             </a>
-            <a href="dashboard.php?tab=history" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">
+            <a href="booking_history.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">
                 History
             </a>
 
