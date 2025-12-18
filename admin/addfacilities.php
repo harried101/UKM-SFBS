@@ -245,7 +245,7 @@ input:focus, textarea:focus, select:focus {
 </head>
 <body>
 
-<!-- NAVBAR (Clean White Style) -->
+<!-- NAVBAR (No Icons, No Closures, White BG) -->
 <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -254,18 +254,12 @@ input:focus, textarea:focus, select:focus {
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2 group">
-                <span class="p-2 rounded-full bg-gray-100 group-hover:bg-[#0b4d9d] group-hover:text-white transition shadow-sm">
-                    <i class="fa-solid fa-house"></i>
-                </span>
-                <span class="hidden md:inline">Home</span>
+            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">
+                Home
             </a>
             
-            <!-- Active State for Facilities -->
-            <a href="addfacilities.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2">
-                <span class="p-2 rounded-full bg-[#0b4d9d] text-white shadow-sm">
-                    <i class="fa-solid fa-building"></i>
-                </span>
+            <!-- Active State -->
+            <a href="addfacilities.php" class="text-[#0b4d9d] font-bold transition">
                 Facilities
             </a>
             
@@ -276,13 +270,18 @@ input:focus, textarea:focus, select:focus {
                     <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($adminName); ?></p>
                     <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($adminIdentifier); ?></p>
                 </div>
+                <!-- Profile Dropdown Container -->
                 <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
-                    <!-- Dropdown -->
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50 pt-1">
-                        <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
+                    <button class="flex items-center focus:outline-none">
+                        <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition">
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                        <div class="bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
+                            <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
+                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -290,19 +289,8 @@ input:focus, textarea:focus, select:focus {
     </div>
 </nav>
 
-<!-- HERO BANNER -->
-<div class="w-full h-64 md:h-80 overflow-hidden relative shadow-md group">
-    <img src="../court.jpg" alt="Sports Court" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
-        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg font-serif">Manage Facilities</h1>
-        <p class="text-lg md:text-xl opacity-90 max-w-2xl font-light leading-relaxed">
-            Create, update, and manage sports facilities and schedules.
-        </p>
-    </div>
-</div>
-
-<main class="container mx-auto px-6 pb-20 flex-grow relative z-20">
+<!-- MAIN CONTENT (No Banner) -->
+<main class="container mx-auto px-6 py-10 flex-grow max-w-6xl mt-8">
     
     <!-- Filter Section (Search) -->
     <div class="filter-bar max-w-5xl mx-auto">
