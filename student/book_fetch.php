@@ -154,7 +154,7 @@ try {
 
         // 4. Insert
         $stmt = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status, BookedAt) VALUES (?, ?, ?, ?, 'Pending', NOW())");
-        $stmt->bind_param("iiss", $uid, $facilityID, $startTime, $endTime);
+        $stmt->bind_param("isss", $uid, $facilityID, $startTime, $endTime);
 
         if ($stmt->execute()) {
             jsonResponse(true, 'Booking successful!');
