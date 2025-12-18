@@ -9,7 +9,7 @@ if ($facility_id) {
     // We use integer binding for ID if your DB uses INT, otherwise 's'
     // Based on previous admin code, FacilityID is INT.
     $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
-    $stmt->bind_param("i", $facility_id);
+    $stmt->bind_param("s", $facility_id);
     $stmt->execute();
     $res = $stmt->get_result();
     if ($row = $res->fetch_assoc()) {
