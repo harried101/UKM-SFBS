@@ -2,7 +2,7 @@
 session_start();
 require_once '../includes/db_connect.php';
 
-// --- 1. GET REQUEST: Fetch Dynamic Slots (Synced with Admin Data) ---
+// --- 1. GET REQUEST: Fetch Dynamic Slots (Synced with DB) ---
 if (isset($_GET['get_slots'])) {
     header('Content-Type: application/json');
     
@@ -14,16 +14,14 @@ if (isset($_GET['get_slots'])) {
         exit;
     }
 
-    $selectedDate = date('Y-m-d', strtotime($date));
-
-    // A. CHECK CLOSURES (Maintenance/Events)
-    // Checks if the selected date falls inside any blocked range set by Admin
+    // A. CHECK CLOSURES (scheduleoverrides)
+    // We check if the requested date falls within any closure range
     $closure_sql = "SELECT Reason FROM scheduleoverrides 
                     WHERE FacilityID = ? 
                     AND ? BETWEEN DATE(StartTime) AND DATE(EndTime) 
                     LIMIT 1";
     $stmt = $conn->prepare($closure_sql);
-    $stmt->bind_param("is", $facilityID, $selectedDate);
+    $stmt->bind_param("ss", $facilityID, $date);
     $stmt->execute();
     $closure_res = $stmt->get_result();
     
@@ -38,67 +36,71 @@ if (isset($_GET['get_slots'])) {
     }
     $stmt->close();
 
-    // B. FETCH WEEKLY SCHEDULE
-    // Convert date to Day Index (0=Sunday, 1=Monday... matches Admin setup)
-    $dayIndex = date('w', strtotime($selectedDate)); 
+    // B. FETCH WEEKLY SCHEDULE (facilityschedules)
+    // FIX: Convert date to Integer DayOfWeek (0=Sunday, 1=Monday, ... 6=Saturday)
+    $dayIndex = date('w', strtotime($date)); 
     
     $sched_sql = "SELECT OpenTime, CloseTime, SlotDuration 
                   FROM facilityschedules 
                   WHERE FacilityID = ? AND DayOfWeek = ?";
     $stmt = $conn->prepare($sched_sql);
-    $stmt->bind_param("ii", $facilityID, $dayIndex);
+    // Use "si" (string, integer) or "ii" if FacilityID is integer. "ss" usually works too but "si" is safer here.
+    $stmt->bind_param("si", $facilityID, $dayIndex);
     $stmt->execute();
     $sched_res = $stmt->get_result();
     
-    // If no schedule exists for this specific day (e.g. Sat/Sun unchecked in Admin), it is CLOSED.
+    // --- DEFAULT FALLBACK OR DB SCHEDULE ---
     if ($sched_res->num_rows === 0) {
-        echo json_encode([
-            'success' => true, 
-            'slots' => [], 
-            'message' => 'Facility is closed on this day.', 
-            'is_closed' => true
-        ]);
-        exit;
+        // If no schedule exists in DB for this day, we default to 9 AM - 10 PM
+        // (Or you could set this to return 'Closed' if you prefer strict scheduling)
+        $openTime = '09:00:00';
+        $closeTime = '22:00:00';
+        $slotDuration = 60;
+    } else {
+        $schedule = $sched_res->fetch_assoc();
+        $openTime = $schedule['OpenTime'];
+        $closeTime = $schedule['CloseTime'];
+        $slotDuration = intval($schedule['SlotDuration']);
     }
-
-    $schedule = $sched_res->fetch_assoc();
-    $openTime = $schedule['OpenTime'];
-    $closeTime = $schedule['CloseTime'];
-    $slotDuration = intval($schedule['SlotDuration']);
     $stmt->close();
 
-    // C. FETCH EXISTING BOOKINGS (To gray out taken slots)
+    // C. FETCH EXISTING BOOKINGS
+    // We select TIME(StartTime) to compare easily
     $bk_sql = "SELECT TIME(StartTime) as booked_time 
                FROM bookings 
                WHERE FacilityID = ? 
                AND DATE(StartTime) = ? 
-               AND Status IN ('Approved', 'Pending', 'Confirmed')";
+               AND Status IN ('Approved', 'Pending')";
     $stmt = $conn->prepare($bk_sql);
-    $stmt->bind_param("is", $facilityID, $selectedDate);
+    $stmt->bind_param("ss", $facilityID, $date);
     $stmt->execute();
     $bk_res = $stmt->get_result();
     
     $booked_times = [];
     while ($row = $bk_res->fetch_assoc()) {
-        $booked_times[] = substr($row['booked_time'], 0, 5); // "09:00"
+        // Take only HH:MM to ensure match even if seconds differ
+        $booked_times[] = substr($row['booked_time'], 0, 5); 
     }
     $stmt->close();
 
     // D. GENERATE TIME SLOTS
     $slots = [];
-    $current = strtotime($selectedDate . ' ' . $openTime);
-    $end = strtotime($selectedDate . ' ' . $closeTime);
+    $current = strtotime($date . ' ' . $openTime);
+    $end = strtotime($date . ' ' . $closeTime);
 
     while ($current < $end) {
+        // Formats: "09:00:00" for DB, "09:00" for comparison, "09:00 AM" for display
         $startTimeStr = date('H:i:s', $current);
         $compareTime = date('H:i', $current); 
         $labelTime = date('h:i A', $current); 
         
+        // Calculate end of this specific slot
         $slotEndTime = $current + ($slotDuration * 60);
         
         // Stop if the slot exceeds closing time
         if ($slotEndTime > $end) break;
 
+        // Check if this time exists in booked_times array
         $isBooked = in_array($compareTime, $booked_times);
 
         $slots[] = [
@@ -107,6 +109,7 @@ if (isset($_GET['get_slots'])) {
             'status' => $isBooked ? 'booked' : 'available'
         ];
 
+        // Jump to next slot
         $current = $slotEndTime;
     }
 
@@ -119,64 +122,70 @@ if (isset($_GET['get_slots'])) {
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     if (!isset($_SESSION['user_id'])) {
-        echo json_encode(['success' => false, 'message' => 'Session expired.']);
-        exit;
+        die("<script>alert('Session expired. Please log in.'); window.parent.location.reload();</script>");
     }
 
     $userIdentifier = $_SESSION['user_id'];
     $facilityID = $_POST['facility_id'];
-    $startTime = $_POST['start_time']; // Full datetime string from JS
+    $startTime = $_POST['start_time']; 
     
-    // 1. Get Slot Duration
+    // 1. Get Slot Duration (or default to 60)
+    // FIX: Match DayOfWeek Integer type here too for accuracy
     $dayIndex = date('w', strtotime($startTime));
+    
     $dur_sql = "SELECT SlotDuration FROM facilityschedules WHERE FacilityID = ? AND DayOfWeek = ?";
     $d_stmt = $conn->prepare($dur_sql);
-    $d_stmt->bind_param("ii", $facilityID, $dayIndex);
+    $d_stmt->bind_param("si", $facilityID, $dayIndex);
     $d_stmt->execute();
     $dur_res = $d_stmt->get_result();
     
-    $durationMinutes = 60; // Default
     if ($dur_row = $dur_res->fetch_assoc()) {
         $durationMinutes = intval($dur_row['SlotDuration']);
+    } else {
+        $durationMinutes = 60;
     }
     $d_stmt->close();
 
     // 2. Calculate End Time
     $endTime = date('Y-m-d H:i:s', strtotime($startTime . " +$durationMinutes minutes"));
 
-    // 3. Get User ID (Integer)
+    // 3. Get User ID
     $u_stmt = $conn->prepare("SELECT UserID FROM users WHERE UserIdentifier = ?");
     $u_stmt->bind_param("s", $userIdentifier);
     $u_stmt->execute();
     $res = $u_stmt->get_result();
-    $userID = ($row = $res->fetch_assoc()) ? $row['UserID'] : 0;
+    
+    if ($row = $res->fetch_assoc()) {
+        $userID = $row['UserID'];
+    } else {
+        // Fallback if session ID is the actual numeric ID
+        $userID = $userIdentifier; 
+    }
     $u_stmt->close();
 
-    if ($userID === 0) {
-        echo json_encode(['success' => false, 'message' => 'User profile not found.']);
-        exit;
-    }
-
     // 4. Double Booking Check
-    $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID = ? AND StartTime = ? AND Status IN ('Approved', 'Pending', 'Confirmed')");
-    $check->bind_param("is", $facilityID, $startTime);
+    $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID = ? AND StartTime = ? AND Status IN ('Approved', 'Pending')");
+    $check->bind_param("ss", $facilityID, $startTime);
     $check->execute();
     
     if ($check->get_result()->num_rows > 0) {
-        echo json_encode(['success' => false, 'message' => 'Slot already taken.']);
+        echo json_encode(['success' => false, 'message' => 'Sorry! This slot was just taken.']);
         exit;
     }
     $check->close();
 
     // 5. Insert
     $status = 'Pending';
-    $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status, BookedAt) VALUES (?, ?, ?, ?, ?, NOW())");
-    $ins->bind_param("iisss", $userID, $facilityID, $startTime, $endTime, $status);
+    $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status) VALUES (?, ?, ?, ?, ?)");
+    $ins->bind_param("issss", $userID, $facilityID, $startTime, $endTime, $status);
 
     if ($ins->execute()) {
-        echo json_encode(['success' => true, 'booking_id' => $ins->insert_id]);
+        echo json_encode([
+            'success' => true, 
+            'booking_id' => $ins->insert_id
+        ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'DB Error: ' . $conn->error]);
+        echo json_encode(['success' => false, 'message' => 'Database Error: ' . $conn->error]);
     }
 
     $ins->close();
