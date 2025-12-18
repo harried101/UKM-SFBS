@@ -66,7 +66,7 @@ if ($db_numeric_id > 0) {
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        // StartTime logic
+        // StartTime logic: handle invalid data
         if ($row['StartTime'] === '0000-00-00 00:00:00' || empty($row['StartTime'])) {
             $start = new DateTime($row['EndTime']);
         } else {
@@ -74,7 +74,8 @@ if ($db_numeric_id > 0) {
         }
 
         // EndTime logic: combine StartTime date with EndTime clock components
-        $end = new DateTime($row['StartTime']);
+        // This ensures the comparison against $now is accurate for today's sessions
+        $end = new DateTime($start->format('Y-m-d H:i:s'));
         $end->setTime(
             (int)date('H', strtotime($row['EndTime'])),
             (int)date('i', strtotime($row['EndTime'])),
@@ -129,32 +130,6 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Tab link styles */
-.tab-link {
-    position: relative;
-    padding-bottom: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-.tab-link.active {
-    color: var(--primary);
-}
-.tab-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: var(--primary);
-}
-.tab-link:not(.active) {
-    color: #64748b;
-}
-.tab-link:not(.active):hover {
-    color: var(--primary);
-}
 </style>
 </head>
 <body>
@@ -168,11 +143,13 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-8">
+            <!-- Navigation Links -->
             <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative text-decoration-none">
                 <span>Home</span>
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
             </a>
             <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Facilities</a>
+            <a href="booking_history.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Booking History</a>
 
             <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
                 <div class="text-right hidden sm:block">
@@ -199,15 +176,12 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     <div class="mb-12 fade-in">
         <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
         <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
-        <p class="text-slate-500 mt-4 max-w-2xl">Manage your sports activities and track your bookings below.</p>
+        <p class="text-slate-500 mt-4 max-w-2xl">Manage your active sessions and provide feedback on completed activities.</p>
     </div>
 
     <!-- PAGE HEADER & ACTION -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
-        <div class="flex items-center gap-8 border-b border-slate-200 w-full md:w-auto">
-            <a href="dashboard.php" class="tab-link active text-decoration-none text-sm uppercase tracking-wider">Active Bookings</a>
-            <a href="booking_history.php" class="tab-link text-decoration-none text-sm uppercase tracking-wider">Booking History</a>
-        </div>
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-slate-800">My Bookings</h2>
         <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none">
             <i class="fa-solid fa-plus-circle"></i> New Booking
         </a>
