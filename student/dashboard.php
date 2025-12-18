@@ -102,60 +102,82 @@ if ($conn->connect_error) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Dashboard – UKM Sports Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<style>
-:root {
-    --primary: #8a0d19; 
-    --primary-hover: #6d0a13;
-    --bg-light: #f8fafc;
-}
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-light);
-    color: #1e293b;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-h1, h2, h3 { font-family: 'Playfair Display', serif; }
-.fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard – UKM Sports Center</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #8a0d19; 
+            --primary-hover: #6d0a13;
+            --bg-light: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+    </style>
 </head>
 <body>
 
 <!-- NAVBAR -->
-<nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
+<nav class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40 transition-all duration-300 shadow-sm">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-10 md:h-12 w-auto transition-transform hover:scale-105">
             <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-10 md:h-12 w-auto hidden sm:block transition-transform hover:scale-105">
         </div>
+        
+        <!-- Desktop Nav -->
         <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative text-decoration-none">
-                <span>Home</span>
-                <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
-            </a>
-            <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Facilities</a>
-            <a href="booking_history.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">History</a>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="dashboard.php" class="text-[#8a0d19] font-bold transition flex items-center gap-2 relative text-decoration-none">
+                    <span>Home</span>
+                    <span class="absolute -bottom-1.5 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
+                </a>
+                <a href="student_facilities.php" class="text-slate-600 hover:text-[#8a0d19] font-medium transition hover:-translate-y-0.5 text-decoration-none">Facilities</a>
+                <a href="booking_history.php" class="text-slate-600 hover:text-[#8a0d19] font-medium transition hover:-translate-y-0.5 text-decoration-none">History</a>
+            </div>
 
-            <!-- Profile / Logout Dropdown -->
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-200 relative">
+            <!-- Profile & Mobile Menu -->
+            <div class="flex items-center gap-4 pl-4 md:pl-6 md:border-l border-slate-200 relative">
                 <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-slate-800"><?php echo htmlspecialchars($studentName); ?></p>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold"><?php echo htmlspecialchars($studentID); ?></p>
+                    <p class="text-sm font-bold text-slate-800 leading-tight"><?php echo htmlspecialchars($studentName); ?></p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold"><?php echo htmlspecialchars($studentID); ?></p>
                 </div>
-                <div class="relative" id="profileDropdown">
-                    <img id="profileBtn" src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform hover:scale-105">
-                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden z-50 overflow-hidden">
-                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2 text-decoration-none">
+                <div class="relative" id="profileDropdownContainer">
+                    <button id="profileBtn" class="focus:outline-none focus:ring-2 focus:ring-[#8a0d19] rounded-full transition-transform active:scale-95">
+                        <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover shadow-sm hover:ring-[#8a0d19]/20">
+                    </button>
+                    <!-- Dropdown -->
+                    <div id="dropdownMenu" class="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-slate-100 hidden z-50 overflow-hidden transform origin-top-right transition-all duration-200">
+                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 md:hidden">
+                             <p class="text-sm font-bold text-slate-800"><?php echo htmlspecialchars($studentName); ?></p>
+                             <p class="text-xs text-slate-500"><?php echo htmlspecialchars($studentID); ?></p>
+                        </div>
+                        <a href="student_facilities.php" class="block md:hidden px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#8a0d19] text-decoration-none">New Booking</a>
+                        <a href="booking_history.php" class="block md:hidden px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#8a0d19] text-decoration-none">History</a>
+                        <div class="h-px bg-slate-100 md:hidden"></div>
+                        <a href="../logout.php" id="logoutLink" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:pl-6 transition-all font-medium flex items-center gap-2 text-decoration-none">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>
                     </div>
@@ -166,138 +188,232 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 </nav>
 
 <!-- MAIN CONTENT -->
-<main class="container mx-auto px-6 py-12 flex-grow max-w-7xl relative z-20">
-<!-- WELCOME GREETING -->
-<div class="mb-12 fade-in">
-    <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
-    <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
-    <p class="text-slate-500 mt-4 max-w-2xl">Manage your active sessions and provide feedback on completed activities.</p>
-</div>
+<main class="container mx-auto px-4 md:px-6 py-8 md:py-12 flex-grow max-w-7xl relative z-10 space-y-8">
 
-<!-- PAGE HEADER & ACTION -->
-<div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-slate-800">My Bookings</h2>
-    <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none">
-        <i class="fa-solid fa-plus-circle"></i> New Booking
-    </a>
-</div>
-
-<!-- BOOKINGS CONTAINER -->
-<div class="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden min-h-[400px] flex flex-col fade-in">
-    <div class="p-8 flex-grow bg-slate-50/50">
-        <?php if (empty($all_bookings)): ?>
-            <div class="flex flex-col items-center justify-center h-80 text-center">
-                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm text-slate-300">
-                    <i class="fa-regular fa-calendar-xmark text-3xl"></i>
+    <!-- WELCOME & STATS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in">
+        <div class="lg:col-span-2 space-y-2">
+            <p class="text-slate-500 font-medium text-sm uppercase tracking-wide">Dashboard</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] font-serif">Welcome back, <?php echo explode(' ', trim($studentName))[0]; ?>! 👋</h1>
+            <p class="text-slate-600 max-w-xl text-lg">Here's an overview of your sports activities and upcoming sessions.</p>
+        </div>
+        
+        <!-- Quick Stats Card (Subtle UX enhancement) -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between gap-4 card-hover">
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Bookings</p>
+                <div class="text-3xl font-bold text-slate-800 font-serif">
+                    <?php 
+                    $active_count = 0;
+                    foreach($all_bookings as $b) {
+                        if(!$b['is_passed'] && in_array($b['Status'], ['Pending','Approved','Confirmed'])) $active_count++;
+                    }
+                    echo $active_count;
+                    ?>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-2">No Bookings Found</h3>
-                <p class="text-slate-500 mb-6 max-w-xs text-sm">You haven't made any bookings yet.</p>
-                <a href="student_facilities.php" class="text-[#8a0d19] text-sm font-bold hover:underline flex items-center gap-2 group text-decoration-none">
-                    Browse Facilities <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+            </div>
+            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-[#8a0d19]">
+                <i class="fa-regular fa-calendar-check text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION HEADER -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+        <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <span class="w-2 h-8 bg-[#8a0d19] rounded-full"></span>
+            My Bookings
+        </h2>
+        <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 group text-sm text-decoration-none">
+            <i class="fa-solid fa-plus transition-transform group-hover:rotate-90"></i> New Booking
+        </a>
+    </div>
+
+    <!-- BOOKINGS LIST (Compacted) -->
+    <div class="space-y-6 fade-in" style="animation-delay: 0.1s;">
+        <?php if (empty($all_bookings)): ?>
+            <!-- Improved Empty State -->
+            <div class="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center flex flex-col items-center justify-center hover:border-slate-300 transition-colors">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                    <i class="fa-solid fa-person-running text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-1">No Upcoming Activities</h3>
+                <p class="text-slate-500 mb-6 max-w-sm mx-auto text-sm">You haven't booked any facilities yet.</p>
+                <a href="student_facilities.php" class="text-[#8a0d19] font-bold text-sm hover:underline flex items-center gap-2 transition group text-decoration-none">
+                    Browse Facilities <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                 </a>
             </div>
         <?php else: ?>
-            <div class="space-y-4">
-            <?php foreach ($all_bookings as $bk): 
-                $statusClass = 'bg-slate-100 text-slate-500 border-slate-200';
-                if (in_array($bk['Status'], ['Approved', 'Confirmed'])) {
-                    $statusClass = 'bg-green-100 text-green-700 border-green-200';
-                } elseif ($bk['Status'] === 'Pending') {
-                    $statusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
-                    $statusClass = 'bg-red-50 text-red-700 border-red-200';
-                }
-            ?>
-            <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-center justify-between gap-6 group">
-                <div class="flex items-center gap-6 w-full">
-                    <div class="bg-slate-50 rounded-xl p-3 min-w-[70px] text-center border border-slate-100 <?php echo $bk['is_passed'] ? 'opacity-50' : ''; ?>">
-                        <span class="block text-xl font-bold text-[#8a0d19] font-serif"><?php echo $bk['day']; ?></span>
-                        <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider"><?php echo $bk['month']; ?></span>
+            <!-- SINGLE CARD HOLDER -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="divide-y divide-slate-100">
+                <?php foreach ($all_bookings as $bk): 
+                    $statusColor = 'bg-slate-100 text-slate-600';
+                    $statusDot = 'bg-slate-400';
+                    
+                    if (in_array($bk['Status'], ['Approved', 'Confirmed'])) {
+                        $statusColor = 'bg-emerald-50 text-emerald-700';
+                        $statusDot = 'bg-emerald-500';
+                    } elseif ($bk['Status'] === 'Pending') {
+                        $statusColor = 'bg-amber-50 text-amber-700';
+                        $statusDot = 'bg-amber-500';
+                    } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
+                        $statusColor = 'bg-red-50 text-red-700';
+                        $statusDot = 'bg-red-500';
+                    }
+                    
+                    $opacityClass = $bk['is_passed'] ? 'opacity-60 bg-slate-50/50' : 'hover:bg-slate-50';
+                ?>
+                <!-- Compact Row -->
+                <div class="p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors <?php echo $opacityClass; ?>">
+                    
+                    <!-- Date (Mini) -->
+                    <div class="flex-shrink-0 flex sm:flex-col items-center sm:justify-center gap-2 sm:gap-0 min-w-[60px] text-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"><?php echo $bk['month']; ?></span>
+                        <span class="text-xl font-bold text-[#8a0d19] font-serif leading-none"><?php echo $bk['day']; ?></span>
                     </div>
-                    <div class="<?php echo $bk['is_passed'] ? 'opacity-60' : ''; ?>">
-                        <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#8a0d19] transition-colors"><?php echo htmlspecialchars($bk['FacilityName']); ?></h4>
-                        <div class="flex flex-wrap gap-4 text-sm text-slate-500 font-medium">
-                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-slate-400"></i> <?php echo $bk['formatted_time']; ?></span>
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-slate-400"></i> <?php echo htmlspecialchars($bk['Location']); ?></span>
+                    
+                    <!-- Info -->
+                    <div class="flex-grow min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <h4 class="text-sm font-bold text-slate-800 truncate"><?php echo htmlspecialchars($bk['FacilityName']); ?></h4>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold <?php echo $statusColor; ?>">
+                                <span class="w-1.5 h-1.5 rounded-full <?php echo $statusDot; ?>"></span>
+                                <?php echo $bk['Status']; ?>
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-slate-500">
+                            <span class="flex items-center gap-1.5 truncate">
+                                <i class="fa-regular fa-clock text-slate-400"></i> <?php echo $bk['formatted_time']; ?>
+                            </span>
+                            <span class="flex items-center gap-1.5 truncate">
+                                <i class="fa-solid fa-location-dot text-slate-400"></i> <?php echo htmlspecialchars($bk['Location']); ?>
+                            </span>
                         </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
-                        <?php echo $bk['Status']; ?>
-                    </span>
-                    <div class="flex gap-2">
-                        <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
-                        <button onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)" 
-                            class="text-red-500 hover:text-white border border-red-200 hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                            Cancel
-                        </button>
+
+                    <!-- Actions (Compact) -->
+                    <div class="flex-shrink-0 flex items-center gap-2 mt-2 sm:mt-0">
+                         <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
+                            <button onclick="showCancelModal(<?php echo $bk['BookingID']; ?>)" 
+                                title="Cancel Booking"
+                                class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600 transition flex items-center justify-center">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
-                        <button onclick="openFeedback(<?php echo $bk['BookingID']; ?>)" 
-                            class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                            Feedback
-                        </button>
+                            <button onclick="openFeedback(<?php echo $bk['BookingID']; ?>)" 
+                                class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition">
+                                Feedback
+                            </button>
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+                </div>
             </div>
         <?php endif; ?>
     </div>
-</div>
-
-<!-- ABOUT SECTION -->
-<div class="mt-12 bg-white rounded-2xl border border-slate-100 p-8 shadow-lg flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
-    <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#8a0d19]"></div>
-    <div class="flex-1 relative z-10">
-        <h2 class="text-2xl font-bold font-serif mb-3 text-slate-800">About UKM Sports Center</h2>
-        <p class="text-slate-600 text-sm leading-relaxed max-w-3xl">
-            Established on 1 November 1974, the UKM Sports Center began with a single Sports Officer. Today, it has evolved into a fully equipped center managing sports activities for students and staff, participating in major events like the ASEAN University Games. We are committed to fostering athletic excellence and student well-being.
-        </p>
+    
+    <!-- INFO CARD -->
+    <div class="mt-8 bg-slate-900 rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl group">
+        <div class="absolute right-0 top-0 h-full w-1/3 bg-white/5 skew-x-12 transform origin-top-right group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="relative z-10 flex flex-col md:flex-row items-center gap-6">
+            <div class="p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
+                <i class="fa-solid fa-medal text-4xl text-yellow-400"></i>
+            </div>
+            <div>
+                 <h3 class="text-xl font-bold font-serif mb-2">UKM Sports Center Excellence</h3>
+                 <p class="text-slate-300 text-sm leading-relaxed max-w-2xl">
+                     Since 1974, we've been dedicated to fostering athletic talent and student well-being.
+                     Enjoy world-class facilities right here at the Bangi campus.
+                 </p>
+            </div>
+        </div>
     </div>
-    <div class="flex-shrink-0 opacity-10 group-hover:opacity-20 transition-opacity">
-        <i class="fa-solid fa-medal text-8xl text-slate-800"></i>
-    </div>
-</div>
 
 </main>
 
 <!-- FOOTER -->
-<footer class="bg-white border-t border-slate-200 py-12 mt-auto">
+<footer class="bg-white border-t border-slate-200 pt-12 pb-8 mt-auto">
     <div class="container mx-auto px-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div class="space-y-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan" class="h-14">
-                <p class="text-xs text-slate-500 leading-relaxed max-w-xs">
-                    Empowering students through sports excellence and state-of-the-art facilities management.
-                </p>
-            </div>
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 text-center md:text-left">
             <div>
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm text-slate-600">
-                    <li><a href="dashboard.php" class="hover:text-[#8a0d19] transition text-decoration-none">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#8a0d19] transition text-decoration-none">Browse Facilities</a></li>
-                </ul>
+                 <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan" class="h-12 mx-auto md:mx-0 opacity-80 hover:opacity-100 transition">
             </div>
-            <div>
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Contact Us</h4>
-                <div class="text-sm text-slate-600 space-y-2">
-                    <p class="font-medium">Stadium Universiti, UKM</p>
-                    <p>43600 Bangi, Selangor</p>
-                    <p class="text-[#8a0d19] font-bold mt-2"><i class="fa-solid fa-phone mr-2"></i> 03-8921 5306</p>
-                </div>
+            <div class="flex gap-8 text-sm font-medium text-slate-500">
+                <a href="#" class="hover:text-[#8a0d19] transition text-decoration-none">Facilities</a>
+                <a href="#" class="hover:text-[#8a0d19] transition text-decoration-none">Rules</a>
+                <a href="#" class="hover:text-[#8a0d19] transition text-decoration-none">Contact</a>
             </div>
         </div>
-        <div class="border-t border-slate-100 mt-12 pt-8">
-            <p class="text-[10px] text-slate-400">© 2025 Universiti Kebangsaan Malaysia. All rights reserved.</p>
+        <div class="border-t border-slate-100 pt-8 text-center">
+            <p class="text-[11px] text-slate-400 uppercase tracking-widest">© 2025 Universiti Kebangsaan Malaysia. All rights reserved.</p>
         </div>
     </div>
 </footer>
 
+<!-- CUSTOM MODAL COMPONENT -->
+<div id="cancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md mx-4 transform scale-95 transition-transform duration-300" id="cancelModalContent">
+        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+            <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-center text-slate-800 mb-2 font-serif">Cancel Booking?</h3>
+        <p class="text-center text-slate-500 text-sm mb-8">Are you sure you want to cancel? This action cannot be undone.</p>
+        
+        <div class="flex gap-3">
+            <button onclick="closeCancelModal()" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">
+                No, Keep it
+            </button>
+            <button id="confirmCancelBtn" class="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition">
+                Yes, Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-function cancelBooking(id) {
-    if(!confirm("Are you sure you want to cancel this booking?")) return;
+let currentBookingId = null;
+
+// Modal Logic
+function showCancelModal(id) {
+    currentBookingId = id;
+    const modal = document.getElementById('cancelModal');
+    const content = document.getElementById('cancelModalContent');
+    
+    modal.classList.remove('hidden');
+    // small delay to allow display:block to apply before opacity transition
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+    }, 10);
+    
+    document.getElementById('confirmCancelBtn').onclick = function() {
+        processCancellation(currentBookingId);
+    };
+}
+
+function closeCancelModal() {
+    const modal = document.getElementById('cancelModal');
+    const content = document.getElementById('cancelModalContent');
+    
+    modal.classList.add('opacity-0');
+    content.classList.remove('scale-100');
+    content.classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        currentBookingId = null;
+    }, 300);
+}
+
+// Cancel Booking Fetch
+function processCancellation(id) {
+    const btn = document.getElementById('confirmCancelBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+    btn.disabled = true;
 
     const formData = new FormData();
     formData.append('booking_id', id);
@@ -309,15 +425,26 @@ function cancelBooking(id) {
     .then(res => res.json())
     .then(data => {
         if(data.success) {
-            alert("Booking cancelled successfully.");
-            location.reload(); 
+            // Optional: Success visual before reload
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Cancelled!';
+            btn.classList.remove('bg-red-600');
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+                location.reload(); 
+            }, 800);
         } else {
             alert("Error: " + (data.message || "Unknown error"));
+            closeCancelModal();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     })
     .catch(err => {
         console.error(err);
         alert("Network error. Please try again.");
+        closeCancelModal();
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     });
 }
 
@@ -325,19 +452,40 @@ function openFeedback(id) {
     window.location.href = "feedback.php?booking_id=" + id;
 }
 
-// Profile dropdown click toggle
+// Dropdown Interactions
 const profileBtn = document.getElementById('profileBtn');
 const dropdownMenu = document.getElementById('dropdownMenu');
+const profileContainer = document.getElementById('profileDropdownContainer');
+let isDropdownOpen = false;
 
 profileBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevents immediate close
-    dropdownMenu.classList.toggle('hidden');
+    e.stopPropagation();
+    isDropdownOpen = !isDropdownOpen;
+    toggleDropdown();
 });
 
-// Close dropdown if clicked outside
+function toggleDropdown() {
+    if (isDropdownOpen) {
+        dropdownMenu.classList.remove('hidden');
+        // Animate open
+        requestAnimationFrame(() => {
+            dropdownMenu.classList.remove('opacity-0', 'scale-95');
+            dropdownMenu.classList.add('opacity-100', 'scale-100');
+        });
+    } else {
+        // Animate close
+        dropdownMenu.classList.remove('opacity-100', 'scale-100');
+        dropdownMenu.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+            dropdownMenu.classList.add('hidden');
+        }, 150);
+    }
+}
+
 document.addEventListener('click', (e) => {
-    if(!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-        dropdownMenu.classList.add('hidden');
+    if(isDropdownOpen && !profileContainer.contains(e.target)) {
+        isDropdownOpen = false;
+        toggleDropdown();
     }
 });
 </script>
