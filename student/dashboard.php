@@ -77,7 +77,7 @@ if ($conn->connect_error) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard – UKM Sports Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -95,6 +95,8 @@ body {
     flex-direction: column;
     min-height: 100vh;
 }
+
+h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 /* Custom Scrollbar */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -157,24 +159,29 @@ body {
     </div>
 </nav>
 
-<!-- MAIN CONTENT -->
-<main class="container mx-auto px-6 py-8 flex-grow max-w-7xl">
-
-    <!-- PAGE HEADER -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-gray-500 mt-1">Welcome back, <span class="font-semibold text-gray-800"><?php echo htmlspecialchars($studentName); ?></span></p>
-        </div>
-        <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-5 py-2.5 rounded-lg shadow-sm text-sm font-medium transition flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> New Booking
+<!-- HERO BANNER & HEADER -->
+<div class="w-full h-72 md:h-80 overflow-hidden relative shadow-md group">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105">
+    <div class="absolute inset-0 bg-gradient-to-t from-[#8a0d19]/90 to-black/30 mix-blend-multiply"></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
+        <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight drop-shadow-lg font-serif">Student Dashboard</h1>
+        <p class="text-lg opacity-95 font-light max-w-2xl">
+            Welcome back, <span class="font-semibold"><?php echo htmlspecialchars($studentName); ?></span>. Manage your schedule and activities.
+        </p>
+        
+        <a href="student_facilities.php" class="mt-6 bg-white text-[#8a0d19] px-6 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1 flex items-center gap-2">
+            <i class="fa-solid fa-plus-circle"></i> New Booking
         </a>
     </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="container mx-auto px-6 py-10 flex-grow max-w-7xl relative z-20">
 
     <!-- STATS OVERVIEW -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <!-- Stat 1 -->
-        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
             <div>
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Facilities</p>
                 <p class="text-2xl font-bold text-gray-900 mt-1" id="facility-counter">0</p>
@@ -184,7 +191,7 @@ body {
             </div>
         </div>
         <!-- Stat 2 -->
-        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
              <div>
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Staff Members</p>
                 <p class="text-2xl font-bold text-gray-900 mt-1" id="staff-counter">0</p>
@@ -194,7 +201,7 @@ body {
             </div>
         </div>
         <!-- Stat 3 -->
-        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
              <div>
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Bookings</p>
                 <p class="text-2xl font-bold text-gray-900 mt-1"><?php echo count($upcoming) + count($history); ?></p>
