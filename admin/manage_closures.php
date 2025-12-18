@@ -172,7 +172,7 @@ if (isset($_GET["delete_id"])) {
         
         <a class="nav-link" href="bookinglist.php" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 12px; text-decoration: none;">Booking</a>
         
-        <a class="nav-link" href="report.php" style="color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 12px; text-decoration: none;">Report</a>
+
 
         <div class="dropdown">
             <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">

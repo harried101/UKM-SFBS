@@ -252,7 +252,7 @@ function getStatusClass($status) {
         
         <a class="nav-link active" href="bookinglist.php">Booking</a>
         
-        <a class="nav-link" href="report.php">Report</a>
+
 
         <div class="dropdown">
             <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
