@@ -106,9 +106,9 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
                     <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
                     <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                        <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
-                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                        </a>
+                      <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition">
+                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                            </a>
                     </div>
                 </div>
             </div>
