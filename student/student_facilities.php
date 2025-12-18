@@ -88,39 +88,40 @@ h1, h2, h3 {
 </head>
 <body>
 
-<!-- NAVBAR (Blue Gradient Theme) -->
-<nav class="bg-gradient-to-r from-[#0b4d9d] to-[#052c5c] shadow-lg sticky top-0 z-50">
+<!-- NAVBAR (Clean White Version) -->
+<nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
-            <!-- Logos with inversion filter for white text on blue bg -->
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto brightness-0 invert">
-            <div class="h-8 w-px bg-white/30 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto brightness-0 invert hidden sm:block">
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
+            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <a href="dashboard.php" class="text-white/80 hover:text-white font-medium transition flex items-center gap-2 group">
-                <span class="p-2 rounded-full bg-white/10 group-hover:bg-white/20 transition shadow-sm">
+            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition flex items-center gap-2 group">
+                <span class="p-2 rounded-full bg-gray-100 group-hover:bg-[#0b4d9d] group-hover:text-white transition shadow-sm">
                     <i class="fa-solid fa-house"></i>
                 </span>
                 <span class="hidden md:inline">Home</span>
             </a>
             
-            <!-- Active State for Facilities (White Pill) -->
-            <a href="student_facilities.php" class="bg-white text-[#0b4d9d] px-4 py-2 rounded-full font-bold transition flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-dumbbell"></i>
+            <!-- Active State for Facilities -->
+            <a href="student_facilities.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2">
+                <span class="p-2 rounded-full bg-[#0b4d9d] text-white shadow-sm">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </span>
                 Facilities
             </a>
             
-            <!-- History Link -->
-            <a href="dashboard.php?tab=history" class="text-white/80 hover:text-white font-medium transition">History</a>
+            <!-- Direct Link to History Tab -->
+            <a href="dashboard.php?tab=history" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">History</a>
 
-            <div class="flex items-center gap-3 pl-6 border-l border-white/20">
-                <div class="text-right hidden sm:block text-white">
-                    <p class="text-sm font-bold"><?php echo htmlspecialchars($studentName); ?></p>
-                    <p class="text-xs uppercase tracking-wider opacity-80"><?php echo htmlspecialchars($studentID); ?></p>
+            <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-gray-800"><?php echo htmlspecialchars($studentName); ?></p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider"><?php echo htmlspecialchars($studentID); ?></p>
                 </div>
                 <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white/50 shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
                     <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
                         <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
@@ -136,7 +137,7 @@ h1, h2, h3 {
 <!-- HERO BANNER -->
 <div class="w-full h-64 md:h-80 overflow-hidden relative shadow-md group">
     <img src="../court.jpg" alt="Sports Court" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-    <div class="absolute inset-0 bg-gradient-to-t from-[#0b4d9d]/80 to-black/20 mix-blend-multiply"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
     <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
         <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg font-serif">Browse Facilities</h1>
         <p class="text-lg md:text-xl opacity-90 max-w-2xl font-light leading-relaxed">
@@ -179,7 +180,7 @@ h1, h2, h3 {
 
 </main>
 
-<!-- FOOTER (Correct Full Address) -->
+<!-- FOOTER (Full Address) -->
 <footer class="bg-white border-t border-gray-200 py-6 mt-auto">
     <div class="container mx-auto px-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-6">
