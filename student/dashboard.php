@@ -9,6 +9,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 
 require_once '../includes/db_connect.php';
 
+// FIX: Set Timezone to match Database (Malaysia Time)
+date_default_timezone_set('Asia/Kuala_Lumpur');
+
 // 1. Fetch Student Details
 $studentIdentifier = $_SESSION['user_id'] ?? '';
 $studentName = 'Student';
@@ -31,10 +34,9 @@ if ($studentIdentifier) {
 // 2. Fetch All Bookings (Separated into Upcoming & History)
 $upcoming = [];
 $history = [];
-$now = new DateTime();
+$now = new DateTime(); // Current time in KL (due to timezone set above)
 
 if ($db_numeric_id > 0) {
-    // We remove the 'StartTime > NOW()' filter to get everything
     $sql = "SELECT b.BookingID, b.StartTime, b.EndTime, b.Status, f.Name as FacilityName, f.Type, f.Location
             FROM bookings b
             JOIN facilities f ON b.FacilityID = f.FacilityID
@@ -81,7 +83,7 @@ if ($conn->connect_error) {
 
 <style>
 :root {
-    --primary: #0b4d9d; /* UKM Blue */
+    --primary: #8a0d19; /* UKM Red */
     --secondary: #006400;
     --bg-light: #f8f9fa;
 }
@@ -114,7 +116,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 </head>
 <body>
 
-<!-- NAVBAR (Clean White Version) -->
+<!-- NAVBAR -->
 <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -123,16 +125,13 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
         </div>
         <div class="flex items-center gap-6">
-            <!-- Active State for Home -->
-            <a href="dashboard.php" class="text-[#0b4d9d] font-bold transition flex items-center gap-2 group">
-                <span class="p-2 rounded-full bg-[#0b4d9d] text-white transition shadow-sm">
-                    <i class="fa-solid fa-house"></i>
-                </span>
-                <span class="hidden md:inline">Home</span>
+            <!-- Active Home (No Icon) -->
+            <a href="dashboard.php" class="text-[#8a0d19] font-bold transition flex items-center gap-2 group">
+                Home
             </a>
-            <a href="student_facilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
+            <a href="student_facilities.php" class="text-gray-600 hover:text-[#8a0d19] font-medium transition">Facilities</a>
             <!-- Link triggers history tab -->
-            <button onclick="switchTab('history')" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">History</button>
+            <button onclick="switchTab('history')" class="text-gray-600 hover:text-[#8a0d19] font-medium transition">History</button>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right hidden sm:block">
@@ -154,7 +153,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 <!-- HERO BANNER (Image Only) -->
 <div class="w-full h-64 md:h-72 overflow-hidden relative shadow-md group">
-    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-100">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
     <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 </div>
 
@@ -163,11 +162,11 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-gray-100">
         <div>
             <h1 class="text-3xl md:text-4xl font-bold text-gray-800 font-serif mb-2">
-                Welcome back, <span class="text-[#0b4d9d]"><?php echo htmlspecialchars($studentName); ?></span>
+                Welcome back, <span class="text-[#8a0d19]"><?php echo htmlspecialchars($studentName); ?></span>
             </h1>
             <p class="text-gray-500">Ready to stay active? Check your schedule below or book a new facility.</p>
         </div>
-        <a href="student_facilities.php" class="bg-[#0b4d9d] text-white px-8 py-3 rounded-lg shadow-md hover:bg-[#083a75] transition font-medium whitespace-nowrap flex items-center gap-2 transform hover:-translate-y-0.5">
+        <a href="student_facilities.php" class="bg-[#8a0d19] text-white px-8 py-3 rounded-lg shadow-md hover:bg-[#6d0a13] transition font-medium whitespace-nowrap flex items-center gap-2 transform hover:-translate-y-0.5">
             <i class="fa-solid fa-plus-circle"></i> Book New Facility
         </a>
     </div>
@@ -181,7 +180,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
         <!-- Tabs Header -->
         <div class="flex items-center gap-8 px-8 pt-6 border-b border-gray-100 bg-white">
             <button onclick="switchTab('upcoming')" id="tab-upcoming" class="tab-btn active pb-4 px-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
-                Upcoming <span class="bg-[#0b4d9d] text-white px-2 py-0.5 rounded-full text-xs"><?php echo count($upcoming); ?></span>
+                Upcoming <span class="bg-[#8a0d19] text-white px-2 py-0.5 rounded-full text-xs"><?php echo count($upcoming); ?></span>
             </button>
             <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-4 px-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                 History <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-xs"><?php echo count($history); ?></span>
@@ -210,7 +209,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
                                         </div>
                                         <h3 class="text-lg font-bold text-gray-700">No Upcoming Bookings</h3>
                                         <p class="text-gray-500 text-sm mb-4">You have no active sessions scheduled.</p>
-                                        <a href="student_facilities.php" class="text-[#0b4d9d] font-bold hover:underline">Browse Facilities &rarr;</a>
+                                        <a href="student_facilities.php" class="text-[#8a0d19] font-bold hover:underline">Browse Facilities &rarr;</a>
                                     </div>
                                 </td>
                             </tr>
@@ -223,19 +222,19 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
                                 
                                 $statusClass = ($bk['Status'] === 'Approved') 
                                     ? 'bg-green-100 text-green-700 border-green-200' 
-                                    : 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
                             ?>
                             <tr class="hover:bg-gray-50 transition duration-150">
                                 <td class="p-5">
                                     <div class="font-bold text-gray-800 text-lg"><?php echo htmlspecialchars($bk['FacilityName']); ?></div>
                                     <div class="text-xs text-gray-500 mt-1 flex items-center gap-2">
                                         <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600"><?php echo htmlspecialchars($bk['Type']); ?></span>
-                                        <span><i class="fa-solid fa-location-dot text-[#0b4d9d] mr-1"></i> <?php echo htmlspecialchars($bk['Location']); ?></span>
+                                        <span><i class="fa-solid fa-location-dot text-[#8a0d19] mr-1"></i> <?php echo htmlspecialchars($bk['Location']); ?></span>
                                     </div>
                                 </td>
                                 <td class="p-5">
                                     <div class="flex items-center gap-3">
-                                        <div class="bg-blue-50 text-[#0b4d9d] rounded-lg p-2 text-center min-w-[50px] border border-blue-100">
+                                        <div class="bg-red-50 text-[#8a0d19] rounded-lg p-2 text-center min-w-[50px] border border-red-100">
                                             <span class="block text-lg font-bold leading-none"><?php echo $startObj->format('d'); ?></span>
                                             <span class="block text-[10px] uppercase font-bold"><?php echo $startObj->format('M'); ?></span>
                                         </div>
@@ -317,7 +316,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
         <!-- Stat 1 -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition">
-            <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0b4d9d] text-xl">
+            <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-[#8a0d19] text-xl">
                 <i class="fa-solid fa-dumbbell"></i>
             </div>
             <div>
@@ -353,7 +352,7 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
         <div class="relative z-10 flex flex-col md:flex-row gap-8 items-center">
             <div class="flex-1 text-center md:text-left">
                 <h2 class="text-2xl font-bold font-serif mb-3 text-white">About UKM Sports Center</h2>
-                <div class="w-16 h-1 bg-[#0b4d9d] mb-4 mx-auto md:mx-0"></div>
+                <div class="w-16 h-1 bg-[#8a0d19] mb-4 mx-auto md:mx-0"></div>
                 <p class="text-gray-300 text-sm leading-relaxed">
                     Established on 1 November 1974, the UKM Sports Center began with a single Sports Officer. Today, it has evolved into a fully equipped center managing sports activities for students and staff, participating in major events like the ASEAN University Games.
                 </p>
@@ -366,35 +365,32 @@ h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
 </main>
 
-<!-- FOOTER (Correct Full Address) -->
-<footer class="bg-white border-t border-gray-200 py-6 mt-auto">
+<!-- FOOTER -->
+<footer class="bg-white border-t border-gray-200 py-10 mt-auto">
     <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <!-- Logo & Address -->
-            <div class="flex items-center gap-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto">
-                <div class="text-xs text-gray-600 leading-snug">
-                    <strong class="block text-gray-800 text-sm mb-0.5">PEJABAT PENGARAH PUSAT SUKAN</strong>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <div class="flex items-start gap-4 max-w-md">
+                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-16 w-auto">
+                <div class="text-sm text-gray-600 leading-relaxed">
+                    <strong class="block text-gray-900 text-base mb-1">PEJABAT PENGARAH PUSAT SUKAN</strong>
                     Stadium Universiti, Universiti Kebangsaan Malaysia<br>
                     43600 Bangi, Selangor Darul Ehsan<br>
-                    <span class="mt-0.5 block text-[#0b4d9d] font-semibold"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
+                    <span class="mt-1 block"><i class="fa-solid fa-phone mr-1"></i> 03-8921-5306</span>
                 </div>
             </div>
-            
-            <!-- SDG Logo & Copyright -->
-            <div class="flex items-center gap-6">
-                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-14 w-auto opacity-90">
-                <p class="text-[10px] text-gray-400 text-right">
-                    &copy; 2025 Universiti Kebangsaan Malaysia.<br>All rights reserved.
-                </p>
+            <div>
+                <img src="../assets/img/sdg.png" alt="SDG Logo" class="h-20 w-auto opacity-90">
             </div>
+        </div>
+        <div class="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-500">
+            &copy; 2025 Universiti Kebangsaan Malaysia. All rights reserved.
         </div>
     </div>
 </footer>
 
 <!-- SCRIPTS -->
 <script>
-// 1. Tab Logic (with URL Parameter Support)
+// 1. Tab Logic
 function switchTab(tab) {
     // Buttons
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
