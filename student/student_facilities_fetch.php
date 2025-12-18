@@ -59,30 +59,30 @@ if ($result->num_rows > 0) {
             $btnAttr = 'disabled class="w-full bg-gray-100 text-gray-400 py-2.5 rounded-lg font-bold cursor-not-allowed border border-gray-200"';
             $btnText = 'Under Maintenance';
         } else {
-            // Active UKM Blue Button
-            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#0b4d9d] text-white py-2.5 rounded-lg font-bold hover:bg-[#083a75] transition shadow-md hover:shadow-lg transform active:scale-[0.98]"';
+            // Active UKM Red Button (#8a0d19)
+            $btnAttr = 'onclick="openCalendar(\''.$row['FacilityID'].'\')" class="w-full bg-[#8a0d19] text-white py-2.5 rounded-lg font-bold hover:bg-[#6d0a13] transition shadow-md hover:shadow-lg transform active:scale-[0.98]"';
             $btnText = 'Check Availability';
         }
 
         echo '
-        <div class="facility-card group bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
+        <div class="facility-card group bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl hover:shadow-red-100/50 transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
             <div class="relative h-56 overflow-hidden">
                 <img src="'.$imgSrc.'" alt="'.htmlspecialchars($row['Name']).'" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                <div class="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#0b4d9d] shadow-sm uppercase tracking-wide border border-gray-100">
+                <div class="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#8a0d19] shadow-sm uppercase tracking-wide border border-gray-100">
                     '.htmlspecialchars($row['Type']).'
                 </div>
             </div>
             
             <div class="p-5 flex flex-col flex-grow">
                 <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#0b4d9d] transition-colors">
+                    <h3 class="text-lg font-bold text-gray-800 leading-tight group-hover:text-[#8a0d19] transition-colors">
                         '.htmlspecialchars($row['Name']).'
                     </h3>
                 </div>
 
                 <div class="mb-4">
                     <p class="text-sm text-gray-500 flex items-center mb-2">
-                        <i class="fa-solid fa-location-dot text-[#0b4d9d] w-5 text-center mr-1"></i> 
+                        <i class="fa-solid fa-location-dot text-[#8a0d19] w-5 text-center mr-1"></i> 
                         '.htmlspecialchars($row['Location']).'
                     </p>
                     <div class="inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-semibold '.$statusClass.'">
