@@ -111,7 +111,7 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
     <img src="../court.jpg" class="w-full h-full object-cover">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
-        <h1 class="text-7xl font-bold mb-3">Browse Facilities</h1>
+        <h1 class="text-6xl font-bold mb-3">Browse Facilities</h1>
         <p class="opacity-90">Find and book sports facilities at UKM</p>
     </div>
 </div>
