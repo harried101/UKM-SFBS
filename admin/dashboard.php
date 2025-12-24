@@ -270,13 +270,13 @@ include 'includes/navbar.php';
                 <p class="text-blue-100 text-sm">Welcome back, <?php echo htmlspecialchars($adminName); ?> - Real-time insights and statistics</p>
             </div>
             <div class="flex gap-3">
-                <a href="book_walkin.php" class="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-5 py-2.5 rounded-lg hover:bg-white/20 transition font-medium shadow-sm flex items-center gap-2 text-sm">
-                    <i class="fa-solid fa-user-pen"></i> Walk-in
-                </a>
-                <a href="bookinglist.php" class="bg-white text-[#0b4d9d] px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition font-medium flex items-center gap-2 text-sm">
-                    <i class="fa-solid fa-list-check"></i> Manage Requests
-                </a>
-            </div>
+             <a href="bookinglist.php?openModal=true" class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium shadow-sm flex items-center gap-2 text-sm">
+                <i class="fa-solid fa-user-pen"></i> Walk-in
+            </a>
+            <a href="bookinglist.php" class="bg-white text-[#0b4d9d] px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition font-medium flex items-center gap-2 text-sm">
+                <i class="fa-solid fa-list-check"></i> Manage Requests
+            </a>
+        </div>
         </div>
     </div>
 </div>

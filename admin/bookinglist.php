@@ -470,6 +470,16 @@ include 'includes/navbar.php';
             window.location.href = "bookinglist.php?msg=" + encodeURIComponent(event.data.message);
         }
     });
+    
+    // Auto-open modal if URL parameter is set
+    window.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('openModal') === 'true') {
+            openNewBookingModal();
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
 </script>
 
 
