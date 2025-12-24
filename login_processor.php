@@ -76,10 +76,23 @@ if ($stmt = $conn->prepare($sql)) {
             $role = $user['Role'];
             
             // --- START SESSION AND STORE USER DATA ---
+            // ---------------- SESSION SECURITY SETTINGS ----------------
+ini_set('session.gc_maxlifetime', 1800);   // 30 minutes
+ini_set('session.cookie_lifetime', 1800);
+ini_set('session.use_strict_mode', 1);
+ini_set('session.use_only_cookies', 1);
+
             session_start();
-            $_SESSION['user_id'] = $identifier; 
-            $_SESSION['role'] = $role;
-            $_SESSION['logged_in'] = true;
+
+// Core session data
+$_SESSION['user_id'] = $identifier;
+$_SESSION['role'] = $role;
+$_SESSION['logged_in'] = true;
+
+// Session timing (REQUIRED for expiry)
+$_SESSION['created_at'] = time();      // absolute expiry
+$_SESSION['last_activity'] = time();   // idle tracking
+
 
             $response = [
                 'status' => 'success',
