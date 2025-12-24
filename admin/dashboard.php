@@ -782,7 +782,8 @@ new Chart(statusCtx, {
                 cornerRadius: 8,
                 callbacks: {
                     label: function(context) {
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        // Convert strings to numbers to prevent concatenation
+                        const total = context.dataset.data.reduce((a, b) => Number(a) + Number(b), 0);
                         const percentage = ((context.parsed / total) * 100).toFixed(1);
                         return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
                     }
