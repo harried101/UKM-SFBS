@@ -12,9 +12,7 @@ require_once '../includes/db_connect.php';
 // Timezone
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-// -----------------------------
 // 1. FETCH STUDENT DETAILS
-// -----------------------------
 $studentIdentifier = $_SESSION['user_id'] ?? '';
 $studentName = 'Student';
 $studentID = '';
@@ -38,14 +36,11 @@ if ($studentIdentifier) {
     $stmtStudent->close();
 }
 
-// -----------------------------
-// 2. FETCH BOOKINGS
-// -----------------------------
+// 2. FETCH ALL BOOKINGS (FIXED LOGIC)
 $all_bookings = [];
 $now = new DateTime(); // current KL time
 
 if ($db_numeric_id > 0) {
-    // We fetch all bookings here to display in the dashboard list
     $sql = "
         SELECT 
             b.BookingID,
@@ -53,7 +48,6 @@ if ($db_numeric_id > 0) {
             b.EndTime,
             b.Status,
             f.Name AS FacilityName,
-            f.Type,
             f.Location
         FROM bookings b
         JOIN facilities f ON b.FacilityID = f.FacilityID
@@ -67,34 +61,36 @@ if ($db_numeric_id > 0) {
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        // StartTime logic: handle invalid data
-        if ($row['StartTime'] === '0000-00-00 00:00:00' || empty($row['StartTime'])) {
-            $start = new DateTime($row['EndTime']);
-        } else {
-            $start = new DateTime($row['StartTime']);
-        }
+        
+        // Use full database datetime strings to create DateTime objects
+        $startTimeStr = ($row['StartTime'] === '0000-00-00 00:00:00' || empty($row['StartTime'])) 
+            ? $row['EndTime'] 
+            : $row['StartTime'];
 
-        // EndTime logic: combine StartTime date with EndTime clock components
-        $end = new DateTime($start->format('Y-m-d H:i:s'));
-        $end->setTime(
-            (int)date('H', strtotime($row['EndTime'])),
-            (int)date('i', strtotime($row['EndTime'])),
-            (int)date('s', strtotime($row['EndTime']))
-        );
-
-        // Determine if the booking session has ended
+        $start = new DateTime($startTimeStr);
+        $end = new DateTime($row['EndTime']);
+        
+        // Check if the booking has passed
         $is_passed = ($end < $now);
 
-        $all_bookings[] = array_merge($row, [
-            'is_passed'       => $is_passed,
-            'formatted_start' => $start->format('d M Y'),
-            'formatted_time'  => $start->format('h:i A') . ' - ' . $end->format('h:i A'),
-            'day'             => $start->format('d'),
-            'month'           => $start->format('M')
-        ]);
+        // Add formatted data for display
+        $row['is_passed'] = $is_passed;
+        $row['formatted_start'] = $start->format('d M Y');
+        $row['formatted_time'] = $start->format('h:i A') . ' - ' . $end->format('h:i A');
+        
+        $all_bookings[] = $row;
     }
     $stmt->close();
 }
+
+// 3. FETCH COUNTS (Dynamic)
+$activeCount = 0;
+foreach($all_bookings as $b) {
+    if (!$b['is_passed'] && in_array($b['Status'], ['Pending', 'Approved', 'Confirmed'])) {
+        $activeCount++;
+    }
+}
+$staffCount = 47; // Static as requested in previous contexts or fetch from DB if available
 
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
@@ -110,233 +106,282 @@ if ($conn->connect_error) {
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
 :root {
-    --primary: #8a0d19; /* UKM Red */
+    --primary: #8a0d19;
     --primary-hover: #6d0a13;
-    --bg-light: #f8fafc;
+    --bg-light: #f8f9fa;
 }
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-light);
-    color: #1e293b;
+    color: #333;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
+h1,h2,h3 { font-family: 'Playfair Display', serif; }
 
-h1, h2, h3 { font-family: 'Playfair Display', serif; }
-
-.fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Tab link styles */
-.tab-link {
-    position: relative;
-    padding-bottom: 0.5rem;
+/* NAVBAR */
+nav {
+    background: #bfd9dc;
+    padding: 10px 40px;
+    border-bottom-left-radius: 25px;
+    border-bottom-right-radius: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.nav-logo img { height: 65px; }
+.nav-link {
+    color: #071239ff;
     font-weight: 600;
-    transition: all 0.3s;
-    color: #64748b;
+    padding: 8px 18px;
+    border-radius: 12px;
+    transition: 0.3s ease;
     text-decoration: none;
 }
-.tab-link:hover {
-    color: var(--primary);
-}
-.tab-link.active {
-    color: var(--primary);
-}
-.tab-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.5); }
+.dropdown-menu { border-radius: 12px; background: #bfd9dc; box-shadow: 0 4px 8px rgba(0,0,0,0.2); padding: 5px; }
+.dropdown-item { color: #071239ff; font-weight: 600; padding: 8px 18px; border-radius: 10px; transition: 0.3s ease; }
+.dropdown-item:hover { background: rgba(255,255,255,0.5); color: #071239ff; }
+
+/* BANNER IMAGE */
+.banner img {
     width: 100%;
-    height: 2px;
-    background-color: var(--primary);
+    max-height: 250px;
+    object-fit: cover;
+    display: block;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* WELCOME TEXT */
+.welcome-text {
+    text-align: center;
+    margin: 30px auto 50px auto;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--primary);
+}
+
+/* TABLE */
+.table-wrapper {
+    width: 90%;
+    margin: 0 auto 50px;
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    background: white;
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 14px; text-align: center; border-bottom: 1px solid #eee; }
+th { background: var(--primary); color: white; text-transform: uppercase; }
+button.cancel-btn { background: #dc3545; color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; border:none; }
+button.review-btn { background: #21b32d; color: white; padding: 6px 14px; font-weight: 600; border-radius: 6px; border:none; text-decoration:none; display:inline-block; }
+button.cancel-btn:hover { background: #bb2d3b; }
+button.review-btn:hover { background: #1a8b23; }
+
+/* COUNTERS */
+.counters { display: flex; justify-content: center; gap: 80px; margin: 30px auto 50px; flex-wrap: wrap; text-align: center; }
+.counter-number { font-size: 48px; font-weight: 700; color: var(--primary); }
+.counter-label { font-size: 18px; margin-top: 5px; color: #004d7a; }
+
+/* INFO BOX */
+.info-text {
+    width: 85%;
+    margin: 40px auto;
+    background: white;
+    padding: 25px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    font-size: 16px;
+    line-height: 1.7;
+    text-align: center;
+    color: #004d7a;
+}
+.info-text h2 { font-size: 28px; margin-bottom: 15px; font-weight: bold; color: var(--primary); }
+
+/* FOOTER */
+.footer { background: white; border-top: 1px solid #eee; margin-top: auto; }
+.footer-top { display: flex; justify-content: space-between; align-items: center; padding: 30px 15px; flex-wrap: wrap; }
+.footer-logo img { height: 100px; }
+.footer-info { text-align: center; flex: 1; line-height: 1.6; }
+.footer-title { font-size: 22px; margin-bottom: 10px; display: block; }
+.footer-sdg img { height: 180px; }
+.footer-bottom { background: var(--primary); color: white; text-align: center; padding: 12px 15px; font-size: 13px; }
+
+@media screen and (max-width:768px) {
+    .counters { flex-direction: column; gap: 30px; }
+    .footer-top { flex-direction: column; gap: 20px; }
+    .footer-logo img, .footer-sdg img { height: 100px; }
 }
 </style>
 </head>
 <body>
 
 <!-- NAVBAR -->
-<nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
-            <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
-        </div>
-        <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative text-decoration-none">
-                <span>Home</span>
-                <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
-            </a>
-            <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Facilities</a>
-            
-            <!-- Added Notification Bell Link -->
-            <a href="notification.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none relative">
-                <i class="fa-solid fa-bell text-lg"></i>
-                <!-- Optional: Add a red dot if there are unread notifications (requires backend logic) -->
-                <!-- <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-400"></span> -->
-            </a>
+<nav class="d-flex justify-content-between align-items-center px-4 py-2">
+    <div class="nav-logo d-flex align-items-center gap-3">
+        <img src="../assets/img/ukm.png" alt="UKM Logo" height="45">
+        <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" height="45">
+    </div>
 
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-slate-800"><?php echo htmlspecialchars($studentName); ?></p>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold"><?php echo htmlspecialchars($studentID); ?></p>
+    <div class="d-flex align-items-center gap-4">
+        <a class="nav-link active" href="#">Home</a>
+        <a class="nav-link" href="student_facilities.php">Facilities</a>
+        <a class="nav-link" href="booking_history.php">Booking History</a>
+        
+        <!-- Notification Bell -->
+        <a class="nav-link relative" href="notification.php">
+            <i class="fa-solid fa-bell text-xl"></i>
+        </a>
+
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="../assets/img/user.png" class="rounded-circle" style="width:45px; height:45px;">
+                <div style="line-height:1.2; text-align: left;">
+                    <div class="fw-bold" style="color:#071239ff;"><?php echo htmlspecialchars($studentName); ?></div>
+                    <small class="text-muted" style="font-size: 0.8rem;"><?php echo htmlspecialchars($studentID); ?></small>
                 </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform group-hover:scale-105">
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 overflow-hidden">
-                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2 text-decoration-none">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item text-danger" href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
+            </ul>
         </div>
     </div>
 </nav>
 
-<!-- MAIN CONTENT -->
-<main class="container mx-auto px-6 py-12 flex-grow max-w-7xl relative z-20">
+<!-- BANNER -->
+<div class="banner">
+    <img src="../assets/img/psukan.jpg" alt="Pusat Sukan">
+</div>
 
-    <!-- WELCOME GREETING -->
-    <div class="mb-10 fade-in">
-        <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] mb-2 font-serif">Welcome back, <?php echo htmlspecialchars($studentName); ?>!</h1>
-        <div class="w-20 h-1 bg-[#8a0d19] rounded-full opacity-50"></div>
-    </div>
+<!-- WELCOME TEXT BELOW BANNER -->
+<h1 class="welcome-text">Welcome, <?php echo htmlspecialchars($studentName); ?>!</h1>
 
-    <!-- PAGE HEADER WITH TABS -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-slate-200 pb-0">
-        <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="tab-link active text-sm uppercase tracking-wider">Active Bookings</a>
-            <a href="booking_history.php" class="tab-link text-sm uppercase tracking-wider">Booking History</a>
-        </div>
-        <div class="pb-4 md:pb-0">
-            <a href="student_facilities.php" class="bg-[#8a0d19] hover:bg-[#6d0a13] text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 text-decoration-none text-sm">
-                <i class="fa-solid fa-plus-circle"></i> New Booking
-            </a>
-        </div>
-    </div>
-
-    <!-- BOOKINGS LIST -->
-    <div class="space-y-4 fade-in" style="animation-delay: 0.1s;">
-        <?php if (empty($all_bookings)): ?>
-            <div class="bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center flex flex-col items-center justify-center">
-                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
-                    <i class="fa-regular fa-calendar-xmark text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">No Bookings Found</h3>
-                <p class="text-slate-500 mb-6 max-w-sm mx-auto text-sm">You haven't made any bookings yet.</p>
-                <a href="student_facilities.php" class="text-[#8a0d19] font-bold text-sm hover:underline flex items-center gap-2 transition group text-decoration-none">
-                    Browse Facilities <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                </a>
-            </div>
-        <?php else: ?>
-            <?php foreach ($all_bookings as $bk): 
-                $statusClass = 'bg-slate-100 text-slate-600 border-slate-200';
-                if (in_array($bk['Status'], ['Approved', 'Confirmed'])) {
-                    $statusClass = 'bg-green-100 text-green-700 border-green-200';
-                } elseif ($bk['Status'] === 'Pending') {
-                    $statusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
-                    $statusClass = 'bg-red-50 text-red-700 border-red-200';
-                }
-                
-                // Opacity for passed bookings
-                $opacityClass = $bk['is_passed'] ? 'opacity-75 bg-slate-50' : 'bg-white hover:shadow-md';
-            ?>
-            <div class="<?php echo $opacityClass; ?> rounded-2xl p-5 border border-slate-100 shadow-sm transition-all flex flex-col md:flex-row items-center justify-between gap-6 group">
-                <div class="flex items-center gap-6 w-full">
-                    <!-- Date Badge -->
-                    <div class="bg-red-50 rounded-xl p-3 min-w-[70px] text-center border border-red-100">
-                        <span class="block text-xl font-bold text-[#8a0d19] font-serif"><?php echo $bk['day']; ?></span>
-                        <span class="block text-[10px] uppercase font-bold text-red-400 tracking-wider"><?php echo $bk['month']; ?></span>
-                    </div>
-                    <!-- Info -->
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#8a0d19] transition-colors"><?php echo htmlspecialchars($bk['FacilityName']); ?></h4>
-                        <div class="flex flex-wrap gap-4 text-sm text-slate-500 font-medium">
-                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-slate-400"></i> <?php echo $bk['formatted_time']; ?></span>
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-slate-400"></i> <?php echo htmlspecialchars($bk['Location']); ?></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Status & Action Buttons -->
-                <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end pt-4 md:pt-0 border-t md:border-t-0 border-slate-100">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold border <?php echo $statusClass; ?>">
-                        <?php echo $bk['Status']; ?>
-                    </span>
-                    
-                    <div class="flex gap-2">
-                        <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
-                            <!-- CANCEL Button: Shown for active upcoming bookings -->
-                            <button onclick="cancelBooking(<?php echo $bk['BookingID']; ?>)" 
-                                    class="text-red-500 hover:text-white border border-red-200 hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                                Cancel
-                            </button>
-                        <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
-                            <!-- FEEDBACK Button: Shown for completed approved bookings -->
-                            <!-- Direct link to feedback.php -->
-                            <button onclick="openFeedback(this, <?php echo $bk['BookingID']; ?>)" 
-                                    data-facility="<?php echo htmlspecialchars($bk['FacilityName']); ?>"
-                                    data-date="<?php echo htmlspecialchars($bk['formatted_start']); ?>"
-                                    class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 hover:border-blue-600 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
-                                <i class="fa-regular fa-comment-dots"></i> Feedback
-                            </button>
+<!-- ACTIVE BOOKINGS -->
+<div class="section-title text-center text-3xl font-bold text-[#0b4d9d] mb-6">ALL BOOKINGS</div>
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Facility</th>
+                <th>Date / Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($all_bookings)): ?>
+                <tr><td colspan="4">No bookings found.</td></tr>
+            <?php else: ?>
+                <?php foreach ($all_bookings as $booking): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($booking['FacilityName']); ?></td>
+                    <td>
+                        <?php echo $booking['formatted_start']; ?><br>
+                        <?php echo $booking['formatted_time']; ?>
+                    </td>
+                    <td>
+                        <span class="badge <?php echo ($booking['Status'] == 'Approved' || $booking['Status'] == 'Confirmed') ? 'bg-success' : 'bg-warning text-dark'; ?>">
+                            <?php echo $booking['Status']; ?>
+                        </span>
+                    </td>
+                    <td>
+                        <?php if (!$booking['is_passed'] && in_array($booking['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
+                            <!-- Show Cancel if Not Passed -->
+                            <button class="cancel-btn" onclick="cancelBooking(<?php echo $booking['BookingID']; ?>)">Cancel</button>
+                        
+                        <?php elseif ($booking['is_passed'] && in_array($booking['Status'], ['Approved', 'Confirmed'])): ?>
+                            <!-- Show Feedback if Passed and Approved -->
+                            <button class="review-btn" onclick="location.href='feedback.php?booking_id=<?php echo $booking['BookingID']; ?>'">Feedback</button>
+                        
+                        <?php else: ?>
+                            <span class="text-gray-400 text-sm">No Action</span>
                         <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-</main>
+<!-- COUNTERS -->
+<div class="counters">
+    <div class="counter">
+        <div class="counter-number" id="facility-counter">0</div>
+        <div class="counter-label">Active Bookings</div>
+    </div>
+    <div class="counter">
+        <div class="counter-number" id="staff-counter">0</div>
+        <div class="counter-label">Staffs</div>
+    </div>
+</div>
+
+<!-- INFO TEXT -->
+<div class="info-text">
+    <h2>Let’s Get to Know UKM Sports Center</h2>
+    <p>The UKM Sports Center started on 1 November 1974 with a Sports Officer from the Ministry of Education who managed sports activities for students and staff. In 1981 and 1982, UKM participated in the ASEAN University Games. In 2008, the Sports Unit was upgraded to the Sports Center, and in 2010, a director was appointed. Today, the center has 47 staff members.</p>
+</div>
 
 <!-- FOOTER -->
-<footer class="bg-white border-t border-slate-200 py-12 mt-auto">
-    <div class="container mx-auto px-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <!-- Brand -->
-            <div class="space-y-4">
-                <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan" class="h-14">
-                <p class="text-xs text-slate-500 leading-relaxed max-w-xs">
-                    Empowering students through sports excellence and state-of-the-art facilities management.
-                </p>
-            </div>
-            
-            <!-- Quick Links -->
-            <div>
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Quick Access</h4>
-                <ul class="space-y-2 text-sm text-slate-600">
-                    <li><a href="dashboard.php" class="hover:text-[#8a0d19] transition text-decoration-none">Dashboard</a></li>
-                    <li><a href="student_facilities.php" class="hover:text-[#8a0d19] transition text-decoration-none">Browse Facilities</a></li>
-                    <li><a href="booking_history.php" class="hover:text-[#8a0d19] transition text-decoration-none">My Bookings</a></li>
-                </ul>
-            </div>
-
-            <!-- Contact -->
-            <div>
-                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Contact Us</h4>
-                <div class="text-sm text-slate-600 space-y-2">
-                    <p class="font-medium">Stadium Universiti, UKM</p>
-                    <p>43600 Bangi, Selangor</p>
-                    <p class="text-[#8a0d19] font-bold mt-2"><i class="fa-solid fa-phone mr-2"></i> 03-8921 5306</p>
-                </div>
-            </div>
+<div class="footer">
+    <div class="footer-top">
+        <div class="footer-logo">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo">
         </div>
-        
-        <div class="border-t border-slate-100 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-[10px] text-slate-400">© 2025 Universiti Kebangsaan Malaysia. All rights reserved.</p>
+        <div class="footer-info">
+            <strong class="footer-title">PEJABAT PENGARAH PUSAT SUKAN</strong>
+            Stadium Universiti<br>
+            Universiti Kebangsaan Malaysia<br>
+            43600 Bangi, Selangor Darul Ehsan<br>
+            No. Telefon : 03-8921-5306
+        </div>
+        <div class="footer-sdg">
+            <img src="../assets/img/sdg.png" alt="SDG Logo">
         </div>
     </div>
-</footer>
+    <div class="footer-bottom">
+        Hakcipta © 2025 Universiti Kebangsaan Malaysia
+    </div>
+</div>
 
+<!-- COUNTER SCRIPT -->
 <script>
+let facilityCount = 0;
+let staffCount = 0;
+const facilityTarget = <?php echo $activeCount; ?>;
+const staffTarget = 47;
+const facilityElem = document.getElementById('facility-counter');
+const staffElem = document.getElementById('staff-counter');
+
+function incrementCounters() {
+    let done = true;
+    if(facilityCount < facilityTarget){ 
+        facilityCount++; 
+        facilityElem.textContent = facilityCount; 
+        done = false; 
+    }
+    if(staffCount < staffTarget){ 
+        staffCount++; 
+        staffElem.textContent = staffCount; 
+        done = false; 
+    }
+    if(!done){
+        setTimeout(incrementCounters, 50);
+    }
+}
+window.onload = incrementCounters;
+
+// Cancel Logic
 function cancelBooking(id) {
     if(!confirm("Are you sure you want to cancel this booking?")) return;
 
@@ -361,14 +406,9 @@ function cancelBooking(id) {
         alert("Network error. Please try again.");
     });
 }
-
-function openFeedback(buttonElement, bookingId) {
-    const facilityName = buttonElement.getAttribute('data-facility');
-    const date = buttonElement.getAttribute('data-date');
-    const url = `feedback.php?booking_id=${bookingId}&facility_name=${encodeURIComponent(facilityName)}&date=${encodeURIComponent(date)}`;
-    window.location.href = url;
-}
 </script>
 
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
