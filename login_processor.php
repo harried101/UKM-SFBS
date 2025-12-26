@@ -74,14 +74,6 @@ if ($stmt = $conn->prepare($sql)) {
         if (password_verify($password, $stored_hash)) {
             
             $role = $user['Role'];
-            
-            // --- START SESSION AND STORE USER DATA ---
-            // ---------------- SESSION SECURITY SETTINGS ----------------
-ini_set('session.gc_maxlifetime', 1800);   // 30 minutes
-ini_set('session.cookie_lifetime', 1800);
-ini_set('session.use_strict_mode', 1);
-ini_set('session.use_only_cookies', 1);
-
             session_start();
 
 // Core session data

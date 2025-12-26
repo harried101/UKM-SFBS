@@ -4,7 +4,7 @@ ini_set('display_errors', 1);
 
 session_start();
 // Absolute session expiration (30 mins)
-if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > 1800) {
+if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > 600) {
     session_unset();
     session_destroy();
     header("Location: ../index.php?expired=1");
@@ -12,7 +12,7 @@ if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > 1800)
 }
 
 // Idle timeout (server-side backup)
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 600) {
     session_unset();
     session_destroy();
     header("Location: ../index.php?idle=1");
