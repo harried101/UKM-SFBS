@@ -34,12 +34,22 @@ $nav_active = $nav_active ?? '';
             </a>
 
             <!-- Bookings -->
-            <a href="bookinglist.php" class="<?php echo ($nav_active === 'bookings') ? 'text-[#0b4d9d] font-bold flex items-center gap-2 relative' : 'text-slate-500 hover:text-[#0b4d9d] font-semibold transition'; ?>">
-                Bookings
-                <?php if($nav_active === 'bookings'): ?>
-                <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#0b4d9d] rounded-full"></span>
-                <?php endif; ?>
-            </a>
+<a href="bookinglist.php" ...>Bookings ...</a>
+
+<!-- Notifications -->
+<div class="relative cursor-pointer">
+    <a href="notifications.php" class="flex items-center text-slate-500 hover:text-[#0b4d9d] transition relative">
+        <i class="fa-solid fa-bell text-xl"></i>
+        <span id="notif-count"
+              class="hidden absolute -top-1 -right-2 bg-red-600 text-white text-xs font-bold 
+                     rounded-full w-5 h-5 flex items-center justify-center">
+        </span>
+    </a>
+</div>
+
+<!-- User Profile -->
+<div class="flex items-center gap-4 pl-6 border-l border-slate-200">
+
 
             <!-- User Profile -->
             <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
