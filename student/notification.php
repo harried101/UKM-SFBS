@@ -7,6 +7,23 @@ error_reporting(E_ALL);
 date_default_timezone_set('Asia/Kuala_Lumpur'); 
 
 session_start();
+
+$timeout_limit = 10; 
+
+// 2. Check if the 'last_activity' timestamp exists
+if (isset($_SESSION['last_activity'])) {
+    $seconds_inactive = time() - $_SESSION['last_activity'];
+    
+    // 3. If inactive for too long, redirect to logout
+    if ($seconds_inactive >= $timeout_limit) {
+        header("Location: ../logout.php");
+        exit;
+    }
+}
+
+// 4. Update the timestamp to 'now' because they just loaded the page
+$_SESSION['last_activity'] = time();
+
 require_once '../includes/db_connect.php';
 
 /* ===== AUTH CHECK & SESSION VALIDATION ===== */
@@ -216,6 +233,6 @@ function markAllRead() {
     });
 }
 </script>
-
+<script src="../assets/js/idle_timer.js"></script>
 </body>
 </html>

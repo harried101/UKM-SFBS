@@ -1,22 +1,19 @@
 <?php
 session_start();
-// Absolute session expiration (30 mins)
-if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > 1800) {
-    session_unset();
-    session_destroy();
-    header("Location: ../index.php?expired=1");
-    exit();
+$timeout_limit = 10; 
+
+// 2. Check if the 'last_activity' timestamp exists
+if (isset($_SESSION['last_activity'])) {
+    $seconds_inactive = time() - $_SESSION['last_activity'];
+    
+    // 3. If inactive for too long, redirect to logout
+    if ($seconds_inactive >= $timeout_limit) {
+        header("Location: ../logout.php");
+        exit;
+    }
 }
 
-// Idle timeout (server-side backup)
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
-    session_unset();
-    session_destroy();
-    header("Location: ../index.php?idle=1");
-    exit();
-}
-
-// Update activity time
+// 4. Update the timestamp to 'now' because they just loaded the page
 $_SESSION['last_activity'] = time();
 
 // SECURITY CHECK
@@ -310,6 +307,6 @@ async function cancelBooking(id) {
     }
 }
 </script>
-
+<script src="../assets/js/idle_timer.js"></script>
 </body>
 </html>
