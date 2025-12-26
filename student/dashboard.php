@@ -173,6 +173,13 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
             </a>
             <a href="student_facilities.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none">Facilities</a>
+            
+            <!-- Added Notification Bell Link -->
+            <a href="notification.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105 text-decoration-none relative">
+                <i class="fa-solid fa-bell text-lg"></i>
+                <!-- Optional: Add a red dot if there are unread notifications (requires backend logic) -->
+                <!-- <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-400"></span> -->
+            </a>
 
             <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
                 <div class="text-right hidden sm:block">
@@ -231,7 +238,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
             <?php foreach ($all_bookings as $bk): 
                 $statusClass = 'bg-slate-100 text-slate-600 border-slate-200';
                 if (in_array($bk['Status'], ['Approved', 'Confirmed'])) {
-                    $statusClass = 'bg-green-50 text-green-700 border-green-200';
+                    $statusClass = 'bg-green-100 text-green-700 border-green-200';
                 } elseif ($bk['Status'] === 'Pending') {
                     $statusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
                 } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
@@ -273,6 +280,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
                             </button>
                         <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
                             <!-- FEEDBACK Button: Shown for completed approved bookings -->
+                            <!-- Direct link to feedback.php -->
                             <button onclick="openFeedback(this, <?php echo $bk['BookingID']; ?>)" 
                                     data-facility="<?php echo htmlspecialchars($bk['FacilityName']); ?>"
                                     data-date="<?php echo htmlspecialchars($bk['formatted_start']); ?>"
