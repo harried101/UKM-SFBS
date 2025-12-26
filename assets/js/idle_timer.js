@@ -18,4 +18,6 @@ window.onload = resetTimer;       // Page loads
 window.onmousemove = resetTimer;  // Mouse moves
 window.onmousedown = resetTimer;  // Mouse clicks
 window.onkeypress = resetTimer;   // Typing
+window.onscroll = resetTimer;     // Scrolling with bar or trackpad <--- NEW
+window.onwheel = resetTimer;      // Mouse wheel usage <--- NEW
 window.ontouchstart = resetTimer; // Phone screen touch
