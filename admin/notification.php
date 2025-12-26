@@ -78,21 +78,54 @@ body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
 <body class="flex flex-col min-h-screen">
 
 <!-- Navbar -->
-<nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-    <div class="flex items-center gap-3">
-        <a href="dashboard.php" class="text-slate-400 hover:text-slate-800 transition">
-            <i class="fa-solid fa-arrow-left"></i>
-        </a>
-        <h1 class="text-xl font-bold text-slate-800">Notifications</h1>
-    </div>
-    <div class="flex items-center gap-4">
-        <span class="text-sm text-slate-500 hidden sm:inline"><?= htmlspecialchars($adminName) ?></span>
-        <button id="markAllBtn"
-            class="text-xs font-bold text-[#8a0d19] hover:underline disabled:opacity-50 transition-all duration-300"
-            onclick="markAllRead()"
-            <?= ($unreadCount===0)?'disabled':'' ?>>
-            Mark all as read (<?= $unreadCount ?>)
-        </button>
+<nav class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+        <!-- Logo -->
+        <div class="flex items-center gap-4">
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-10 md:h-12 w-auto">
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-10 md:h-12 w-auto hidden sm:block">
+            <span class="md:hidden font-serif font-bold text-[#0b4d9d]">Admin</span>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="flex items-center gap-8">
+            <a href="dashboard.php" class="text-slate-500 hover:text-[#0b4d9d] font-semibold transition">Home</a>
+            <a href="addfacilities.php" class="text-slate-500 hover:text-[#0b4d9d] font-semibold transition">Facilities</a>
+            <a href="bookinglist.php" class="text-slate-500 hover:text-[#0b4d9d] font-semibold transition">Bookings</a>
+
+            <!-- Notifications -->
+            <div class="relative cursor-pointer">
+                <a href="notification.php" class="flex items-center text-slate-500 hover:text-[#0b4d9d] transition relative">
+                    <i class="fa-solid fa-bell text-xl"></i>
+                    <?php if ($unreadCount > 0): ?>
+                        <span id="notif-count"
+                              class="absolute -top-1 -right-2 bg-red-600 text-white text-xs font-bold 
+                                     rounded-full w-5 h-5 flex items-center justify-center">
+                            <?= $unreadCount ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
+            </div>
+
+            <!-- User Profile -->
+            <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($adminName) ?></p>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider"><?= htmlspecialchars($adminID) ?></p>
+                </div>
+                <div class="relative group">
+                    <img src="../assets/img/user.png" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover cursor-pointer transition hover:scale-105">
+                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                        <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
+                            <a href="../logout.php" onclick="return confirm('Logout?')" class="block px-4 py-3 text-sm text-red-600 hover:bg-slate-50 transition font-medium">
+                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </nav>
 
@@ -116,7 +149,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     $messageClass = $isRead ? 'text-slate-600' : 'text-slate-900 font-medium';
     $timeClass = $isRead ? 'text-slate-400' : 'text-[#8a0d19] font-semibold';
 ?>
-<div class="notification-item p-4 rounded-xl border <?= $readClass ?> flex gap-4 items-start" data-id="<?= $n['NotificationID'] ?>" data-read="<?= $isRead ?>">
+<div class="notification-item p-4 rounded-xl border <?= $readClass ?> flex gap-4 items-start">
     <div class="flex-shrink-0 pt-1">
         <i class="fa-solid fa-circle-info text-xl text-slate-500"></i>
     </div>
@@ -141,7 +174,7 @@ function markAllRead() {
     markAllBtn.disabled = true;
     markAllBtn.textContent = 'Updating...';
 
-    fetch("notification.php", {  // Corrected to this file
+    fetch("notification.php", {
         method: "POST",
         headers: {"Content-Type":"application/x-www-form-urlencoded"},
         body: "mark_all_read=1"
@@ -152,5 +185,6 @@ function markAllRead() {
 }
 </script>
 
+<script src="../assets/js/idle_timer.js"></script>
 </body>
 </html>
