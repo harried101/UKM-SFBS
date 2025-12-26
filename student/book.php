@@ -315,6 +315,19 @@ if ($facility_id) {
     </script>
     
     <?php include 'includes/footer.php'; ?>
-    <script src="../assets/js/idle_timer.js"></script>
+    <script>
+// This function tells the parent window to reset its timer
+function notifyParent() {
+    if (window.parent && window.parent.resetTimer) {
+        window.parent.resetTimer();
+    }
+}
+
+// Listen for activity inside the calendar modal
+window.onmousemove = notifyParent;
+window.onmousedown = notifyParent;
+window.onkeypress = notifyParent;
+window.onscroll = notifyParent;
+</script>
 </body>
 </html>

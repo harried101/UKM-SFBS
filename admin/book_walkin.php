@@ -276,6 +276,19 @@ if ($facility_id) {
     document.getElementById('nextMonth').onclick = () => { currMonth++; if(currMonth>11){currMonth=0;currYear++}; renderCalendar(currMonth,currYear); };
     renderCalendar(currMonth, currYear);
 </script>
+<script>
+// This function tells the parent window to reset its timer
+function notifyParent() {
+    if (window.parent && window.parent.resetTimer) {
+        window.parent.resetTimer();
+    }
+}
 
+// Listen for activity inside the calendar modal
+window.onmousemove = notifyParent;
+window.onmousedown = notifyParent;
+window.onkeypress = notifyParent;
+window.onscroll = notifyParent;
+</script>
 </body>
 </html>

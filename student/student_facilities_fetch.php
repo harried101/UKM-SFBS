@@ -1,24 +1,5 @@
 <?php
 session_start();
-// Absolute session expiration (30 mins)
-if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > 1800) {
-    session_unset();
-    session_destroy();
-    header("Location: ../index.php?expired=1");
-    exit();
-}
-
-// Idle timeout (server-side backup)
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
-    session_unset();
-    session_destroy();
-    header("Location: ../index.php?idle=1");
-    exit();
-}
-
-// Update activity time
-$_SESSION['last_activity'] = time();
-
 require_once '../includes/db_connect.php';
 
 // SECURITY CHECK

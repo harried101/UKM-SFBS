@@ -1,23 +1,31 @@
-// Time in milliseconds (10 minutes = 600,000ms)
-const idleTimeLimit = 10000; 
+const idleTimeLimit = 10000; // 10 seconds for testing
 let idleTimer;
+let lastSyncTime = 0;
 
 function resetTimer() {
-    // This clears the previous countdown
     clearTimeout(idleTimer);
-    
-    // This starts a brand new 10-minute countdown
+
+    // 1. Reset the Browser Timer
     idleTimer = setTimeout(() => {
-        // This only happens if 10 minutes pass with NO movement
         window.location.href = '../logout.php';
     }, idleTimeLimit);
+
+    // 2. Sync with the Server (The "Heartbeat")
+    let now = Date.now();
+    // During your 10-second test, we sync every 2 seconds
+    if (now - lastSyncTime > 2000) { 
+        fetch('../refresh_session.php')
+            .then(response => console.log("Server session refreshed!"))
+            .catch(err => console.log("Sync failed: ", err));
+        lastSyncTime = now;
+    }
 }
 
-// List of activities that "Reset" the timer
-window.onload = resetTimer;       // Page loads
-window.onmousemove = resetTimer;  // Mouse moves
-window.onmousedown = resetTimer;  // Mouse clicks
-window.onkeypress = resetTimer;   // Typing
-window.onscroll = resetTimer;     // Scrolling with bar or trackpad <--- NEW
-window.onwheel = resetTimer;      // Mouse wheel usage <--- NEW
-window.ontouchstart = resetTimer; // Phone screen touch
+// All your listeners (mouse, scroll, etc.)
+window.onload = resetTimer;
+window.onmousemove = resetTimer;
+window.onmousedown = resetTimer;
+window.onkeypress = resetTimer;
+window.onscroll = resetTimer;
+window.onwheel = resetTimer;
+window.ontouchstart = resetTimer;
