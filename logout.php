@@ -15,6 +15,7 @@ if (ini_get("session.use_cookies")) {
 
 // 3. Destroy the session
 session_destroy();
+header("Location: login.php?message=timeout");
 
 // 4. Redirect to Login Page
 header("Location: index.php");
