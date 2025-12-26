@@ -152,6 +152,5 @@ function markAllRead() {
 }
 </script>
 
-<script src="../assets/js/idle_timer.js"></script>
 </body>
 </html>
