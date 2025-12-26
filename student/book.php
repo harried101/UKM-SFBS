@@ -25,7 +25,7 @@ $facility_id = $_GET['facility_id'] ?? '';
 $facility_name = "Facility";
 
 if ($facility_id) {
-    // We use integer binding for ID if your DB uses INT, otherwise 's'
+    // We use integers binding for ID if your DB uses INT, otherwise 's'
     // Based on previous admin code, FacilityID is INT.
     $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
     $stmt->bind_param("s", $facility_id);
