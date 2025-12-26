@@ -1,0 +1,157 @@
+<?php
+// === PHP Configuration ===
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+date_default_timezone_set('Asia/Kuala_Lumpur');
+
+session_start();
+
+// === Session Timeout ===
+$timeout_limit = 10; // seconds
+if (isset($_SESSION['last_activity'])) {
+    $inactive = time() - $_SESSION['last_activity'];
+    if ($inactive >= $timeout_limit) {
+        header("Location: ../logout.php");
+        exit;
+    }
+}
+$_SESSION['last_activity'] = time();
+
+// === DB Connection ===
+require_once '../includes/db_connect.php';
+
+// === Admin Auth Check ===
+if (!isset($_SESSION['logged_in']) || ($_SESSION['role'] ?? '') !== 'Admin' || !isset($_SESSION['admin_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+$adminID = $_SESSION['admin_id'];
+$adminName = $_SESSION['admin_name'] ?? 'Admin';
+
+// === Time Ago Function ===
+function time_ago($datetime) {
+    $timestamp = strtotime($datetime);
+    $diff = time() - $timestamp;
+    if ($diff < 60) return 'just now';
+    if ($diff < 3600) return round($diff/60).' minutes ago';
+    if ($diff < 86400) return round($diff/3600).' hours ago';
+    return date("d M Y, h:i A", $timestamp);
+}
+
+// === AJAX: Mark All as Read ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
+    header('Content-Type: application/json');
+    $stmt = $conn->prepare("UPDATE notifications SET IsRead=1 WHERE UserID=? AND IsRead=0");
+    $stmt->bind_param("i", $adminID);
+    $stmt->execute();
+    echo json_encode(['success'=>true, 'count'=>$stmt->affected_rows]);
+    exit();
+}
+
+// === Fetch Notifications ===
+$stmt = $conn->prepare("SELECT NotificationID, Message, IsRead, CreatedAt FROM notifications WHERE UserID=? ORDER BY CreatedAt DESC LIMIT 50");
+$stmt->bind_param("i", $adminID);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$notifications = [];
+$unreadCount = 0;
+while ($row = $result->fetch_assoc()) {
+    $notifications[] = $row;
+    if ($row['IsRead'] == 0) $unreadCount++;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Notifications - Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+.notification-unread { border-left: 4px solid #8a0d19; background-color: #fef2f2; }
+</style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+<!-- Navbar -->
+<nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+        <a href="dashboard.php" class="text-slate-400 hover:text-slate-800 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1 class="text-xl font-bold text-slate-800">Notifications</h1>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="text-sm text-slate-500 hidden sm:inline"><?= htmlspecialchars($adminName) ?></span>
+        <button id="markAllBtn"
+            class="text-xs font-bold text-[#8a0d19] hover:underline disabled:opacity-50 transition-all duration-300"
+            onclick="markAllRead()"
+            <?= ($unreadCount===0)?'disabled':'' ?>>
+            Mark all as read (<?= $unreadCount ?>)
+        </button>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="flex-grow container mx-auto px-6 py-8 max-w-2xl">
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 ml-1">Recent Activity</h4>
+
+<div class="space-y-4" id="notificationList">
+<?php if (count($notifications) === 0): ?>
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+            <i class="fa-regular fa-bell-slash text-2xl"></i>
+        </div>
+        <p class="text-slate-500 font-medium">No new notifications</p>
+    </div>
+<?php endif; ?>
+
+<?php foreach ($notifications as $n):
+    $isRead = $n['IsRead'];
+    $readClass = $isRead ? 'opacity-60 bg-white border-slate-200' : 'notification-unread border-[#8a0d19] shadow-md hover:shadow-lg transition duration-200';
+    $messageClass = $isRead ? 'text-slate-600' : 'text-slate-900 font-medium';
+    $timeClass = $isRead ? 'text-slate-400' : 'text-[#8a0d19] font-semibold';
+?>
+<div class="notification-item p-4 rounded-xl border <?= $readClass ?> flex gap-4 items-start" data-id="<?= $n['NotificationID'] ?>" data-read="<?= $isRead ?>">
+    <div class="flex-shrink-0 pt-1">
+        <i class="fa-solid fa-circle-info text-xl text-slate-500"></i>
+    </div>
+    <div class="flex-grow">
+        <div class="flex justify-between items-start">
+            <p class="text-sm <?= $messageClass ?> whitespace-pre-line leading-relaxed"><?= htmlspecialchars($n['Message']) ?></p>
+            <span class="text-[10px] <?= $timeClass ?> ml-4 flex-shrink-0 pt-1" title="<?= date("d M Y, h:i A", strtotime($n['CreatedAt'])) ?>">
+                <?= time_ago($n['CreatedAt']) ?>
+            </span>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
+</div>
+</main>
+
+<!-- JS: Mark All as Read -->
+<script>
+function markAllRead() {
+    const markAllBtn = document.getElementById('markAllBtn');
+    if (markAllBtn.disabled) return;
+    markAllBtn.disabled = true;
+    markAllBtn.textContent = 'Updating...';
+
+    fetch("notification.php", {  // Corrected to this file
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: "mark_all_read=1"
+    })
+    .then(res => res.json())
+    .then(() => location.reload())
+    .catch(()=> location.reload());
+}
+</script>
+
+<script src="../assets/js/idle_timer.js"></script>
+</body>
+</html>
