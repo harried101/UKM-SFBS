@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-$timeout_limit = 5; 
+$timeout_limit = 10; 
 
 // 2. Check if the 'last_activity' timestamp exists
 if (isset($_SESSION['last_activity'])) {
