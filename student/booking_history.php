@@ -84,11 +84,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking History - UKM Sports Center</title>
     
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -114,17 +111,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
 <body>
 
-<!-- NAVBAR -->
 <nav class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40 transition-all duration-300 shadow-sm">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <!-- Logo -->
         <div class="flex items-center gap-4">
             <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-10 md:h-12 w-auto">
             <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
             <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-10 md:h-12 w-auto hidden sm:block">
         </div>
         
-        <!-- Desktop Nav -->
         <div class="flex items-center gap-8">
             <div class="hidden md:flex items-center gap-6">
                 <a href="dashboard.php" class="text-slate-600 hover:text-[#8a0d19] font-medium transition text-decoration-none">Home</a>
@@ -135,7 +129,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </a>
             </div>
 
-            <!-- Profile & Mobile Menu -->
             <div class="flex items-center gap-4 pl-4 md:pl-6 md:border-l border-slate-200 relative">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold text-slate-800 leading-tight"><?php echo htmlspecialchars($studentName); ?></p>
@@ -145,7 +138,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <button class="focus:outline-none rounded-full transition-transform active:scale-95">
                         <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover shadow-sm group-hover:ring-[#8a0d19]/20">
                     </button>
-                    <!-- Dropdown -->
                     <div class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block z-50">
                         <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
                              <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 md:hidden">
@@ -166,10 +158,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </div>
 </nav>
 
-<!-- MAIN CONTENT -->
 <main class="container mx-auto px-4 md:px-6 py-8 md:py-12 flex-grow max-w-6xl fade-in">
 
-    <!-- HEADER -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
             <div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
@@ -187,11 +177,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </a>
     </div>
 
-    <!-- BOOKINGS LIST -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         
         <?php if (empty($bookings)): ?>
-            <!-- EMPTY STATE -->
             <div class="px-6 py-16 text-center flex flex-col items-center justify-center">
                 <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-300">
                     <i class="fa-regular fa-calendar-xmark text-4xl"></i>
@@ -203,7 +191,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </a>
             </div>
         <?php else: ?>
-            <!-- DATA TABLE -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
                     <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold tracking-wider">
@@ -272,6 +259,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                        class="text-red-600 hover:text-red-800 font-semibold text-sm hover:underline transition">
                                        Cancel
                                     </button>
+                                <?php elseif (!$isFuture && in_array($status, ['Approved', 'Confirmed'])): ?>
+                                    <a href="feedback.php?booking_id=<?php echo $row['BookingID']; ?>&facility_name=<?php echo urlencode($row['FacilityName']); ?>&date=<?php echo urlencode($startObj->format('d M Y')); ?>"
+                                       class="inline-block px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition text-decoration-none">
+                                       Feedback
+                                    </a>
                                 <?php else: ?>
                                     <span class="text-slate-300 text-xs italic">No actions</span>
                                 <?php endif; ?>
@@ -281,9 +273,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     </tbody>
                 </table>
             </div>
-            <!-- /DATA TABLE -->
-            
-            <!-- PAGINATION / FOOTER (Optional) -->
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
                 <span>Showing <?php echo count($bookings); ?> records</span>
                 <span>Sorted by latest</span>
