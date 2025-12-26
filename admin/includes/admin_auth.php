@@ -1,5 +1,20 @@
 <?php
 session_start();
+$timeout_limit = 10; 
+
+// 2. Check if the 'last_activity' timestamp exists
+if (isset($_SESSION['last_activity'])) {
+    $seconds_inactive = time() - $_SESSION['last_activity'];
+    
+    // 3. If inactive for too long, redirect to logout
+    if ($seconds_inactive >= $timeout_limit) {
+        header("Location: ../logout.php");
+        exit;
+    }
+}
+
+// 4. Update the timestamp to 'now' because they just loaded the page
+$_SESSION['last_activity'] = time();
 
 // 1. Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
