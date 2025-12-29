@@ -38,6 +38,13 @@ $nav_active = $nav_active ?? '';
                 <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#0b4d9d] rounded-full"></span>
                 <?php endif; ?>
             </a>
+             <!-- Feedback -->
+            <a href="view_feedback.php" class="<?php echo ($nav_active === 'feedback') ? 'text-[#0b4d9d] font-bold flex items-center gap-2 relative' : 'text-slate-500 hover:text-[#0b4d9d] font-semibold transition'; ?>">
+                Feedback
+                <?php if($nav_active === 'feedback'): ?>
+                <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#0b4d9d] rounded-full"></span>
+                <?php endif; ?>
+            </a>
 
             <!-- Notifications -->
             <div class="relative cursor-pointer">
