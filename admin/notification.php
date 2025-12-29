@@ -7,7 +7,7 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 session_start();
 
 // === Session Timeout ===
-$timeout_limit = 10; // seconds
+$timeout_limit = 1800; // seconds
 if (isset($_SESSION['last_activity'])) {
     $inactive = time() - $_SESSION['last_activity'];
     if ($inactive >= $timeout_limit) {
@@ -20,14 +20,15 @@ $_SESSION['last_activity'] = time();
 // === DB Connection ===
 require_once '../includes/db_connect.php';
 
-// === Admin Auth Check ===
-if (!isset($_SESSION['logged_in']) || ($_SESSION['role'] ?? '') !== 'Admin' || !isset($_SESSION['admin_id'])) {
+// === Admin Auth Check (adapted to original login) ===
+$session_role = strtolower($_SESSION['role'] ?? '');
+if (!isset($_SESSION['logged_in']) || $session_role !== 'admin' || !isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
 }
 
-$adminID = $_SESSION['admin_id'];
-$adminName = $_SESSION['admin_name'] ?? 'Admin';
+$adminID = $_SESSION['user_id'];
+$adminName = $_SESSION['user_id']; // fallback to ID since original login has no name
 
 // === Time Ago Function ===
 function time_ago($datetime) {
@@ -61,6 +62,7 @@ while ($row = $result->fetch_assoc()) {
     $notifications[] = $row;
     if ($row['IsRead'] == 0) $unreadCount++;
 }
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,57 +79,11 @@ body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
 </head>
 <body class="flex flex-col min-h-screen">
 
-<!-- Navbar -->
-<nav class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <!-- Logo -->
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-10 md:h-12 w-auto">
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-10 md:h-12 w-auto hidden sm:block">
-            <span class="md:hidden font-serif font-bold text-[#0b4d9d]">Admin</span>
-        </div>
+<?php
+$nav_active = 'notifications'; 
+include 'includes/navbar.php';
+?>
 
-        <!-- Navigation Links -->
-        <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="text-slate-500 hover:text-[#0b4d9d] font-semibold transition">Home</a>
-            <a href="addfacilities.php" class="text-slate-500 hover:text-[#0b4d9d] font-semibold transition">Facilities</a>
-            <a href="bookinglist.php" class="text-slate-500 hover:text-[#0b4d9d] font-semibold transition">Bookings</a>
-
-            <!-- Notifications -->
-            <div class="relative cursor-pointer">
-                <a href="notification.php" class="flex items-center text-slate-500 hover:text-[#0b4d9d] transition relative">
-                    <i class="fa-solid fa-bell text-xl"></i>
-                    <?php if ($unreadCount > 0): ?>
-                        <span id="notif-count"
-                              class="absolute -top-1 -right-2 bg-red-600 text-white text-xs font-bold 
-                                     rounded-full w-5 h-5 flex items-center justify-center">
-                            <?= $unreadCount ?>
-                        </span>
-                    <?php endif; ?>
-                </a>
-            </div>
-
-            <!-- User Profile -->
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($adminName) ?></p>
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider"><?= htmlspecialchars($adminID) ?></p>
-                </div>
-                <div class="relative group">
-                    <img src="../assets/img/user.png" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover cursor-pointer transition hover:scale-105">
-                    <div class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
-                        <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
-                            <a href="../logout.php" onclick="return confirm('Logout?')" class="block px-4 py-3 text-sm text-red-600 hover:bg-slate-50 transition font-medium">
-                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</nav>
 
 <!-- Main Content -->
 <main class="flex-grow container mx-auto px-6 py-8 max-w-2xl">
@@ -164,7 +120,8 @@ body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
 </div>
 <?php endforeach; ?>
 </div>
-</main>
+
+<button id="markAllBtn" onclick="markAllRead()" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Mark All as Read</button>
 
 <!-- JS: Mark All as Read -->
 <script>
