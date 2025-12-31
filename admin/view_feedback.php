@@ -171,7 +171,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
 
       <!-- Feedback Table -->
       <div class="overflow-x-auto rounded-xl">
-        <table id="feedback" class="w-full text-sm display rounded-lg">
+        <table id="feedbackTable" class="w-full text-sm display rounded-lg">
           <thead>
             <tr class="bg-ukm-blue text-white">
               <th class="text-left rounded-tl-lg">Student</th>
@@ -195,7 +195,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
   <script>
     $(document).ready(function () {
       // Initialize DataTable with AJAX
-      const table = $('#feedback').DataTable({
+      const table = $('#feedbackTable').DataTable({
         ajax: {
             url: 'fetch_feedback_data.php', // Fetches data from backend
             dataSrc: 'data'
