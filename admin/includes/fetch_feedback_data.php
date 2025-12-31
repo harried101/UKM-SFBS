@@ -1,29 +1,50 @@
 <?php
 // 1. SILENCE ERRORS & BUFFER OUTPUT
-// This prevents PHP warnings/notices from corrupting the JSON response
 ob_start();
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 header('Content-Type: application/json');
+date_default_timezone_set('Asia/Kuala_Lumpur');
 
-// Helper function defined EARLY to handle errors even before DB loads
+// Helper to sanitize data for JSON
+function utf8ize($d) {
+    if (is_array($d)) {
+        foreach ($d as $k => $v) {
+            $d[$k] = utf8ize($v);
+        }
+    } else if (is_string($d)) {
+        return mb_convert_encoding($d, 'UTF-8', 'UTF-8');
+    }
+    return $d;
+}
+
+// Helper function defined EARLY to handle errors
 function jsonResponse($success, $data = [], $message = '') {
     // Clear buffer of any warnings/notices/whitespace
     if (ob_get_length()) ob_clean(); 
-    echo json_encode([
+    
+    $response = [
         'success' => $success, 
-        'data' => $data, // DataTables expects this key
+        'data' => utf8ize($data), // Ensure UTF-8
         'message' => $message
-    ]);
+    ];
+
+    $json = json_encode($response);
+    
+    if ($json === false) {
+        // JSON Encode failed (usually special chars)
+        echo json_encode(['success' => false, 'data' => [], 'message' => 'JSON Encode Error: ' . json_last_error_msg()]);
+    } else {
+        echo $json;
+    }
     exit;
 }
 
-// Catch Fatal Errors (e.g. if db_connect fails severely)
+// Catch Fatal Errors
 register_shutdown_function(function() {
     $error = error_get_last();
     if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_CORE_ERROR)) {
-        // We can't use jsonResponse here easily if headers sent, but we try
         @ob_clean();
         echo json_encode(['success' => false, 'data' => [], 'message' => 'Fatal Error: ' . $error['message']]);
     }
@@ -49,7 +70,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
 
 try {
     // 4. QUERY DATABASE
-    // We explicitly select columns to avoid ambiguity and ensure we get UserIdentifier
     $sql = "
         SELECT 
             fb.FeedbackID,
@@ -83,7 +103,7 @@ try {
         if ($dateStr && $dateStr !== '0000-00-00 00:00:00') {
             try {
                 $dt = new DateTime($dateStr);
-                $formattedDate = $dt->format('Y-m-d'); // Match the format shown in your UI example
+                $formattedDate = $dt->format('Y-m-d'); 
             } catch (Exception $e) {
                 $formattedDate = $dateStr; 
             }
@@ -94,29 +114,23 @@ try {
         $lname = $row['LastName'] ?? '';
         $studentName = trim("$fname $lname");
         
-        // Fallback if name is missing (e.g. user deleted)
         if (empty($studentName)) {
             $studentName = 'Unknown Student';
         }
         
-        // Ensure Facility Name exists
+        // Ensure values aren't null
         $facilityName = $row['FacilityName'] ?? 'Unknown Facility';
-        
-        // Ensure Comment isn't null
         $comment = $row['Comment'] ?? '-';
-        
-        // User Identifier (Matric No)
         $userIdentifier = $row['UserIdentifier'] ?? '-';
 
         // 6. BUILD ROW OBJECT
-        // Keys must match what the DataTables 'columns' config expects
         $feedbacks[] = [
             'FeedbackID'     => $row['FeedbackID'],
             'Rating'         => (int)$row['Rating'],
             'Comment'        => htmlspecialchars($comment),
             'FormattedDate'  => $formattedDate,
             'StudentName'    => htmlspecialchars($studentName),
-            'UserIdentifier' => htmlspecialchars($userIdentifier), // Crucial for the UI render function
+            'UserIdentifier' => htmlspecialchars($userIdentifier),
             'FacilityName'   => htmlspecialchars($facilityName)
         ];
     }
@@ -126,7 +140,6 @@ try {
 
 } catch (Exception $e) {
     // 8. HANDLE ERRORS GRACEFULLY
-    // Return empty data array so DataTables doesn't crash, just shows empty table
     jsonResponse(false, [], 'Server Error: ' . $e->getMessage());
 }
 ?>
