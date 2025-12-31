@@ -1,5 +1,12 @@
 <?php
-require_once 'includes/admin_auth.php'; // Standardized Auth & User Fetch
+require_once '../includes/db_connect.php';
+session_start();
+
+// Basic Admin Auth Check
+if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../index.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,17 +62,63 @@ require_once 'includes/admin_auth.php'; // Standardized Auth & User Fetch
     table.dataTable thead th {
       background-color: #0b4d9d;
       color: white;
+      font-weight: 600;
+      padding: 12px 16px;
+    }
+    
+    table.dataTable tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    /* Remove default datatable styling that conflicts */
+    .dataTables_wrapper .dataTables_length, 
+    .dataTables_wrapper .dataTables_filter, 
+    .dataTables_wrapper .dataTables_info, 
+    .dataTables_wrapper .dataTables_processing, 
+    .dataTables_wrapper .dataTables_paginate {
+        color: #64748b;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        padding-top: 1rem;
     }
   </style>
 </head>
 
 <body class="bg-slate-50 min-h-screen font-body text-slate-800">
 
-  <!-- NAVBAR -->
-  <?php
-    $nav_active = 'feedback';
-    include 'includes/navbar.php';
-  ?>
+  <!-- NAVBAR (Standard Admin) -->
+  <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
+    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
+            <div class="h-8 w-px bg-gray-300 hidden sm:block"></div>
+            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Home</a>
+            <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
+            <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
+            
+            <!-- Active State -->
+            <a href="view_feedback.php" class="text-[#0b4d9d] font-bold transition">Feedback</a>
+
+            <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-gray-800">Admin</p>
+                </div>
+                <div class="relative group">
+                    <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:scale-105 transition">
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
+                        <a href="../logout.php" onclick="return confirm('Logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg m-1">
+                            <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </nav>
 
   <div class="max-w-7xl mx-auto px-6 py-8 fade-in">
 
@@ -121,42 +174,15 @@ require_once 'includes/admin_auth.php'; // Standardized Auth & User Fetch
         <table id="feedbackTable" class="w-full text-sm display rounded-lg">
           <thead>
             <tr class="bg-ukm-blue text-white">
-              <th>Student</th>
-              <th>Facility Name</th>
-              <th>Rating</th>
-              <th>Feedback</th>
-              <th>Date</th>
+              <th class="text-left rounded-tl-lg">Student</th>
+              <th class="text-left">Facility Name</th>
+              <th class="text-left">Rating</th>
+              <th class="text-left">Feedback</th>
+              <th class="text-left rounded-tr-lg">Date</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="hover:bg-slate-100 transition-all rounded-lg">
-              <td class="font-medium">Ali</td>
-              <td>Swimming Pool</td>
-              <td><span class="px-2 py-1 bg-ukm-light text-ukm-dark rounded-full inline-flex items-center gap-1">
-                <i class="fa-solid fa-star text-yellow-400"></i> 5
-              </span></td>
-              <td>Not clean</td>
-              <td>2025-01-10</td>
-            </tr>
-            <tr class="hover:bg-slate-100 transition-all rounded-lg">
-              <td class="font-medium">Siti</td>
-              <td>Badminton Court</td>
-              <td><span class="px-2 py-1 bg-ukm-light text-ukm-dark rounded-full inline-flex items-center gap-1">
-                <i class="fa-solid fa-star text-yellow-400"></i> 3
-              </span></td>
-              <td>Not bad</td>
-              <td>2025-01-11</td>
-            </tr>
-            <tr class="hover:bg-slate-100 transition-all rounded-lg">
-              <td class="font-medium">Kumar</td>
-              <td>Field</td>
-              <td><span class="px-2 py-1 bg-ukm-light text-ukm-dark rounded-full inline-flex items-center gap-1">
-                <i class="fa-solid fa-star text-yellow-400"></i> 2
-              </span></td>
-              <td>Very spacious</td>
-              <td>2025-01-12</td>
-            </tr>
-          </tbody>
+          <!-- Tbody empty, populated by JS -->
+          <tbody class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
 
@@ -168,11 +194,39 @@ require_once 'includes/admin_auth.php'; // Standardized Auth & User Fetch
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
     $(document).ready(function () {
+      // Initialize DataTable with AJAX
       const table = $('#feedbackTable').DataTable({
-        pageLength: 5,
+        ajax: {
+            url: 'fetch_feedback_data.php', // Fetches data from backend
+            dataSrc: 'data'
+        },
+        columns: [
+            { 
+                data: 'StudentName',
+                render: function(data, type, row) {
+                    return `<div class="font-medium text-slate-800">${data}</div>
+                            <div class="text-xs text-slate-400 font-mono">${row.UserIdentifier}</div>`;
+                }
+            },
+            { data: 'FacilityName' },
+            { 
+                data: 'Rating',
+                render: function(data) {
+                    return `<span class="px-2 py-1 bg-ukm-light text-ukm-dark rounded-full inline-flex items-center gap-1 font-bold">
+                              <i class="fa-solid fa-star text-yellow-400"></i> ${data}
+                            </span>`;
+                }
+            },
+            { data: 'Comment' },
+            { data: 'FormattedDate' }
+        ],
+        pageLength: 10,
         lengthMenu: [5, 10, 20],
-        order: [[4, 'desc']],
-        dom: 'lrtip' // removes default search box
+        order: [[4, 'desc']], // Sort by Date Descending
+        dom: 'lrtip', // Hide default search/pagination styling to use ours
+        language: {
+            emptyTable: "No feedback records found."
+        }
       });
 
       // Filter by rating
@@ -186,8 +240,6 @@ require_once 'includes/admin_auth.php'; // Standardized Auth & User Fetch
       });
     });
   </script>
-
-  <?php include 'includes/footer.php'; ?>
 
 </body>
 </html>
