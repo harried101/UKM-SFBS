@@ -1,75 +1,40 @@
 <?php
-// 1. SILENCE ERRORS & BUFFER OUTPUT
-ob_start();
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
+// 1. START BUFFERING & ERROR HANDLING
+ob_start(); // Capture all output
+ini_set('display_errors', 0); // Hide errors from output
+error_reporting(E_ALL); // Report all errors internally
 
 header('Content-Type: application/json');
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-// Helper to sanitize data for JSON
-function utf8ize($d) {
-    if (is_array($d)) {
-        foreach ($d as $k => $v) {
-            $d[$k] = utf8ize($v);
-        }
-    } else if (is_string($d)) {
-        return mb_convert_encoding($d, 'UTF-8', 'UTF-8');
-    }
-    return $d;
-}
+// 2. INCLUDE DATABASE
+$db_path = '../includes/db_connect.php';
 
-// Helper function defined EARLY to handle errors
-function jsonResponse($success, $data = [], $message = '') {
-    // Clear buffer of any warnings/notices/whitespace
-    if (ob_get_length()) ob_clean(); 
-    
-    $response = [
-        'success' => $success, 
-        'data' => utf8ize($data), // Ensure UTF-8
-        'message' => $message
-    ];
-
-    $json = json_encode($response);
-    
-    if ($json === false) {
-        // JSON Encode failed (usually special chars)
-        echo json_encode(['success' => false, 'data' => [], 'message' => 'JSON Encode Error: ' . json_last_error_msg()]);
-    } else {
-        echo $json;
-    }
+if (!file_exists($db_path)) {
+    ob_clean();
+    echo json_encode(['success' => false, 'data' => [], 'message' => 'DB file missing']);
     exit;
 }
 
-// Catch Fatal Errors
-register_shutdown_function(function() {
-    $error = error_get_last();
-    if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_CORE_ERROR)) {
-        @ob_clean();
-        echo json_encode(['success' => false, 'data' => [], 'message' => 'Fatal Error: ' . $error['message']]);
-    }
-});
-
-session_start();
-
-// 2. INCLUDE DB
-$db_path = '../includes/db_connect.php';
-if (!file_exists($db_path)) {
-    jsonResponse(false, [], 'Database connection file not found.');
-}
 require_once $db_path;
 
+// CRITICAL: Clean the buffer immediately after include to remove any whitespace from db_connect.php
+if (ob_get_length()) ob_clean(); 
+
 if (!isset($conn) || $conn->connect_error) {
-    jsonResponse(false, [], 'Database connection failed.');
+    echo json_encode(['success' => false, 'data' => [], 'message' => 'DB connection failed']);
+    exit;
 }
 
-// 3. AUTHENTICATION CHECK
+// 3. AUTH CHECK
 if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
-    jsonResponse(false, [], 'Access Denied');
+    echo json_encode(['success' => false, 'data' => [], 'message' => 'Access Denied']);
+    exit;
 }
 
 try {
-    // 4. QUERY DATABASE
+    // 4. QUERY
+    // Matching your provided table structure: FeedbackID, UserID, FacilityID, BookingID, Rating, Comment, SubmittedAt
     $sql = "
         SELECT 
             fb.FeedbackID,
@@ -89,57 +54,57 @@ try {
     $result = $conn->query($sql);
     
     if (!$result) {
-        throw new Exception("Database Query Failed: " . $conn->error);
+        throw new Exception("SQL Error: " . $conn->error);
     }
     
     $feedbacks = [];
     while ($row = $result->fetch_assoc()) {
         
-        // 5. DATA FORMATTING
-        
-        // Format Date
+        // Date Formatting
         $dateStr = $row['SubmittedAt'];
         $formattedDate = '-';
-        if ($dateStr && $dateStr !== '0000-00-00 00:00:00') {
-            try {
-                $dt = new DateTime($dateStr);
-                $formattedDate = $dt->format('Y-m-d'); 
-            } catch (Exception $e) {
-                $formattedDate = $dateStr; 
+        if (!empty($dateStr) && $dateStr !== '0000-00-00 00:00:00') {
+            $dt = date_create($dateStr);
+            if ($dt) {
+                $formattedDate = date_format($dt, 'd M Y, h:i A');
             }
         }
 
-        // Format Student Name
-        $fname = $row['FirstName'] ?? '';
-        $lname = $row['LastName'] ?? '';
-        $studentName = trim("$fname $lname");
-        
+        // Name Formatting
+        $studentName = trim(($row['FirstName'] ?? '') . ' ' . ($row['LastName'] ?? ''));
         if (empty($studentName)) {
-            $studentName = 'Unknown Student';
+            $studentName = $row['UserIdentifier'] ?? 'Unknown ID';
         }
         
-        // Ensure values aren't null
+        // Null checks
         $facilityName = $row['FacilityName'] ?? 'Unknown Facility';
         $comment = $row['Comment'] ?? '-';
-        $userIdentifier = $row['UserIdentifier'] ?? '-';
+        $userIdLabel = $row['UserIdentifier'] ?? '';
 
-        // 6. BUILD ROW OBJECT
         $feedbacks[] = [
             'FeedbackID'     => $row['FeedbackID'],
             'Rating'         => (int)$row['Rating'],
             'Comment'        => htmlspecialchars($comment),
             'FormattedDate'  => $formattedDate,
             'StudentName'    => htmlspecialchars($studentName),
-            'UserIdentifier' => htmlspecialchars($userIdentifier),
+            'UserIdentifier' => htmlspecialchars($userIdLabel),
             'FacilityName'   => htmlspecialchars($facilityName)
         ];
     }
 
-    // 7. RETURN SUCCESS
-    jsonResponse(true, $feedbacks, 'Data fetched successfully');
+    // 5. OUTPUT JSON
+    // Use flags to handle invalid UTF-8 characters gracefully
+    echo json_encode(
+        ['success' => true, 'data' => $feedbacks, 'message' => 'Fetched'], 
+        JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR
+    );
 
 } catch (Exception $e) {
-    // 8. HANDLE ERRORS GRACEFULLY
-    jsonResponse(false, [], 'Server Error: ' . $e->getMessage());
+    // 6. CATCH ERRORS
+    ob_clean(); // Clean buffer before sending error JSON
+    echo json_encode(['success' => false, 'data' => [], 'message' => 'Server Error: ' . $e->getMessage()]);
 }
+
+// Final flush/exit
+exit;
 ?>
