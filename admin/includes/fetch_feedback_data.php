@@ -1,5 +1,6 @@
 <?php
-// 1. Prevent unwanted output (HTML/Whitespace)
+// 1. SILENCE ERRORS & BUFFER OUTPUT
+// This prevents PHP warnings/notices from corrupting the JSON response
 ob_start();
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
@@ -9,21 +10,25 @@ require_once '../includes/db_connect.php';
 
 header('Content-Type: application/json');
 
-// Helper to return clean JSON
+// Helper function to send JSON and stop execution
 function jsonResponse($success, $data = [], $message = '') {
-    ob_clean(); // Discard any prior output/warnings
-    echo json_encode(['success' => $success, 'data' => $data, 'message' => $message]);
+    ob_clean(); // Discard any partial output or warnings
+    echo json_encode([
+        'success' => $success, 
+        'data' => $data, // DataTables expects this key
+        'message' => $message
+    ]);
     exit;
 }
 
-// 2. Auth Check
+// 2. AUTHENTICATION CHECK
 if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
     jsonResponse(false, [], 'Access Denied');
 }
 
 try {
-    // 3. Database Query
-    // We select specific columns to avoid ambiguity
+    // 3. QUERY DATABASE
+    // We explicitly select columns to avoid ambiguity and ensure we get UserIdentifier
     $sql = "
         SELECT 
             fb.FeedbackID,
@@ -43,53 +48,64 @@ try {
     $result = $conn->query($sql);
     
     if (!$result) {
-        throw new Exception("Query Failed: " . $conn->error);
+        throw new Exception("Database Query Failed: " . $conn->error);
     }
     
     $feedbacks = [];
     while ($row = $result->fetch_assoc()) {
-        // Safe Date Formatting
+        
+        // 4. DATA FORMATTING
+        
+        // Format Date
         $dateStr = $row['SubmittedAt'];
         $formattedDate = '-';
         if ($dateStr && $dateStr !== '0000-00-00 00:00:00') {
             try {
                 $dt = new DateTime($dateStr);
-                $formattedDate = $dt->format('d M Y, h:i A');
+                $formattedDate = $dt->format('Y-m-d'); // Match the format shown in your UI example
             } catch (Exception $e) {
-                $formattedDate = $dateStr; // Fallback
+                $formattedDate = $dateStr; 
             }
         }
 
-        // Safe Name Formatting
+        // Format Student Name
         $fname = $row['FirstName'] ?? '';
         $lname = $row['LastName'] ?? '';
         $studentName = trim("$fname $lname");
         
-        // Fallback if name is empty (e.g. deleted user)
+        // Fallback if name is missing (e.g. user deleted)
         if (empty($studentName)) {
-            $studentName = $row['UserIdentifier'] ?? 'Unknown User';
+            $studentName = 'Unknown Student';
         }
         
-        // Safe Facility Name
+        // Ensure Facility Name exists
         $facilityName = $row['FacilityName'] ?? 'Unknown Facility';
         
-        // Safe Comment
+        // Ensure Comment isn't null
         $comment = $row['Comment'] ?? '-';
+        
+        // User Identifier (Matric No)
+        $userIdentifier = $row['UserIdentifier'] ?? '-';
 
+        // 5. BUILD ROW OBJECT
+        // Keys must match what the DataTables 'columns' config expects
         $feedbacks[] = [
-            'FeedbackID' => $row['FeedbackID'],
-            'Rating' => (int)$row['Rating'],
-            'Comment' => htmlspecialchars($comment),
-            'FormattedDate' => $formattedDate,
-            'StudentName' => htmlspecialchars($studentName),
-            'UserIdentifier' => htmlspecialchars($row['UserIdentifier'] ?? ''),
-            'FacilityName' => htmlspecialchars($facilityName)
+            'FeedbackID'     => $row['FeedbackID'],
+            'Rating'         => (int)$row['Rating'],
+            'Comment'        => htmlspecialchars($comment),
+            'FormattedDate'  => $formattedDate,
+            'StudentName'    => htmlspecialchars($studentName),
+            'UserIdentifier' => htmlspecialchars($userIdentifier), // Crucial for the UI render function
+            'FacilityName'   => htmlspecialchars($facilityName)
         ];
     }
 
+    // 6. RETURN SUCCESS
     jsonResponse(true, $feedbacks, 'Data fetched successfully');
 
 } catch (Exception $e) {
+    // 7. HANDLE ERRORS GRACEFULLY
+    // Return empty data array so DataTables doesn't crash, just shows empty table
     jsonResponse(false, [], 'Server Error: ' . $e->getMessage());
 }
 ?>
