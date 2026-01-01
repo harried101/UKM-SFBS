@@ -184,6 +184,7 @@ if ($conn->connect_error) {
                 <span id="health-status-tag" class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-500">Loading...</span>
             </div>
             
+<<<<<<< HEAD
             <div class="flex items-end gap-3 mb-2">
                  <h3 id="health-score-percent" class="text-3xl font-extrabold text-[#d9464a]">--%</h3>
                  <p id="health-status-message" class="text-slate-400 text-xs mb-1.5">Fetching data...</p>
@@ -197,6 +198,21 @@ if ($conn->connect_error) {
 
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+=======
+            <div class="flex items-center justify-between">
+                <h3 id="health-score-percent" class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">--%</h3>
+                
+                <span id="health-status-tag" class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Loading...</span>
+            </div>
+            
+            <p id="health-status-message" class="text-slate-400 text-sm">Fetching weekly rate data...</p>
+            
+            <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
+                <div id="health-progress-bar" class="h-3 bg-amber-400 rounded-full" style="width:0%"></div>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+>>>>>>> b574f780a30c136ab07ef376759ce18c0013307a
         <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <span class="w-2 h-8 bg-[#8a0d19] rounded-full"></span>
             My Bookings
@@ -270,20 +286,20 @@ if ($conn->connect_error) {
                     </div>
 
                     <div class="flex-shrink-0 flex items-center gap-2 mt-2 sm:mt-0">
-                             <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
-                                <button onclick="showCancelModal(<?php echo $bk['BookingID']; ?>)" 
-                                    title="Cancel Booking"
-                                    class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600 transition flex items-center justify-center">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
-                                <button onclick="openFeedback(this, <?php echo $bk['BookingID']; ?>)" 
-                                    data-facility="<?php echo htmlspecialchars($bk['FacilityName']); ?>"
-                                    data-date="<?php echo htmlspecialchars($bk['formatted_start']); ?>"
-                                    class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition">
-                                    Feedback
-                                </button>
-                            <?php endif; ?>
+                                 <?php if (!$bk['is_passed'] && in_array($bk['Status'], ['Pending', 'Approved', 'Confirmed'])): ?>
+                                     <button onclick="showCancelModal(<?php echo $bk['BookingID']; ?>)" 
+                                         title="Cancel Booking"
+                                         class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600 transition flex items-center justify-center">
+                                         <i class="fa-solid fa-xmark"></i>
+                                     </button>
+                                 <?php elseif ($bk['is_passed'] && in_array($bk['Status'], ['Approved', 'Confirmed'])): ?>
+                                     <button onclick="openFeedback(this, <?php echo $bk['BookingID']; ?>)" 
+                                         data-facility="<?php echo htmlspecialchars($bk['FacilityName']); ?>"
+                                         data-date="<?php echo htmlspecialchars($bk['formatted_start']); ?>"
+                                         class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition">
+                                         Feedback
+                                     </button>
+                                 <?php endif; ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -396,7 +412,9 @@ async function fetchCancellationHealth() {
             CARD_ELEMENTS.message.textContent = data.message;
 
             // --- 4. Update Progress Bar ---
-            CARD_ELEMENTS.bar.style.width = `${data.rate_value}%`; 
+            // Ensure the width does not exceed 100%
+            const barWidth = Math.min(data.rate_value, 100);
+            CARD_ELEMENTS.bar.style.width = `${barWidth}%`; 
             // Reset and apply new bar color
             resetClasses(CARD_ELEMENTS.bar, 'bg-');
             CARD_ELEMENTS.bar.classList.add(classes.barBg);

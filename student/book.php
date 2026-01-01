@@ -1,15 +1,46 @@
 <?php
+// ==========================================
+// BOOK.PHP - UPDATED FOR CANCELLATION CHECK INTEGRATION
+// ==========================================
+
 require_once 'includes/student_auth.php';
 
 
 require_once '../includes/db_connect.php';
+// FIX: Use the correct relative path to include the file.
+// This now imports the 'get_cancellation_stats_internal' function.
+require_once 'API/fetch_cancellation_health.php'; 
+
+
+// --- PHP logic to check cancellation status on page load (NEW) ---
+$is_blocked = false;
+$cancellation_status = [
+    'rate_value' => 0,
+    'rate_status' => 'No Data',
+    'status_color' => 'gray',
+    'message' => 'Checking health status...'
+];
+
+if (isset($_SESSION['user_id'])) {
+    // 1. Get Student Identifier from session
+    $studentIdentifier = $_SESSION['user_id'];
+
+    // 2. Use the internal function to get statistics
+    $status_data = get_cancellation_stats_internal($conn, $studentIdentifier);
+
+    // 3. Update status variables if successful
+    if (!isset($status_data['error'])) {
+        $cancellation_status = $status_data;
+        $is_blocked = $status_data['is_blocked'];
+    }
+}
+// --- END PHP logic ---
+
 
 $facility_id = $_GET['facility_id'] ?? '';
 $facility_name = "Facility";
 
 if ($facility_id) {
-    // We use integer binding for ID if your DB uses INT, otherwise 's'
-    // Based on previous admin code, FacilityID is INT.
     $stmt = $conn->prepare("SELECT Name FROM facilities WHERE FacilityID = ?");
     $stmt->bind_param("s", $facility_id);
     $stmt->execute();
@@ -52,31 +83,68 @@ if ($facility_id) {
 
     <div class="max-w-lg mx-auto bg-white">
         
-        <!-- Month Navigation -->
+        <div id="cancellation-status-banner" class="mb-6 rounded-xl p-4 transition-all duration-300 
+            <?php 
+                // Render the correct color and show the banner based on PHP check
+                if ($is_blocked) {
+                    echo 'bg-red-50 border border-red-100';
+                } elseif ($cancellation_status['status_color'] === 'amber') {
+                    echo 'bg-yellow-50 border border-yellow-100';
+                } elseif ($cancellation_status['status_color'] === 'green' && ($cancellation_status['total_weekly'] ?? 0) > 0) {
+                     echo 'bg-green-50 border border-green-100';
+                } else {
+                    echo 'hidden'; // Hide if no meaningful data or error
+                }
+            ?>">
+            <div class="flex items-start gap-4">
+                <i id="status-icon" class="fa-solid text-xl flex-shrink-0 
+                    <?php 
+                        if ($is_blocked) echo 'fa-triangle-exclamation text-red-600'; 
+                        elseif ($cancellation_status['status_color'] === 'amber') echo 'fa-exclamation text-yellow-600'; 
+                        elseif ($cancellation_status['status_color'] === 'green') echo 'fa-circle-check text-green-600'; 
+                    ?>"></i>
+                <div>
+                    <h5 id="status-title" class="font-bold text-lg leading-tight 
+                        <?php 
+                            if ($is_blocked) echo 'text-red-800'; 
+                            elseif ($cancellation_status['status_color'] === 'amber') echo 'text-yellow-800'; 
+                            elseif ($cancellation_status['status_color'] === 'green') echo 'text-green-800'; 
+                        ?>">
+                        Cancellation Health: <?php echo htmlspecialchars($cancellation_status['rate_value'] ?? '0'); ?>% (<?php echo htmlspecialchars($cancellation_status['rate_status'] ?? 'No Data'); ?>)
+                    </h5>
+                    <p id="status-message" class="text-sm mt-0.5 
+                        <?php 
+                            if ($is_blocked) echo 'text-red-600'; 
+                            elseif ($cancellation_status['status_color'] === 'amber') echo 'text-yellow-600'; 
+                            elseif ($cancellation_status['status_color'] === 'green') echo 'text-green-600'; 
+                        ?>">
+                        <?php echo htmlspecialchars($cancellation_status['message'] ?? 'Checking health status...'); ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <div class="flex justify-between items-center mb-6 bg-gray-50 p-2 rounded-xl border border-gray-100">
-            <button id="prevMonth" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:text-[#0b4d9d] hover:shadow-sm transition text-gray-500">
+            <button id="prevMonth" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:text-[#0b4d9d] hover:shadow-sm transition text-gray-500" <?php if ($is_blocked) echo 'disabled'; ?>>
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
             <h3 id="monthYear" class="text-lg font-bold text-gray-800"></h3>
-            <button id="nextMonth" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:text-[#0b4d9d] hover:shadow-sm transition text-gray-500">
+            <button id="nextMonth" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:text-[#0b4d9d] hover:shadow-sm transition text-gray-500" <?php if ($is_blocked) echo 'disabled'; ?>>
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
         </div>
 
-        <!-- Calendar Grid -->
         <div class="grid grid-cols-7 gap-2 text-center mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
             <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
         </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm mb-6"></div>
 
-        <!-- Legend -->
         <div id="legend" class="hidden flex justify-center gap-6 text-xs text-gray-500 mb-6 border-t border-gray-100 pt-4">
             <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-white border border-[#0b4d9d]"></span> Available</div>
             <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-100 border border-gray-300"></span> Booked</div>
             <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#0b4d9d]"></span> Selected</div>
         </div>
 
-        <!-- Time Slots Section -->
         <div id="timeSlotsSection" class="hidden fade-in">
             <h4 class="font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <span><i class="fa-regular fa-clock mr-2 text-[#0b4d9d]"></i> Available Slots</span>
@@ -91,7 +159,6 @@ if ($facility_id) {
             <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1"></div>
         </div>
 
-        <!-- Hidden Booking Form -->
         <form id="bookingForm" action="book_fetch.php" method="POST" class="hidden mt-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
             <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>">
             <input type="hidden" name="start_time" id="hiddenStartTime">
@@ -101,15 +168,40 @@ if ($facility_id) {
                 <span id="summaryTime" class="font-bold text-[#0b4d9d] text-lg">--:--</span>
             </div>
             
-            <button type="submit" class="w-full bg-[#0b4d9d] text-white py-3.5 rounded-xl font-bold hover:bg-[#083a75] transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 transform active:scale-[0.98]">
-                <span>Confirm Booking</span>
-                <i class="fa-solid fa-arrow-right"></i>
+            <button type="submit" id="confirmBookingBtn" 
+                class="w-full py-3.5 rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2 transform active:scale-[0.98]
+                <?php 
+                    if ($is_blocked) {
+                        echo 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none';
+                    } else {
+                        echo 'bg-[#0b4d9d] text-white hover:bg-[#083a75] shadow-blue-900/20';
+                    }
+                ?>"
+                <?php if ($is_blocked) echo 'disabled'; ?>
+            >
+                <span>
+                    <?php 
+                        if ($is_blocked) {
+                            echo 'Booking Blocked (High Cancellation Rate)';
+                        } else {
+                            echo 'Confirm Booking';
+                        }
+                    ?>
+                </span>
+                <?php if (!$is_blocked) { ?>
+                    <i class="fa-solid fa-arrow-right"></i>
+                <?php } ?>
             </button>
         </form>
     </div>
 
     <script>
         const facilityId = "<?php echo $facility_id; ?>";
+        // The JS check for the rate is redundant since PHP sets the 'isBlocked' flag, 
+        // but we keep the API endpoint for future use or verification.
+        const cancelHealthApi = 'API/fetch_cancellation_health.php'; 
+        let isBlocked = <?php echo $is_blocked ? 'true' : 'false'; ?>; 
+
         let currDate = new Date();
         let currMonth = currDate.getMonth();
         let currYear = currDate.getFullYear();
@@ -120,8 +212,10 @@ if ($facility_id) {
         const slotsContainer = document.getElementById('slotsContainer');
         const slotsLoader = document.getElementById('slotsLoader');
         const bookingForm = document.getElementById('bookingForm');
+        const confirmBookingBtn = document.getElementById('confirmBookingBtn');
         const legend = document.getElementById('legend');
 
+        // --- CALENDAR FUNCTIONS (Renders all days as disabled if blocked) ---
         function renderCalendar(month, year) {
             calendarGrid.innerHTML = "";
             monthYear.innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -144,7 +238,7 @@ if ($facility_id) {
                 
                 const checkDate = new Date(year, month, day);
 
-                if (checkDate < today) {
+                if (checkDate < today || isBlocked) { // DISABLE if date is past OR student is blocked
                     dateDiv.classList.add('disabled');
                 } else {
                     dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
@@ -158,7 +252,10 @@ if ($facility_id) {
             }
         }
 
+
         function selectDate(day, month, year, element) {
+            if (isBlocked) return;
+
             // UI Selection
             document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
@@ -183,6 +280,12 @@ if ($facility_id) {
         function fetchSlots(dateStr) {
             slotsContainer.innerHTML = '';
             slotsLoader.classList.remove('hidden');
+
+            if (isBlocked) {
+                slotsLoader.classList.add('hidden');
+                slotsContainer.innerHTML = '<div class="col-span-full text-red-600 text-center py-4 font-bold">You are currently blocked from viewing and booking slots.</div>';
+                return;
+            }
 
             fetch(`book_fetch.php?get_slots=1&date=${dateStr}&facility_id=${facilityId}`)
                 .then(res => res.json())
@@ -214,7 +317,6 @@ if ($facility_id) {
                             : 'bg-white text-[#0b4d9d] border-blue-100 hover:border-[#0b4d9d] hover:bg-blue-50 hover:shadow-md'
                         }`;
                         
-                        // Using type="button" prevents accidental form submission
                         btn.type = "button";
                         btn.innerHTML = `<span>${slot.label}</span>`;
                         
@@ -235,6 +337,8 @@ if ($facility_id) {
         }
 
         function selectSlot(startTime, label, dateStr, btn) {
+            if (isBlocked) return; 
+
             // Reset styles
             document.querySelectorAll('#slotsContainer button:not(:disabled)').forEach(b => {
                 b.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-white text-[#0b4d9d] border-blue-100 hover:border-[#0b4d9d] hover:bg-blue-50 transition-all flex flex-col items-center justify-center gap-1';
@@ -243,10 +347,6 @@ if ($facility_id) {
             // Active Style
             btn.className = 'py-2.5 px-1 rounded-lg text-xs font-semibold border bg-[#0b4d9d] border-[#0b4d9d] text-white shadow-md transform scale-105 flex flex-col items-center justify-center gap-1';
             
-            // Format for DB: YYYY-MM-DD HH:MM:SS
-            // Note: startTime from fetch is usually "2023-10-25 09:00:00" if we set it right in PHP, 
-            // OR if it is just time "09:00:00", we combine it.
-            // My fetch script returns full datetime in 'start', so we use that directly.
             document.getElementById('hiddenStartTime').value = startTime;
             document.getElementById('summaryTime').innerText = label;
             
@@ -254,13 +354,18 @@ if ($facility_id) {
             setTimeout(() => bookingForm.scrollIntoView({ behavior: 'smooth' }), 50);
         }
 
-        // Handle Form Submit
+        // --- Handle Form Submit (Defensive check for BE blocking) ---
         const form = document.getElementById('bookingForm');
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const btn = this.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
             
+            if (isBlocked) {
+                alert('Booking is currently blocked due to a high weekly cancellation rate.');
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
 
@@ -270,7 +375,22 @@ if ($facility_id) {
                 method: 'POST',
                 body: formData
             })
-            .then(res => res.json())
+            .then(res => {
+                // Check for 403 Forbidden status, expected if the BE (book_fetch.php) implements blocking
+                if (res.status === 403) {
+                    // Try to parse the JSON response for the custom error code
+                    return res.json().then(data => {
+                        if (data && data.code === 'CANCELLATION_BLOCKED') {
+                            // The BE sent a specific blocking error
+                            throw new Error(data.message || 'Booking denied due to cancellation rate.');
+                        }
+                        // Other 403 error
+                        throw new Error('Access denied: ' + (data.message || 'Unknown reason.'));
+                    });
+                }
+                // Check for other standard JSON responses
+                return res.json();
+            })
             .then(data => {
                 if (data.success) {
                     alert('Booking Successful!');
@@ -286,7 +406,7 @@ if ($facility_id) {
             })
             .catch(err => {
                 console.error(err);
-                alert('Network Error');
+                alert('Error: ' + err.message); // Show the specific error message
             })
             .finally(() => {
                 btn.disabled = false;
