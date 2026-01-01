@@ -278,61 +278,95 @@ include 'includes/navbar.php';
 
 <!-- VIEW/EDIT MODAL -->
 <div id="viewModal" class="modal fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-    <div class="modal-content bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-lg text-slate-800">Booking Details <span id="modalId" class="text-ukm-blue font-mono ml-2"></span></h3>
-            <button onclick="closeViewModal()" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition">
+    <div class="modal-content bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 bg-white border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-xl text-slate-800">Booking Details</h3>
+                <span id="modalId" class="text-xs font-mono text-slate-400"></span>
+            </div>
+            <button onclick="closeViewModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 transition flex items-center justify-center">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
         
-        <form id="processBookingForm" action="process.php" method="POST" class="flex-grow overflow-y-auto p-6 space-y-6">
-            <input type="hidden" name="booking_id" id="modalBookingId">
-            <input type="hidden" name="action" id="modalAction">
-            
-            <div class="grid grid-cols-2 gap-6">
+        <div class="flex-grow overflow-y-auto p-6">
+            <!-- Details Grid -->
+            <div class="grid grid-cols-2 gap-6 mb-8">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Facility</label>
-                    <input type="text" id="modalFacility" readonly class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Facility</span>
+                    <span id="modalFacility" class="block font-bold text-slate-800 text-lg leading-tight"></span>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Booked By</label>
-                    <input type="text" id="modalUser" readonly class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Booked By</span>
+                    <span id="modalUser" class="block font-medium text-slate-700 leading-tight"></span>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Start Time</label>
-                    <input type="text" id="modalStart" readonly class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Start Time</span>
+                    <span id="modalStart" class="block font-mono text-slate-600 text-sm"></span>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">End Time</label>
-                    <input type="text" id="modalEnd" readonly class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">End Time</span>
+                    <span id="modalEnd" class="block font-mono text-slate-600 text-sm"></span>
                 </div>
             </div>
 
-            <div class="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm font-bold text-slate-500 uppercase">Management</span>
-                    <span id="modalStatus" class="px-3 py-1 rounded-full text-xs font-bold border uppercase"></span>
-                </div>
+            <!-- Current Status Badge -->
+            <div class="mb-8">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Current Status</span>
+                <span id="modalStatus" class="inline-block px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider"></span>
+            </div>
+
+            <!-- ACTION AREA -->
+            <form id="processBookingForm" action="process.php" method="POST">
+                <input type="hidden" name="booking_id" id="modalBookingId">
+                <input type="hidden" name="action" id="modalAction">
                 
-                <div id="actionButtons" class="flex gap-3 mb-4">
-                    <button type="button" onclick="submitAction('approve')" class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition">
-                        <i class="fa-solid fa-check mr-2"></i> Approve
+                <!-- Step 1: Initial Actions -->
+                <div id="step1Actions" class="grid grid-cols-2 gap-4">
+                    <button type="button" onclick="showStep2('approve')" class="py-3.5 rounded-xl bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 hover:bg-emerald-100 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> Approve
                     </button>
-                    <button type="button" onclick="submitAction('reject')" class="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition">
-                        <i class="fa-solid fa-xmark mr-2"></i> Reject
+                    <button type="button" onclick="showStep2('reject')" class="py-3.5 rounded-xl bg-red-50 text-red-700 font-bold border border-red-200 hover:bg-red-100 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-xmark"></i> Reject
                     </button>
                 </div>
 
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Admin Notes</label>
-                <textarea name="admin_notes" id="adminNotes" rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ukm-blue outline-none" placeholder="Reason for rejection or optional note..."></textarea>
-            </div>
+                <!-- Step 2: Approve Confirmation -->
+                <div id="step2Approve" class="hidden bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+                    <h4 class="font-bold text-emerald-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i> Confirm Approval
+                    </h4>
+                    <p class="text-xs text-emerald-600 mb-4">You are about to approve this booking. You can verify the payment or add a note below (optional).</p>
+                    
+                    <textarea name="admin_notes_approve" class="w-full px-4 py-3 rounded-lg border border-emerald-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white mb-4" placeholder="Optional approval note (e.g. Payment verified)"></textarea>
+                    
+                    <div class="flex gap-3">
+                        <button type="button" onclick="resetSteps()" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
+                        <button type="button" onclick="submitForm('approve')" class="flex-grow px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-200">Confirm Approve</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Reject Confirmation -->
+                <div id="step2Reject" class="hidden bg-red-50 rounded-xl p-5 border border-red-100">
+                    <h4 class="font-bold text-red-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation"></i> Reject Booking
+                    </h4>
+                    <p class="text-xs text-red-600 mb-4">Please provide a reason for rejecting this booking. This will be sent to the student.</p>
+                    
+                    <textarea name="admin_notes_reject" id="rejectReason" class="w-full px-4 py-3 rounded-lg border border-red-200 text-sm focus:ring-2 focus:ring-red-500 outline-none bg-white mb-4 placeholder-red-300" placeholder="Reason for rejection (Required)..."></textarea>
+                    
+                    <div class="flex gap-3">
+                        <button type="button" onclick="resetSteps()" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-100 transition">Cancel</button>
+                        <button type="button" onclick="submitForm('reject')" class="flex-grow px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">Confirm Reject</button>
+                    </div>
+                </div>
+            </form>
             
-            <div class="flex justify-between text-xs text-slate-400 font-medium pt-2">
+            <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between text-[10px] text-slate-400 font-mono">
                 <span id="modalBookedAt"></span>
                 <span id="modalCreatedBy"></span>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -382,34 +416,34 @@ include 'includes/navbar.php';
     const viewModal = document.getElementById('viewModal');
     
     function openViewModal(booking, user, createdBy) {
+        // Populate Data
         document.getElementById('modalId').innerText = '#' + booking.BookingID;
         document.getElementById('modalBookingId').value = booking.BookingID;
-        document.getElementById('modalFacility').value = booking.FacilityName;
-        document.getElementById('modalUser').value = user;
-        document.getElementById('modalStart').value = booking.StartTime;
-        document.getElementById('modalEnd').value = booking.EndTime;
+        document.getElementById('modalFacility').innerText = booking.FacilityName;
+        document.getElementById('modalUser').innerText = user;
+        document.getElementById('modalStart').innerText = booking.StartTime;
+        document.getElementById('modalEnd').innerText = booking.EndTime;
+        document.getElementById('modalBookedAt').innerText = 'Booked: ' + booking.BookedAt;
+        document.getElementById('modalCreatedBy').innerText = 'Src: ' + createdBy;
         
-        // Status Styling
+        // Status Badge Styling
         const statusEl = document.getElementById('modalStatus');
         statusEl.innerText = booking.Status;
-        statusEl.className = 'px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ';
+        statusEl.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ';
+        
         if(booking.Status === 'Pending') statusEl.classList.add('bg-amber-100', 'text-amber-700', 'border-amber-200');
         else if(booking.Status === 'Confirmed') statusEl.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-200');
         else if(booking.Status === 'Canceled') statusEl.classList.add('bg-red-50', 'text-red-600', 'border-red-100');
         else statusEl.classList.add('bg-slate-100', 'text-slate-600', 'border-slate-200');
+
+        // Logic to show/hide actions based on Status
+        const form = document.getElementById('processBookingForm');
         
-        document.getElementById('modalBookedAt').innerText = 'Booked: ' + booking.BookedAt;
-        document.getElementById('modalCreatedBy').innerText = 'Source: ' + createdBy;
-        
-        // Buttons Logic
-        const btns = document.getElementById('actionButtons');
-        const notes = document.getElementById('adminNotes');
         if(booking.Status === 'Pending') {
-            btns.style.display = 'flex';
-            notes.readOnly = false;
+            form.style.display = 'block';
+            resetSteps(); // Ensure we start at step 1
         } else {
-            btns.style.display = 'none';
-            notes.readOnly = true;
+            form.style.display = 'none'; // Hide actions for non-pending
         }
         
         viewModal.classList.add('open');
@@ -419,18 +453,59 @@ include 'includes/navbar.php';
         viewModal.classList.remove('open');
     }
 
-    function submitAction(action) {
-        const form = document.getElementById('processBookingForm');
+    // Two-Step Action Logic
+    function resetSteps() {
+        document.getElementById('step1Actions').classList.remove('hidden');
+        document.getElementById('step2Approve').classList.add('hidden');
+        document.getElementById('step2Reject').classList.add('hidden');
+    }
+
+    function showStep2(type) {
+        document.getElementById('step1Actions').classList.add('hidden');
+        if(type === 'approve') {
+            document.getElementById('step2Approve').classList.remove('hidden');
+        } else {
+            document.getElementById('step2Reject').classList.remove('hidden');
+        }
+    }
+
+    function submitForm(action) {
         document.getElementById('modalAction').value = action;
-        const notes = document.getElementById('adminNotes').value.trim();
         
-        if (action === 'reject' && notes === '') {
-            alert('Please provide a reason for rejection in Admin Notes.');
-            return;
+        // Validation for Reject
+        if (action === 'reject') {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if(!reason) {
+                alert("Please provide a rejection reason.");
+                return;
+            }
         }
-        if (confirm(`Are you sure you want to ${action} this booking?`)) {
-            form.submit();
+
+        // Note Handling: The PHP expects 'admin_notes'. We have two separate textareas now.
+        // We should merge them or rename them in PHP. A simpler way is to copy the value to a hidden input field or just let proper naming handle it.
+        // But wait, 'process.php' likely looks for $_POST['admin_notes'].
+        // I should update the 'name' attributes in the HTML to match expected input?
+        // Or simpler: change the name in HTML to unique ones (admin_notes_approve, admin_notes_reject)
+        // and update process.php? 
+        // NO, I can't edit process.php unless I check it. 
+        // Better: I will create a hidden input 'admin_notes' and populate it via JS before submit.
+        
+        const approveNote = document.querySelector('textarea[name="admin_notes_approve"]').value;
+        const rejectNote = document.querySelector('textarea[name="admin_notes_reject"]').value;
+        
+        // Create/Update hidden input for admin_notes
+        let noteInput = document.querySelector('input[name="admin_notes"]');
+        if(!noteInput) {
+            noteInput = document.createElement('input');
+            noteInput.type = 'hidden';
+            noteInput.name = 'admin_notes';
+            document.getElementById('processBookingForm').appendChild(noteInput);
         }
+        
+        if (action === 'approve') noteInput.value = approveNote;
+        else noteInput.value = rejectNote;
+
+        document.getElementById('processBookingForm').submit();
     }
 
     // NEW BOOKING MODAL LOGIC

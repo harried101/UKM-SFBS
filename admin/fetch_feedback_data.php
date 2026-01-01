@@ -77,6 +77,7 @@ try {
             'Rating'         => (int)$row['Rating'],
             'Comment'        => htmlspecialchars($comment),
             'FormattedDate'  => $formattedDate,
+            'SubmittedAt'    => $row['SubmittedAt'], // Needed for sorting
             'StudentName'    => htmlspecialchars($studentName),
             'UserIdentifier' => htmlspecialchars($userIdentifier),
             'FacilityName'   => htmlspecialchars($facilityName)
