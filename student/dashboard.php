@@ -1,5 +1,21 @@
 <?php
-require_once 'includes/student_auth.php';
+session_start();
+
+$timeout_limit = 1800; 
+
+// 2. Check if the 'last_activity' timestamp exists
+if (isset($_SESSION['last_activity'])) {
+    $seconds_inactive = time() - $_SESSION['last_activity'];
+    
+    // 3. If inactive for too long, redirect to logout
+    if ($seconds_inactive >= $timeout_limit) {
+        header("Location: ../logout.php");
+        exit;
+    }
+}
+
+// 4. Update the timestamp to 'now' because they just loaded the page
+$_SESSION['last_activity'] = time();
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
 
@@ -174,21 +190,21 @@ if ($conn->connect_error) {
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
-            <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
-            
-            <div class="flex items-center justify-between">
-                <h3 class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">22%</h3>
-                <span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Warning</span>
-            </div>
-            
-            <p class="text-slate-400 text-sm">High cancellation rate may lead to penalties.</p>
-            
-            <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
-                <div class="h-3 bg-amber-400 rounded-full" style="width:22%"></div>
-            </div>
-        </div>
+     <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
+    <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
+    
+    <div class="flex items-center justify-between">
+        <h3 id="health-score-percent" class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">--%</h3>
+        
+        <span id="health-status-tag" class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Loading...</span>
     </div>
+    
+    <p id="health-status-message" class="text-slate-400 text-sm">Fetching weekly rate data...</p>
+    
+    <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
+        <div id="health-progress-bar" class="h-3 bg-amber-400 rounded-full" style="width:0%"></div>
+    </div>
+</div>
 
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
@@ -328,6 +344,99 @@ if ($conn->connect_error) {
 <script>
 let currentBookingId = null;
 
+// ===========================================
+// START: FETCH CANCELLATION HEALTH INTEGRATION
+// ===========================================
+
+// Target elements for the Cancellation Card
+const CARD_ELEMENTS = {
+    rateValue: document.getElementById('health-score-percent'),
+    tag: document.getElementById('health-status-tag'),
+    message: document.getElementById('health-status-message'),
+    bar: document.getElementById('health-progress-bar'),
+};
+
+// Tailwind Class Mapping based on status_color from PHP API
+// This is used to override the hardcoded colors (red/amber) with the correct status colors
+const STATUS_CLASSES = {
+    // Low Rate (Good)
+    'green': { tagBg: 'bg-green-100', tagText: 'text-green-700', barBg: 'bg-green-500', scoreText: 'text-green-600' },
+    // Moderate Rate (Warning)
+    'amber': { tagBg: 'bg-amber-100', tagText: 'text-amber-700', barBg: 'bg-amber-500', scoreText: 'text-amber-600' },
+    // High Rate (Risk)
+    'red': { tagBg: 'bg-red-100', tagText: 'text-red-700', barBg: 'bg-red-600', scoreText: 'text-red-600' }
+};
+
+// Helper to clear old CSS classes (e.g., removes the default red color before adding green)
+function resetClasses(element, prefix) {
+    const classes = Array.from(element.classList);
+    classes.forEach(cls => {
+        // Remove all classes that start with the prefix (e.g., 'text-', 'bg-')
+        if (cls.startsWith(prefix)) {
+            element.classList.remove(cls);
+        }
+    });
+}
+
+async function fetchCancellationHealth() {
+    if (!CARD_ELEMENTS.rateValue) return; 
+
+    try {
+        const response = await fetch('/UKM-SFBS/student/API/fetch_cancellation_health.php'); 
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            const data = result.data;
+            const color = data.status_color;
+            const classes = STATUS_CLASSES[color] || STATUS_CLASSES['green']; 
+
+            // --- 1. Update Rate Percentage ---
+            CARD_ELEMENTS.rateValue.textContent = `${data.rate_value}%`; 
+            // Reset and apply new text color
+            resetClasses(CARD_ELEMENTS.rateValue, 'text-');
+            CARD_ELEMENTS.rateValue.classList.add(classes.scoreText, 'drop-shadow-lg'); 
+
+            // --- 2. Update Status Tag ---
+            CARD_ELEMENTS.tag.textContent = data.rate_status;
+            // Reset and apply new background and text color
+            resetClasses(CARD_ELEMENTS.tag, 'bg-');
+            resetClasses(CARD_ELEMENTS.tag, 'text-');
+            CARD_ELEMENTS.tag.classList.add(classes.tagBg, classes.tagText);
+
+            // --- 3. Update Status Message ---
+            CARD_ELEMENTS.message.textContent = data.message;
+
+            // --- 4. Update Progress Bar ---
+            CARD_ELEMENTS.bar.style.width = `${data.rate_value}%`; 
+            // Reset and apply new bar color
+            resetClasses(CARD_ELEMENTS.bar, 'bg-');
+            CARD_ELEMENTS.bar.classList.add(classes.barBg);
+
+        } else {
+            CARD_ELEMENTS.message.textContent = `Error: ${result.data ? result.data.message : 'Failed to fetch rate data.'}`;
+            CARD_ELEMENTS.tag.textContent = 'Error';
+            console.error('API Error:', result);
+        }
+
+    } catch (error) {
+        CARD_ELEMENTS.message.textContent = 'Network or Server connection error.';
+        CARD_ELEMENTS.tag.textContent = 'Network Error';
+        console.error('Fetch Error:', error);
+    }
+}
+
+// NOTE: You would place fetchActiveBookings() here when ready.
+
+// ===========================================
+// END: FETCH CANCELLATION HEALTH INTEGRATION
+// ===========================================
+
+
+// ===========================================
+// START: EXISTING MODAL & DROPDOWN LOGIC
+// (Your original code, unchanged)
+// ===========================================
+
 // Modal Logic
 function showCancelModal(id) {
     currentBookingId = id;
@@ -448,6 +557,17 @@ document.addEventListener('click', (e) => {
         isDropdownOpen = false;
         toggleDropdown();
     }
+});
+// ===========================================
+// END: EXISTING MODAL & DROPDOWN LOGIC
+// ===========================================
+
+
+// EXECUTE FUNCTIONS ON PAGE LOAD
+document.addEventListener('DOMContentLoaded', function() {
+    // Call function to load Cancellation Health data
+    fetchCancellationHealth();
+    // fetchActiveBookings(); // Uncomment this when the corresponding API is ready
 });
 </script>
 
