@@ -54,25 +54,19 @@ try {
     // Avoid division by zero
     $rate = ($total > 0) ? round(($canceled / $total) * 100) : 0;
     
-    // 4. Determine Health Status (With Threshold Logic)
+    // 4. Determine Health Status (Simplified)
+    // Only warn if they strictly cross the 33% penalty threshold
     $status = 'Good';
     $color = 'green';
     $message = 'Your account is in good standing.';
 
-    // Only flag 'Risk' or 'Fair' if user has made at least 3 bookings to avoid penalizing small sample sizes
     if ($total >= 3) {
-        if ($rate >= 33) {
+        if ($rate > 33) {
             $status = 'Risk';
             $color = 'red';
             $message = 'High cancellation rate (>33%). Future bookings blocked.';
-        } elseif ($rate > 15) {
-            $status = 'Fair';
-            $color = 'yellow';
-            $message = 'Your cancellation rate is rising. Please be careful.';
         }
-    } else {
-        // If total bookings < 3, keep status Good regardless of rate
-        $message = 'Your account is in good standing.';
+        // Removed intermediate "Fair" status to avoid confusion at 22%
     }
 
     // 5. Return Data
