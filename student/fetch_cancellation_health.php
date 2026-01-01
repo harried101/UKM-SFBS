@@ -34,8 +34,7 @@ try {
     if (!$uid) jsonResponse(false, ['message' => 'User not found']);
 
     // 3. Calculate Weekly Stats
-    // Logic: Look at ALL bookings for the current week (Monday-Sunday)
-    $weekMode = 1; // SQL Mode 1 = Week starts Monday
+    $weekMode = 1; // Week starts Monday
     $sql = "SELECT 
                 COUNT(*) as total_bookings,
                 SUM(CASE WHEN Status = 'Canceled' THEN 1 ELSE 0 END) as total_canceled
@@ -55,25 +54,35 @@ try {
     // Avoid division by zero
     $rate = ($total > 0) ? round(($canceled / $total) * 100) : 0;
     
-    // Determine Health Status
+    // 4. Determine Health Status (With Threshold Logic)
     $status = 'Good';
     $color = 'green';
-    if ($rate >= 33) {
-        $status = 'Risk';
-        $color = 'red';
-    } elseif ($rate > 15) {
-        $status = 'Fair';
-        $color = 'yellow';
+    $message = 'Your account is in good standing.';
+
+    // Only flag 'Risk' or 'Fair' if user has made at least 3 bookings to avoid penalizing small sample sizes
+    if ($total >= 3) {
+        if ($rate >= 33) {
+            $status = 'Risk';
+            $color = 'red';
+            $message = 'High cancellation rate (>33%). Future bookings blocked.';
+        } elseif ($rate > 15) {
+            $status = 'Fair';
+            $color = 'yellow';
+            $message = 'Your cancellation rate is rising. Please be careful.';
+        }
+    } else {
+        // If total bookings < 3, keep status Good regardless of rate
+        $message = 'Your account is in good standing.';
     }
 
-    // 4. Return Data
+    // 5. Return Data
     jsonResponse(true, [
         'total_weekly' => $total,
         'canceled_weekly' => $canceled,
         'cancellation_rate' => $rate,
         'health_status' => $status,
         'status_color' => $color,
-        'message' => ($rate >= 33) ? 'Cancellation rate too high (>33%). Future bookings may be blocked.' : 'Your account is in good standing.'
+        'message' => $message
     ]);
 
 } catch (Exception $e) {
