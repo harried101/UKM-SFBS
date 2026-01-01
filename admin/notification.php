@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
 }
 
 // === Fetch Notifications ===
-$stmt = $conn->prepare("SELECT NotificationID, Message, IsRead, CreatedAt
+$stmt = $conn->prepare("SELECT NotificationID, BookingID, Message, IsRead, CreatedAt
                         FROM notifications
                         WHERE UserID=? 
                         ORDER BY CreatedAt DESC LIMIT 50");

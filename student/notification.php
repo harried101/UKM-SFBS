@@ -41,10 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
 
 // Fetch notifications
 $stmt = $conn->prepare("
-    SELECT NotificationID, Message, IsRead, CreatedAt
-    FROM notifications
-    WHERE UserID = ?
-    ORDER BY CreatedAt DESC
+    SELECT n.*, f.Name, b.StartTime
+    FROM notifications n
+    LEFT JOIN bookings b ON n.BookingID = b.BookingID
+    LEFT JOIN facilities f ON b.FacilityID = f.FacilityID
+    WHERE n.UserID = ?
+    ORDER BY n.CreatedAt DESC
     LIMIT 50
 ");
 $stmt->bind_param("i", $studentUserID);

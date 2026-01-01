@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 $userID = $userRow['UserID'];
                 
                 // 3. Insert Notification
-                $notifStmt = $conn->prepare("INSERT INTO notifications (UserID, Message, IsRead, CreatedAt) VALUES (?, ?, 0, NOW())");
-                $notifStmt->bind_param("is", $userID, $notificationMessage);
+                $notifStmt = $conn->prepare("INSERT INTO notifications (UserID, BookingID, Message, IsRead, CreatedAt) VALUES (?, ?, ?, 0, NOW())");
+                $notifStmt->bind_param("iis", $userID, $bookingID, $notificationMessage);
                 $notifStmt->execute();
                 $notifStmt->close();
             }
