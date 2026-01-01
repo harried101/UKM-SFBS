@@ -1,21 +1,5 @@
 <?php
-session_start();
-
-$timeout_limit = 1800; 
-
-// 2. Check if the 'last_activity' timestamp exists
-if (isset($_SESSION['last_activity'])) {
-    $seconds_inactive = time() - $_SESSION['last_activity'];
-    
-    // 3. If inactive for too long, redirect to logout
-    if ($seconds_inactive >= $timeout_limit) {
-        header("Location: ../logout.php");
-        exit;
-    }
-}
-
-// 4. Update the timestamp to 'now' because they just loaded the page
-$_SESSION['last_activity'] = time();
+require_once 'includes/student_auth.php';
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
 
@@ -190,10 +174,10 @@ if ($conn->connect_error) {
             </div>
         </div>
 
-     <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
-    <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
-    
-    <div class="flex items-center justify-between">
+        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
+            <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
+            
+             <div class="flex items-center justify-between">
         <h3 id="health-score-percent" class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">--%</h3>
         
         <span id="health-status-tag" class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Loading...</span>
@@ -570,7 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // fetchActiveBookings(); // Uncomment this when the corresponding API is ready
 });
 </script>
-
 <?php include './includes/footer.php'; ?>
 <script src="../assets/js/idle_timer.js"></script>
 </body>
