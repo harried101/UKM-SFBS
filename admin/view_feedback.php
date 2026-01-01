@@ -15,15 +15,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - Student Feedback</title>
 
-  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
-  <!-- Tailwind Config -->
   <script>
     tailwind.config = {
       theme: {
@@ -44,7 +41,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
     }
   </script>
 
-  <!-- Custom Styles -->
   <style>
     .fade-in { animation: fadeIn 0.4s ease-out forwards; }
     @keyframes fadeIn {
@@ -71,7 +67,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
       border-bottom: 1px solid #f1f5f9;
     }
     
-    /* Remove default datatable styling that conflicts */
     .dataTables_wrapper .dataTables_length, 
     .dataTables_wrapper .dataTables_filter, 
     .dataTables_wrapper .dataTables_info, 
@@ -87,7 +82,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
 
 <body class="bg-slate-50 min-h-screen font-body text-slate-800">
 
-  <!-- NAVBAR (Standard Admin) -->
   <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-md">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
         <div class="flex items-center gap-4">
@@ -99,8 +93,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
             <a href="dashboard.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Home</a>
             <a href="addfacilities.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Facilities</a>
             <a href="bookinglist.php" class="text-gray-600 hover:text-[#0b4d9d] font-medium transition">Bookings</a>
-            
-            <!-- Active State -->
             <a href="view_feedback.php" class="text-[#0b4d9d] font-bold transition">Feedback</a>
 
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
@@ -122,7 +114,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
 
   <div class="max-w-7xl mx-auto px-6 py-8 fade-in">
 
-    <!-- PAGE HEADER -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 pb-6 border-b border-slate-200">
       <div>
         <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
@@ -134,30 +125,35 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
           Feedback Management
         </h1>
         <p class="text-slate-500 mt-2 text-lg font-heading">
-          View students' feedback on facilities.
+          Review and filter student feedback by facility and date.
         </p>
       </div>
     </div>
 
-    <!-- FILTER & TABLE PANEL -->
     <div class="glass-panel rounded-2xl p-6 shadow-lg">
 
-      <!-- Filter/Search -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
-        <!-- Search Box -->
-        <div class="relative w-full md:w-1/3">
-          <label class="sr-only" for="searchBox">Search Feedback</label>
-          <input type="text" id="searchBox" placeholder="Search students or facilities..."
-            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ukm-blue focus:border-ukm-blue shadow-sm transition-all"
-          />
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-bold text-slate-500 uppercase ml-1">Filter Facility</label>
+          <select id="facilityFilter"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ukm-blue focus:border-ukm-blue shadow-sm transition-all bg-white">
+            <option value="">All Facilities</option>
+            </select>
         </div>
 
-        <!-- Rating Filter -->
-        <div class="relative w-full md:w-48 mt-2 md:mt-0">
-          <label class="sr-only" for="ratingFilter">Filter by Rating</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-bold text-slate-500 uppercase ml-1">Filter Date</label>
+          <select id="dateFilter"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ukm-blue focus:border-ukm-blue shadow-sm transition-all bg-white">
+            <option value="">All Dates</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-bold text-slate-500 uppercase ml-1">Filter Rating</label>
           <select id="ratingFilter"
-            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ukm-blue focus:border-ukm-blue text-base shadow-sm transition-all">
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ukm-blue focus:border-ukm-blue shadow-sm transition-all bg-white">
             <option value="">All Ratings</option>
             <option value="5">5 - Excellent</option>
             <option value="4">4 - Good</option>
@@ -169,7 +165,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
 
       </div>
 
-      <!-- Feedback Table -->
       <div class="overflow-x-auto rounded-xl">
         <table id="feedback" class="w-full text-sm display rounded-lg">
           <thead>
@@ -181,7 +176,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
               <th class="text-left rounded-tr-lg">Date</th>
             </tr>
           </thead>
-          <!-- Tbody empty, populated by JS -->
           <tbody class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
@@ -189,15 +183,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
     $(document).ready(function () {
-      // Initialize DataTable with AJAX
       const table = $('#feedback').DataTable({
         ajax: {
-            url: 'fetch_feedback_data.php', // Fetches data from backend
+            url: 'fetch_feedback_data.php',
             dataSrc: 'data'
         },
         columns: [
@@ -222,24 +214,43 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
         ],
         pageLength: 10,
         lengthMenu: [5, 10, 20],
-        order: [[4, 'desc']], // Sort by Date Descending
-        dom: 'lrtip', // Hide default search/pagination styling to use ours
+        order: [[4, 'desc']],
+        dom: 'rtip', // Removed 'l' (length) and 'f' (search box) for a cleaner UI
         language: {
             emptyTable: "No feedback records found."
+        },
+        // Populate dropdowns automatically once data is loaded
+        initComplete: function () {
+            const api = this.api();
+
+            // Populate Facility Dropdown
+            api.column(1).data().unique().sort().each(function (d) {
+                $('#facilityFilter').append(`<option value="${d}">${d}</option>`);
+            });
+
+            // Populate Date Dropdown
+            api.column(4).data().unique().sort().reverse().each(function (d) {
+                $('#dateFilter').append(`<option value="${d}">${d}</option>`);
+            });
         }
       });
 
-      // Filter by rating
+      // Filter logic for Facility
+      $('#facilityFilter').on('change', function () {
+        table.column(1).search(this.value).draw();
+      });
+
+      // Filter logic for Date
+      $('#dateFilter').on('change', function () {
+        table.column(4).search(this.value).draw();
+      });
+
+      // Filter logic for Rating
       $('#ratingFilter').on('change', function () {
         table.column(2).search(this.value).draw();
       });
-
-      // Live search for custom search box
-      $('#searchBox').on('keyup', function () {
-        table.search(this.value).draw();
-      });
     });
   </script>
-
+<?php include 'includes/footer.php'; ?>
 </body>
 </html>
