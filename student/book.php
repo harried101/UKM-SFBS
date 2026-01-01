@@ -6,7 +6,7 @@
 require_once 'includes/student_auth.php';
 
 
-require_once '../includes/db_connect.php';
+
 // FIX: Use the correct relative path to include the file.
 // This now imports the 'get_cancellation_stats_internal' function.
 require_once 'API/fetch_cancellation_health.php'; 

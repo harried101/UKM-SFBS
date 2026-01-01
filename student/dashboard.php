@@ -184,7 +184,6 @@ if ($conn->connect_error) {
                 <span id="health-status-tag" class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-500">Loading...</span>
             </div>
             
-<<<<<<< HEAD
             <div class="flex items-end gap-3 mb-2">
                  <h3 id="health-score-percent" class="text-3xl font-extrabold text-[#d9464a]">--%</h3>
                  <p id="health-status-message" class="text-slate-400 text-xs mb-1.5">Fetching data...</p>
@@ -198,21 +197,6 @@ if ($conn->connect_error) {
 
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
-=======
-            <div class="flex items-center justify-between">
-                <h3 id="health-score-percent" class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">--%</h3>
-                
-                <span id="health-status-tag" class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Loading...</span>
-            </div>
-            
-            <p id="health-status-message" class="text-slate-400 text-sm">Fetching weekly rate data...</p>
-            
-            <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
-                <div id="health-progress-bar" class="h-3 bg-amber-400 rounded-full" style="width:0%"></div>
-            </div>
-        </div>
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
->>>>>>> b574f780a30c136ab07ef376759ce18c0013307a
         <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <span class="w-2 h-8 bg-[#8a0d19] rounded-full"></span>
             My Bookings

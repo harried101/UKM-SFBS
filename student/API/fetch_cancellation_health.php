@@ -64,7 +64,7 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
             if ($cancelRate >= 33) { 
                 $status = 'High (Blocked)';
                 $color = 'red';
-                $message = 'Booking restricted. Your weekly cancellation rate is ' . $cancelRate . '%, which exceeds the 33% limit (33% or more canceled bookings out of 3+ total bookings).';
+                $message = 'Booking restricted. Weekly cancellation rate is too high (>33%).';
                 $is_blocked = true;
             } elseif ($cancelRate >= 15) { 
                 // Moderate Risk
