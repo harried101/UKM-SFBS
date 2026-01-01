@@ -227,7 +227,7 @@ if ($conn->connect_error) {
 
  <!-- CANCELLATION HEALTH CARD -->
 <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
-    <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancellation Health (Weekly)</h5>
+    <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
     
     <div class="flex items-center justify-between">
         <h3 class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">22%</h3>
