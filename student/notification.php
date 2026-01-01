@@ -3,17 +3,8 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-session_start();
-$timeout_limit = 1800; // 30 min session timeout
+require_once 'includes/student_auth.php';
 
-if (isset($_SESSION['last_activity'])) {
-    $seconds_inactive = time() - $_SESSION['last_activity'];
-    if ($seconds_inactive >= $timeout_limit) {
-        header("Location: ../logout.php");
-        exit;
-    }
-}
-$_SESSION['last_activity'] = time();
 
 require_once '../includes/db_connect.php';
 

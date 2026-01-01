@@ -7,7 +7,7 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 session_start();
 
 // === Session Timeout ===
-$timeout_limit = 1800;
+$timeout_limit = 600; // 10 minutes
 if (isset($_SESSION['last_activity'])) {
     $inactive = time() - $_SESSION['last_activity'];
     if ($inactive >= $timeout_limit) {

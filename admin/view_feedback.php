@@ -1,12 +1,6 @@
 <?php
-require_once '../includes/db_connect.php';
-session_start();
+require_once 'includes/admin_auth.php';
 
-// Basic Admin Auth Check
-if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
-    header("Location: ../index.php");
-    exit();
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
