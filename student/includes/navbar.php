@@ -1,6 +1,15 @@
 <?php
 // Expected variable: $nav_active (values: 'home', 'facilities', 'history', 'notifications')
 $nav_active = $nav_active ?? '';
+    // Verify UserID is available for fetching notifications 
+    $nav_unread_count = 0;
+    if (isset($db_numeric_id) && $db_numeric_id > 0) {
+        $navCountStmt = $conn->prepare("SELECT COUNT(*) AS unread FROM notifications WHERE UserID = ? AND IsRead = 0");
+        $navCountStmt->bind_param("i", $db_numeric_id);
+        $navCountStmt->execute();
+        $nav_unread_count = $navCountStmt->get_result()->fetch_assoc()['unread'];
+        $navCountStmt->close();
+    }
 ?>
 <nav class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40 transition-all duration-300 shadow-sm">
     <div class="container mx-auto px-6 py-3 flex justify-between items-center">
@@ -39,8 +48,15 @@ $nav_active = $nav_active ?? '';
 
             <div class="flex items-center gap-4 pl-4 md:pl-6 md:border-l border-slate-200 relative">
                 <!-- Notifications -->
-                <a href="notification.php" class="<?php echo ($nav_active === 'notifications') ? 'text-[#8a0d19]' : 'text-slate-400 hover:text-[#8a0d19]'; ?> transition-colors relative p-1 text-decoration-none">
-                    <i class="<?php echo ($nav_active === 'notifications') ? 'fa-solid' : 'fa-regular'; ?> fa-bell text-xl"></i>
+                <a href="notification.php" class="<?php echo ($nav_active === 'notifications') ? 'text-[#8a0d19]' : 'text-slate-400 hover:text-[#8a0d19]'; ?> transition-colors relative p-1 text-decoration-none group">
+                    <div class="relative">
+                        <i class="<?php echo ($nav_active === 'notifications') ? 'fa-solid' : 'fa-regular'; ?> fa-bell text-xl"></i>
+                        <?php if ($nav_unread_count > 0): ?>
+                        <span class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center border-2 border-white shadow-sm">
+                            <?php echo $nav_unread_count > 99 ? '99+' : $nav_unread_count; ?>
+                        </span>
+                        <?php endif; ?>
+                    </div>
                 </a>
 
                 <div class="text-right hidden sm:block">
