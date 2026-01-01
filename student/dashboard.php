@@ -18,41 +18,6 @@ if (isset($_SESSION['last_activity'])) {
 $_SESSION['last_activity'] = time();
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-/* ================= AUTH ================= */
-// Redirect if not logged in or not a student
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
-    header("Location: ../index.php");
-    exit();
-}
-
-require_once '../includes/db_connect.php';
-
-
-// -----------------------------
-// 1. FETCH STUDENT DETAILS
-// -----------------------------
-$studentIdentifier = $_SESSION['user_id'] ?? '';
-$studentName = 'Student';
-$studentID = '';
-$db_numeric_id = 0;
-
-if ($studentIdentifier) {
-    $stmtStudent = $conn->prepare("
-        SELECT UserID, FirstName, LastName, UserIdentifier 
-        FROM users 
-        WHERE UserIdentifier = ?
-    ");
-    $stmtStudent->bind_param("s", $studentIdentifier);
-    $stmtStudent->execute();
-    $resStudent = $stmtStudent->get_result();
-
-    if ($rowStudent = $resStudent->fetch_assoc()) {
-        $studentName   = $rowStudent['FirstName'] . ' ' . $rowStudent['LastName'];
-        $studentID     = $rowStudent['UserIdentifier'];
-        $db_numeric_id = (int)$rowStudent['UserID'];
-    }
-    $stmtStudent->close();
-}
 
 // -----------------------------
 // 2. FETCH ALL BOOKINGS (FIXED LOGIC)

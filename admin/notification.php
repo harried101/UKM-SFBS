@@ -7,7 +7,7 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 session_start();
 
 // === Session Timeout ===
-$timeout_limit = 1800; // seconds
+$timeout_limit = 600; // 10 minutes
 if (isset($_SESSION['last_activity'])) {
     $inactive = time() - $_SESSION['last_activity'];
     if ($inactive >= $timeout_limit) {
@@ -20,7 +20,7 @@ $_SESSION['last_activity'] = time();
 // === DB Connection ===
 require_once '../includes/db_connect.php';
 
-// === Admin Auth Check (adapted to original login) ===
+// === Admin Auth Check ===
 $session_role = strtolower($_SESSION['role'] ?? '');
 if (!isset($_SESSION['logged_in']) || $session_role !== 'admin' || !isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
@@ -28,7 +28,7 @@ if (!isset($_SESSION['logged_in']) || $session_role !== 'admin' || !isset($_SESS
 }
 
 $adminID = $_SESSION['user_id'];
-$adminName = $_SESSION['user_id']; // fallback to ID since original login has no name
+$adminName = $_SESSION['user_id'];
 
 // === Time Ago Function ===
 function time_ago($datetime) {
@@ -51,7 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
 }
 
 // === Fetch Notifications ===
-$stmt = $conn->prepare("SELECT NotificationID, Message, IsRead, CreatedAt FROM notifications WHERE UserID=? ORDER BY CreatedAt DESC LIMIT 50");
+$stmt = $conn->prepare("SELECT n.NotificationID, n.Message, n.IsRead, n.CreatedAt, b.BookingID 
+                        FROM notifications n 
+                        LEFT JOIN bookings b ON n.BookingID = b.BookingID 
+                        WHERE n.UserID=? 
+                        ORDER BY n.CreatedAt DESC LIMIT 50");
 $stmt->bind_param("i", $adminID);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -75,6 +79,7 @@ $stmt->close();
 <style>
 body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
 .notification-unread { border-left: 4px solid #8a0d19; background-color: #fef2f2; }
+.notification-item:hover { background-color: #f1f5f9; }
 </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -84,10 +89,8 @@ $nav_active = 'notifications';
 include 'includes/navbar.php';
 ?>
 
-
-<!-- Main Content -->
 <main class="flex-grow container mx-auto px-6 py-8 max-w-2xl">
-<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 ml-1">Recent Activity</h4>
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 ml-1">Recent Notifications</h4>
 
 <div class="space-y-4" id="notificationList">
 <?php if (count($notifications) === 0): ?>
@@ -104,8 +107,9 @@ include 'includes/navbar.php';
     $readClass = $isRead ? 'opacity-60 bg-white border-slate-200' : 'notification-unread border-[#8a0d19] shadow-md hover:shadow-lg transition duration-200';
     $messageClass = $isRead ? 'text-slate-600' : 'text-slate-900 font-medium';
     $timeClass = $isRead ? 'text-slate-400' : 'text-[#8a0d19] font-semibold';
+    $link = $n['BookingID'] ? "bookinglist.php?id=".$n['BookingID'] : "#";
 ?>
-<div class="notification-item p-4 rounded-xl border <?= $readClass ?> flex gap-4 items-start">
+<a href="<?= $link ?>" class="block notification-item p-4 rounded-xl border <?= $readClass ?> flex gap-4 items-start">
     <div class="flex-shrink-0 pt-1">
         <i class="fa-solid fa-circle-info text-xl text-slate-500"></i>
     </div>
@@ -117,19 +121,21 @@ include 'includes/navbar.php';
             </span>
         </div>
     </div>
-</div>
+</a>
 <?php endforeach; ?>
 </div>
 
+<?php if(count($notifications) > 0): ?>
 <button id="markAllBtn" onclick="markAllRead()" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Mark All as Read</button>
+<?php endif; ?>
 
-<!-- JS: Mark All as Read -->
 <script>
+// Mark All as Read
 function markAllRead() {
-    const markAllBtn = document.getElementById('markAllBtn');
-    if (markAllBtn.disabled) return;
-    markAllBtn.disabled = true;
-    markAllBtn.textContent = 'Updating...';
+    const btn = document.getElementById('markAllBtn');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
 
     fetch("notification.php", {
         method: "POST",

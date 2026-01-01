@@ -1,11 +1,11 @@
 <?php
 let idleSeconds = 0;
 
-// 2 minutes total idle time
-const IDLE_LIMIT = 30 * 60; // 1800 seconds
+// 10 minutes total idle time
+const IDLE_LIMIT = 10 * 60; // 600 seconds (10 minutes)
 
 // Warning at 1 minute (1 minute before logout)
-const WARNING_TIME = 29 * 60; // 1740 seconds
+const WARNING_TIME = 9 * 60; // 540 seconds (9 minutes - 1 minute before logout)
 
 let warningShown = false;
 
@@ -30,7 +30,7 @@ setInterval(() => {
         warningShown = true;
     }
 
-    // Auto logout at 2 minutes
+    // Auto logout at 10 minutes
     if (idleSeconds >= IDLE_LIMIT) {
         window.location.href = "../logout.php";
     }

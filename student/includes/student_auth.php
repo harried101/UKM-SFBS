@@ -1,6 +1,6 @@
 <?php
 session_start();
-$timeout_limit = 600; // 10 minutes 
+$timeout_limit = 600; // 10 minutes
 
 // 2. Check if the 'last_activity' timestamp exists
 if (isset($_SESSION['last_activity'])) {
@@ -17,26 +17,28 @@ if (isset($_SESSION['last_activity'])) {
 $_SESSION['last_activity'] = time();
 
 // 1. Auth Check
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Admin') {
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
     header("Location: ../index.php");
     exit();
 }
 
 require_once '../includes/db_connect.php';
 
-// 2. Fetch Admin Details
-$adminIdentifier = $_SESSION['user_id'] ?? '';
-$adminName = 'Administrator';
-$adminID = $adminIdentifier;
+// 2. Fetch Student Details
+$studentIdentifier = $_SESSION['user_id'] ?? '';
+$studentName = 'Student';
+$studentID = '';
+$db_numeric_id = 0;
 
-if ($adminIdentifier) {
-    $stmtAuth = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
-    $stmtAuth->bind_param("s", $adminIdentifier);
+if ($studentIdentifier) {
+    $stmtAuth = $conn->prepare("SELECT UserID, FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
+    $stmtAuth->bind_param("s", $studentIdentifier);
     $stmtAuth->execute();
     $resAuth = $stmtAuth->get_result();
     if ($rowAuth = $resAuth->fetch_assoc()) {
-        $adminName = $rowAuth['FirstName'] . ' ' . $rowAuth['LastName'];
-        $adminID = $rowAuth['UserIdentifier'];
+        $studentName = $rowAuth['FirstName'] . ' ' . $rowAuth['LastName'];
+        $studentID = $rowAuth['UserIdentifier'];
+        $db_numeric_id = (int)$rowAuth['UserID'];
     }
     $stmtAuth->close();
 }

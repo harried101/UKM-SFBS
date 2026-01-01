@@ -1,47 +1,6 @@
 <?php
-session_start();
-$timeout_limit = 10; 
+require_once 'includes/student_auth.php';
 
-// 2. Check if the 'last_activity' timestamp exists
-if (isset($_SESSION['last_activity'])) {
-    $seconds_inactive = time() - $_SESSION['last_activity'];
-    
-    // 3. If inactive for too long, redirect to logout
-    if ($seconds_inactive >= $timeout_limit) {
-        header("Location: ../logout.php");
-        exit;
-    }
-}
-
-// 4. Update the timestamp to 'now' because they just loaded the page
-$_SESSION['last_activity'] = time();
-
-// SECURITY CHECK
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'Student') {
-    header("Location: ../index.php");
-    exit();
-}
-
-require_once '../includes/db_connect.php';
-
-// Timezone
-date_default_timezone_set('Asia/Kuala_Lumpur');
-
-// Student Details
-$studentIdentifier = $_SESSION['user_id'] ?? '';
-$studentName = 'Student';
-$studentID = $studentIdentifier;
-
-if ($studentIdentifier) {
-    $stmtStudent = $conn->prepare("SELECT FirstName, LastName, UserIdentifier FROM users WHERE UserIdentifier = ?");
-    $stmtStudent->bind_param("s", $studentIdentifier);
-    $stmtStudent->execute();
-    $resStudent = $stmtStudent->get_result();
-    if ($rowStudent = $resStudent->fetch_assoc()) {
-        $studentName = $rowStudent['FirstName'] . ' ' . $rowStudent['LastName'];
-        $studentID = $rowStudent['UserIdentifier'];
-    }
-    $stmtStudent->close();
 }
 
 // Fetch Bookings
