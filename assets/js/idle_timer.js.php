@@ -6,8 +6,8 @@
 header('Content-Type: application/javascript');
 require_once __DIR__ . '/../../includes/config.php';
 ?>
-const idleTimeLimit = <?php echo SESSION_TIMEOUT_MS; ?>; // <?php echo (SESSION_TIMEOUT_SECONDS / 60); ?> minutes
-const syncInterval = <?php echo SESSION_REFRESH_INTERVAL_MS; ?>; // <?php echo (SESSION_REFRESH_INTERVAL_MS / 60000); ?> minutes
+const idleTimeLimit = <?php echo defined('SESSION_TIMEOUT_MS') ? SESSION_TIMEOUT_MS : 600000; ?>; // Default 10 mins if config fails
+const syncInterval = <?php echo defined('SESSION_REFRESH_INTERVAL_MS') ? SESSION_REFRESH_INTERVAL_MS : 300000; ?>; // Default 5 mins
 
 let idleTimer;
 let lastSyncTime = 0;

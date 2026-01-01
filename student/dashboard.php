@@ -155,11 +155,13 @@ if ($conn->connect_error) {
         <p class="text-slate-600 max-w-xl text-lg">Here's an overview of your sports activities and upcoming sessions.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 fade-in">
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between gap-4 card-hover">
+    <!-- Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
+        <!-- Card 1: Active Bookings -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between gap-4 card-hover">
             <div>
-                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Bookings</p>
-                <div class="text-3xl font-bold text-slate-800 font-serif">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Active Bookings</p>
+                <div class="text-4xl font-bold text-slate-800 font-serif">
                     <?php 
                     $active_count = 0;
                     foreach($all_bookings as $b) {
@@ -169,26 +171,28 @@ if ($conn->connect_error) {
                     ?>
                 </div>
             </div>
-            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-[#8a0d19]">
-                <i class="fa-regular fa-calendar-check text-xl"></i>
+            <div class="h-14 w-14 rounded-full bg-red-50 flex items-center justify-center text-[#8a0d19]">
+                <i class="fa-regular fa-calendar-check text-2xl"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
-            <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
+        <!-- Card 2: Cancellation Health -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm card-hover flex flex-col justify-between">
+            <div class="flex items-start justify-between mb-2">
+                <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancellation Health</h5>
+                <span id="health-status-tag" class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-500">Loading...</span>
+            </div>
             
-             <div class="flex items-center justify-between">
-        <h3 id="health-score-percent" class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">--%</h3>
-        
-        <span id="health-status-tag" class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Loading...</span>
+            <div class="flex items-end gap-3 mb-2">
+                 <h3 id="health-score-percent" class="text-3xl font-extrabold text-[#d9464a]">--%</h3>
+                 <p id="health-status-message" class="text-slate-400 text-xs mb-1.5">Fetching data...</p>
+            </div>
+            
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div id="health-progress-bar" class="h-full bg-slate-300 rounded-full transition-all duration-1000" style="width:0%"></div>
+            </div>
+        </div>
     </div>
-    
-    <p id="health-status-message" class="text-slate-400 text-sm">Fetching weekly rate data...</p>
-    
-    <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
-        <div id="health-progress-bar" class="h-3 bg-amber-400 rounded-full" style="width:0%"></div>
-    </div>
-</div>
 
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
