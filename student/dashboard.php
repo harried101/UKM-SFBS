@@ -382,64 +382,6 @@ if ($conn->connect_error) {
 
 <script>
 let currentBookingId = null;
-//Health Logic 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    fetch('fetch_cancellation_health.php')
-        .then(res => res.json())
-        .then(result => {
-            if (!result.success) return;
-
-            const data = result.data;
-
-            // Find elements INSIDE the cancellation card
-            const card = document.querySelector('h5')
-                ?.innerText.includes('Cancelation Health')
-                ? document.querySelector('h5').closest('.card-hover')
-                : null;
-
-            if (!card) return;
-
-            const percentage = card.querySelector('h3');
-            const badge = card.querySelector('span');
-            const message = card.querySelector('p');
-            const bar = card.querySelector('.h-3.bg-amber-400, .h-3.bg-red-500, .h-3.bg-emerald-500') 
-                      || card.querySelector('.h-3.rounded-full');
-
-            // Update text
-            percentage.innerText = data.health_score + '%';
-            badge.innerText = data.health_status;
-            message.innerText = data.message;
-
-            // Update bar width
-            bar.style.width = data.health_score + '%';
-
-            // Reset colors
-            badge.className = 'px-2 py-1 text-xs font-bold rounded-full';
-            bar.className = 'h-3 rounded-full';
-
-            // Color logic
-            if (data.status_color === 'green') {
-                percentage.className = 'text-4xl font-extrabold text-emerald-600 drop-shadow-lg';
-                badge.classList.add('bg-emerald-100', 'text-emerald-700');
-                bar.classList.add('bg-emerald-500');
-            } 
-            else if (data.status_color === 'amber') {
-                percentage.className = 'text-4xl font-extrabold text-amber-600 drop-shadow-lg';
-                badge.classList.add('bg-amber-100', 'text-amber-700');
-                bar.classList.add('bg-amber-400');
-            } 
-            else {
-                percentage.className = 'text-4xl font-extrabold text-red-600 drop-shadow-lg';
-                badge.classList.add('bg-red-100', 'text-red-700');
-                bar.classList.add('bg-red-500');
-            }
-        })
-        .catch(err => console.error('Health fetch error:', err));
-
-});
-</script>
 
 // Modal Logic
 function showCancelModal(id) {
