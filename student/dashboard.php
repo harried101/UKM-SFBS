@@ -23,7 +23,8 @@ if ($db_numeric_id > 0) {
         FROM bookings b
         JOIN facilities f ON b.FacilityID = f.FacilityID
         WHERE b.UserID = ?
-        ORDER BY b.StartTime DESC
+        AND b.EndTime >= NOW()
+        ORDER BY b.StartTime ASC
     ";
 
     $stmt = $conn->prepare($sql);

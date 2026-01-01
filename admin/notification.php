@@ -4,34 +4,12 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-session_start();
-
 require_once 'includes/admin_auth.php';
-require_once '../includes/config.php';
-
-// === Session Timeout ===
-$timeout_limit = SESSION_TIMEOUT_SECONDS; // 10 minutes
-if (isset($_SESSION['last_activity'])) {
-    $inactive = time() - $_SESSION['last_activity'];
-    if ($inactive >= $timeout_limit) {
-        header("Location: ../logout.php");
-        exit;
-    }
-}
-$_SESSION['last_activity'] = time();
 
 // === DB Connection ===
 require_once '../includes/db_connect.php';
 
-// === Admin Auth Check ===
-$session_role = strtolower($_SESSION['role'] ?? '');
-if (!isset($_SESSION['logged_in']) || $session_role !== 'admin' || !isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
-}
-
-$adminID = $_SESSION['user_id'];
-$adminName = $_SESSION['user_id'];
+// $adminID and $adminName are already set by admin_auth.php
 
 // === Time Ago Function ===
 function time_ago($datetime) {

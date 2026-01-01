@@ -1,7 +1,7 @@
 <?php
 require_once 'includes/student_auth.php';
 
-}
+
 
 // Fetch Bookings
 $userID = 0;
