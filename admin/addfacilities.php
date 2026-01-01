@@ -62,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = $_POST['Status'] ?? 'Active';
 
         if (empty($id) || empty($name)) {
-            echo "<script>alert('Please fill Facility ID and Name'); window.history.back();</script>"; exit();
+            header("Location: addfacilities.php?err=" . urlencode("Please fill Facility ID and Name"));
+            exit();
         }
 
         $newPhotoName = $facilityData['PhotoURL'] ?? ''; 
@@ -91,7 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $chk = $conn->prepare("SELECT FacilityID FROM facilities WHERE FacilityID=?");
             $chk->bind_param("s", $id);
             $chk->execute();
-            if ($chk->get_result()->num_rows > 0) { echo "<script>alert('Error: ID exists.'); window.history.back();</script>"; exit(); }
+            if ($chk->get_result()->num_rows > 0) { 
+                header("Location: addfacilities.php?err=" . urlencode("Error: Facility ID '$id' already exists."));
+                exit();
+            }
             $chk->close();
             $stmt = $conn->prepare("INSERT INTO facilities (FacilityID, Name, Description, Location, Type, PhotoURL, Status) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("sssssss", $id, $name, $description, $location, $type, $newPhotoName, $status);
@@ -113,9 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             $ins->close();
-            echo "<script>alert('$msg'); window.location='addfacilities.php?id=$id';</script>";
+            $ins->close();
+            header("Location: addfacilities.php?id=$id&msg=" . urlencode($msg));
+            exit();
         } else {
-            echo "Error: " . $conn->error;
+            header("Location: addfacilities.php?err=" . urlencode("Database Error: " . $conn->error));
+            exit();
         }
         if($stmt) $stmt->close();
     }
@@ -230,6 +237,26 @@ include 'includes/navbar.php';
             </form>
         </div>
     </div>
+
+    <!-- ALERTS -->
+    <?php if (isset($_GET['msg'])): ?>
+        <div class="mb-6 rounded-xl p-4 flex items-center justify-between shadow-sm border bg-emerald-50 border-emerald-200 text-emerald-800 animate-pulse">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+                <span class="font-bold"><?= htmlspecialchars($_GET['msg']); ?></span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-sm opacity-50 hover:opacity-100 font-bold">DISMISS</button>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($_GET['err'])): ?>
+        <div class="mb-6 rounded-xl p-4 flex items-center justify-between shadow-sm border bg-red-50 border-red-200 text-red-800">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-exclamation text-xl"></i>
+                <span class="font-bold"><?= htmlspecialchars($_GET['err']); ?></span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-sm opacity-50 hover:opacity-100 font-bold">DISMISS</button>
+        </div>
+    <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data" id="mainForm">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -432,16 +459,21 @@ include 'includes/navbar.php';
             </div>
         </div>
 
-        <!-- FORM ACTIONS -->
-        <div class="mt-10 flex items-center justify-end gap-4 border-t border-slate-200 pt-6">
-            <button type="button" onclick="window.history.back()" class="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">
-                Cancel
-            </button>
-            <button type="submit" class="px-8 py-3 rounded-xl bg-ukm-blue text-white font-bold hover:bg-ukm-dark shadow-lg shadow-blue-900/20 transition transform active:scale-95 flex items-center gap-2">
-                <i class="fa-solid fa-check-circle"></i>
-                <?php echo $isUpdate ? 'Save Changes' : 'Create Facility'; ?>
-            </button>
+        <!-- FORM ACTIONS (Sticky Bottom) -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-4 z-50 flex items-center justify-end gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <div class="container mx-auto max-w-7xl flex justify-end gap-4 px-4 md:px-6">
+                <button type="button" onclick="window.history.back()" class="px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition">
+                    Cancel
+                </button>
+                <button type="submit" class="px-8 py-3 rounded-xl bg-ukm-blue text-white font-bold hover:bg-ukm-dark shadow-lg shadow-blue-900/20 transition transform active:scale-95 flex items-center gap-2">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <?php echo $isUpdate ? 'Save Changes' : 'Create Facility'; ?>
+                </button>
+            </div>
         </div>
+        
+        <!-- Spacer for sticky footer -->
+        <div class="h-24"></div>
         
     </form>
 </main>
