@@ -200,50 +200,46 @@ if ($conn->connect_error) {
 
 <main class="container mx-auto px-4 md:px-6 py-8 md:py-12 flex-grow max-w-7xl relative z-10 space-y-8">
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in">
-    <div class="lg:col-span-2 space-y-2">
+    <div class="fade-in space-y-2">
         <p class="text-slate-500 font-medium text-sm uppercase tracking-wide">Dashboard</p>
         <h1 class="text-3xl md:text-4xl font-bold text-[#8a0d19] font-serif">Welcome back, <?php echo explode(' ', trim($studentName))[0]; ?> 👋</h1>
         <p class="text-slate-600 max-w-xl text-lg">Here's an overview of your sports activities and upcoming sessions.</p>
     </div>
-    
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between gap-4 card-hover">
-        <div>
-            <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Bookings</p>
-            <div class="text-3xl font-bold text-slate-800 font-serif">
-                <?php 
-                $active_count = 0;
-                foreach($all_bookings as $b) {
-                    if(!$b['is_passed'] && in_array($b['Status'], ['Pending','Approved','Confirmed'])) $active_count++;
-                }
-                echo $active_count;
-                ?>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 fade-in">
+        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between gap-4 card-hover">
+            <div>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Bookings</p>
+                <div class="text-3xl font-bold text-slate-800 font-serif">
+                    <?php 
+                    $active_count = 0;
+                    foreach($all_bookings as $b) {
+                        if(!$b['is_passed'] && in_array($b['Status'], ['Pending','Approved','Confirmed'])) $active_count++;
+                    }
+                    echo $active_count;
+                    ?>
+                </div>
+            </div>
+            <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-[#8a0d19]">
+                <i class="fa-regular fa-calendar-check text-xl"></i>
             </div>
         </div>
-        <div class="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-[#8a0d19]">
-            <i class="fa-regular fa-calendar-check text-xl"></i>
+
+        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
+            <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
+            
+            <div class="flex items-center justify-between">
+                <h3 class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">22%</h3>
+                <span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Warning</span>
+            </div>
+            
+            <p class="text-slate-400 text-sm">High cancellation rate may lead to penalties.</p>
+            
+            <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
+                <div class="h-3 bg-amber-400 rounded-full" style="width:22%"></div>
+            </div>
         </div>
     </div>
-
- <!-- CANCELLATION HEALTH CARD -->
-<div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
-    <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
-    
-    <div class="flex items-center justify-between">
-        <h3 class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">22%</h3>
-        <span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Warning</span>
-    </div>
-    
-    <p class="text-slate-400 text-sm">High cancellation rate may lead to penalties.</p>
-    
-    <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
-        <div class="h-3 bg-amber-400 rounded-full" style="width:22%"></div>
-    </div>
-</div>
-
-
-    </div>
-</div>
 
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
