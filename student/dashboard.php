@@ -61,7 +61,7 @@ $all_bookings = [];
 $now = new DateTime(); // current KL time
 
 if ($db_numeric_id > 0) {
-    // Fetch bookings that are not marked as 'Completed' or permanently 'Rejected/Cancelled' 
+    // Fetch bookings that are not marked as 'Completed' or permanently 'Rejected/Canceled' 
     // to keep the dashboard clean, but fetch all for history.
     $sql = "
         SELECT 
@@ -260,7 +260,7 @@ if ($conn->connect_error) {
         <?php 
         // Filter out completed/rejected bookings from the dashboard display for cleaner UX
         $display_bookings = array_filter($all_bookings, function($b) {
-            return !in_array($b['Status'], ['Completed', 'Rejected', 'Cancelled']);
+            return !in_array($b['Status'], ['Completed', 'Rejected', 'Canceled']);
         });
 
         if (empty($display_bookings)): ?>
@@ -287,7 +287,7 @@ if ($conn->connect_error) {
                     } elseif ($bk['Status'] === 'Pending') {
                         $statusColor = 'bg-amber-50 text-amber-700';
                         $statusDot = 'bg-amber-500';
-                    } elseif (in_array($bk['Status'], ['Cancelled', 'Rejected'])) {
+                    } elseif (in_array($bk['Status'], ['Canceled', 'Rejected'])) {
                         $statusColor = 'bg-red-50 text-red-700';
                         $statusDot = 'bg-red-500';
                     }
@@ -434,7 +434,7 @@ function processCancellation(id) {
     .then(data => {
         if(data.success) {
             // Optional: Success visual before reload
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Cancelled!';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Canceled!';
             btn.classList.remove('bg-red-600');
             btn.classList.add('bg-green-600');
             setTimeout(() => {
