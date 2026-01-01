@@ -1,4 +1,14 @@
-const idleTimeLimit = 10000; // 10 seconds for testing
+<?php
+/**
+ * Client-side idle timeout configuration
+ * Dynamically generated from central config.php
+ */
+header('Content-Type: application/javascript');
+require_once __DIR__ . '/../../includes/config.php';
+?>
+const idleTimeLimit = <?php echo SESSION_TIMEOUT_MS; ?>; // <?php echo (SESSION_TIMEOUT_SECONDS / 60); ?> minutes
+const syncInterval = <?php echo SESSION_REFRESH_INTERVAL_MS; ?>; // <?php echo (SESSION_REFRESH_INTERVAL_MS / 60000); ?> minutes
+
 let idleTimer;
 let lastSyncTime = 0;
 
@@ -12,8 +22,7 @@ function resetTimer() {
 
     // 2. Sync with the Server (The "Heartbeat")
     let now = Date.now();
-    // During your 10-second test, we sync every 2 seconds
-    if (now - lastSyncTime > 2000) { 
+    if (now - lastSyncTime > syncInterval) {
         fetch('../refresh_session.php')
             .then(response => console.log("Server session refreshed!"))
             .catch(err => console.log("Sync failed: ", err));

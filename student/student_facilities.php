@@ -220,6 +220,6 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
         }
     });
 </script>
-<script src="../assets/js/idle_timer.js"></script>
+<script src="../assets/js/idle_timer.js.php"></script>
 </body>
 </html>

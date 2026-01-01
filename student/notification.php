@@ -6,16 +6,11 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 require_once 'includes/student_auth.php';
 
 
-require_once '../includes/db_connect.php';
+// Student details already loaded from student_auth.php
+// $studentIdentifier, $studentName, $studentID, $db_numeric_id are available
 
-// Admin login validation
-if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin' || !isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
-}
+$studentUserID = $db_numeric_id; // Use the numeric ID from auth
 
-$adminID = $_SESSION['user_id'];
-$adminName = $_SESSION['user_id']; // fallback
 
 // Helper: convert datetime to "time ago"
 function time_ago($datetime) {
@@ -29,7 +24,7 @@ function time_ago($datetime) {
 
 // Count unread notifications
 $countStmt = $conn->prepare("SELECT COUNT(*) AS unread FROM notifications WHERE UserID = ? AND IsRead = 0");
-$countStmt->bind_param("i", $adminID);
+$countStmt->bind_param("i", $studentUserID);
 $countStmt->execute();
 $countResult = $countStmt->get_result()->fetch_assoc();
 $unreadCount = $countResult['unread'];
@@ -38,24 +33,21 @@ $unreadCount = $countResult['unread'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
     header('Content-Type: application/json');
     $upd = $conn->prepare("UPDATE notifications SET IsRead = 1 WHERE UserID = ? AND IsRead = 0");
-    $upd->bind_param("i", $adminID);
+    $upd->bind_param("i", $studentUserID);
     $upd->execute();
     echo json_encode(['success' => true]);
     exit();
 }
 
-// Fetch notifications with booking & facility info
+// Fetch notifications
 $stmt = $conn->prepare("
-    SELECT n.NotificationID, n.Message, n.IsRead, n.CreatedAt,
-           f.Name AS Name, b.StartTime
-    FROM notifications n
-    LEFT JOIN bookings b ON n.BookingID = b.BookingID
-    LEFT JOIN facilities f ON b.FacilityID = f.FacilityID
-    WHERE n.UserID = ?
-    ORDER BY n.CreatedAt DESC
+    SELECT NotificationID, Message, IsRead, CreatedAt
+    FROM notifications
+    WHERE UserID = ?
+    ORDER BY CreatedAt DESC
     LIMIT 50
 ");
-$stmt->bind_param("i", $adminID);
+$stmt->bind_param("i", $studentUserID);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -63,6 +55,7 @@ $notifications = [];
 while ($row = $result->fetch_assoc()) {
     $notifications[] = $row;
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -150,5 +143,6 @@ function markAllRead() {
     }).then(() => location.reload());
 }
 </script>
+<script src="../assets/js/idle_timer.js.php"></script>
 </body>
 </html>

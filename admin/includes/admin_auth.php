@@ -1,6 +1,7 @@
 <?php
+require_once '../includes/config.php';
 session_start();
-$timeout_limit = 600; // 10 minutes 
+$timeout_limit = SESSION_TIMEOUT_SECONDS; // 10 minutes 
 
 // 2. Check if the 'last_activity' timestamp exists
 if (isset($_SESSION['last_activity'])) {

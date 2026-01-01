@@ -847,6 +847,6 @@ new Chart(facilityCtx, {
     }
 });
 </script>
-<script src="../assets/js/idle_timer.js"></script>
+<script src="../assets/js/idle_timer.js.php"></script>
 </body>
 </html>

@@ -149,6 +149,6 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
         ratingText.style.opacity = '1';
     }
 </script>
-<script src="../assets/js/idle_timer.js"></script>
+<script src="../assets/js/idle_timer.js.php"></script>
 </body>
 </html>
