@@ -67,52 +67,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
 <body>
 
-<nav class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40 transition-all duration-300 shadow-sm">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-10 md:h-12 w-auto">
-            <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-10 md:h-12 w-auto hidden sm:block">
-        </div>
-        
-        <div class="flex items-center gap-8">
-            <div class="hidden md:flex items-center gap-6">
-                <a href="dashboard.php" class="text-slate-600 hover:text-[#8a0d19] font-medium transition text-decoration-none">Home</a>
-                <a href="student_facilities.php" class="text-slate-600 hover:text-[#8a0d19] font-medium transition text-decoration-none">Facilities</a>
-                <a href="booking_history.php" class="text-[#8a0d19] font-bold transition flex items-center gap-2 relative text-decoration-none">
-                    <span>History</span>
-                    <span class="absolute -bottom-1.5 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
-                </a>
-            </div>
-
-            <div class="flex items-center gap-4 pl-4 md:pl-6 md:border-l border-slate-200 relative">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-slate-800 leading-tight"><?php echo htmlspecialchars($studentName); ?></p>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold"><?php echo htmlspecialchars($studentID); ?></p>
-                </div>
-                <div class="relative group">
-                    <button class="focus:outline-none rounded-full transition-transform active:scale-95">
-                        <img src="../assets/img/user.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover shadow-sm group-hover:ring-[#8a0d19]/20">
-                    </button>
-                    <div class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block z-50">
-                        <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
-                             <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 md:hidden">
-                                 <p class="text-sm font-bold text-slate-800"><?php echo htmlspecialchars($studentName); ?></p>
-                                 <p class="text-xs text-slate-500"><?php echo htmlspecialchars($studentID); ?></p>
-                            </div>
-                            <a href="dashboard.php" class="block md:hidden px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#8a0d19]">Home</a>
-                            <a href="student_facilities.php" class="block md:hidden px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#8a0d19]">Facilities</a>
-                            <div class="h-px bg-slate-100 md:hidden"></div>
-                            <a href="../logout.php" onclick="return confirm('Logout?')" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium">
-                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</nav>
+<!-- NAVBAR -->
+<?php 
+$nav_active = 'history';
+include 'includes/navbar.php'; 
+?>
 
 <main class="container mx-auto px-4 md:px-6 py-8 md:py-12 flex-grow max-w-6xl fade-in">
 

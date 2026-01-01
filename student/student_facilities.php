@@ -46,47 +46,11 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
 <body>
 
 <!-- NAVBAR -->
-<nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
-    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <img src="../assets/img/ukm.png" alt="UKM Logo" class="h-12 w-auto">
-            <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
-            <img src="../assets/img/pusatsukanlogo.png" alt="Pusat Sukan Logo" class="h-12 w-auto hidden sm:block">
-        </div>
-        <div class="flex items-center gap-8">
-            <a href="dashboard.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">
-                Home
-            </a>
-            <!-- Active Facilities -->
-            <a href="student_facilities.php" class="text-[#8a0d19] font-semibold transition flex items-center gap-2 group relative">
-                <span>Facilities</span>
-                <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-[#8a0d19] rounded-full"></span>
-            </a>
-            <a href="booking_history.php" class="text-slate-500 hover:text-[#8a0d19] font-medium transition hover:scale-105">
-                History
-            </a>
-
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-200">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($studentName) ?></p>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold"><?= htmlspecialchars($studentID) ?></p>
-                </div>
-
-                <!-- LOGOUT DROPDOWN CLICK -->
-                <div class="relative">
-                    <img id="userAvatar" src="../assets/img/user.png" class="w-10 h-10 rounded-full border-2 border-white ring-2 ring-slate-100 object-cover cursor-pointer transition transform hover:scale-105">
-
-                    <div id="logoutDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden z-50 overflow-hidden">
-                        <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </a>
-                    </div>
-                </div>
-                <!-- END LOGOUT DROPDOWN -->
-            </div>
-        </div>
-    </div>
-</nav>
+<!-- NAVBAR -->
+<?php 
+$nav_active = 'facilities';
+include 'includes/navbar.php'; 
+?>
 
 <!-- HERO -->
 <div class="w-full h-64 md:h-80 relative overflow-hidden shadow-md">
@@ -206,19 +170,7 @@ h1,h2,h3{font-family:'Playfair Display',serif;}
         }
     });
 
-    // --- LOGOUT DROPDOWN CLICK ---
-    const userAvatar = document.getElementById('userAvatar');
-    const logoutDropdown = document.getElementById('logoutDropdown');
-
-    userAvatar.addEventListener('click', () => {
-        logoutDropdown.classList.toggle('hidden');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!userAvatar.contains(e.target) && !logoutDropdown.contains(e.target)) {
-            logoutDropdown.classList.add('hidden');
-        }
-    });
+// Dropdown logic is now handled in includes/navbar.php
 </script>
 <script src="../assets/js/idle_timer.js.php"></script>
 </body>
