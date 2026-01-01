@@ -161,7 +161,7 @@ try {
         }
 
         // ==========================================
-        // NEW: CHECK CANCELLATION RATE (User Story 2)
+        // CHECK CANCELLATION RATE (Strict > 33%)
         // ==========================================
         $weekMode = 1;
         $statsSql = "SELECT 
@@ -177,8 +177,8 @@ try {
         $stats = $statsStmt->get_result()->fetch_assoc();
         $statsStmt->close();
 
-        // Calculate rate (only if they have made at least 3 bookings to be fair)
-        if ($stats['total'] >= 3) {
+        // Calculate rate (Apply if ANY bookings exist)
+        if ($stats['total'] > 0) {
             $cancelRate = ($stats['canceled'] / $stats['total']) * 100;
             if ($cancelRate > 33) {
                 jsonResponse(false, "Booking Blocked: Your weekly cancellation rate is " . round($cancelRate) . "%. You cannot book new slots until next week.");
