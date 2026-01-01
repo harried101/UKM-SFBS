@@ -174,10 +174,10 @@ if ($conn->connect_error) {
             </div>
         </div>
 
-     <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
-    <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
-    
-    <div class="flex items-center justify-between">
+        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-hover flex flex-col gap-4">
+            <h5 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Cancelation Health (Weekly)</h5>
+            
+             <div class="flex items-center justify-between">
         <h3 id="health-score-percent" class="text-4xl font-extrabold text-[#d9464a] drop-shadow-lg">--%</h3>
         
         <span id="health-status-tag" class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">Loading...</span>
@@ -554,7 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // fetchActiveBookings(); // Uncomment this when the corresponding API is ready
 });
 </script>
-
 <?php include './includes/footer.php'; ?>
 <script src="../assets/js/idle_timer.js.php"></script>
 </body>
