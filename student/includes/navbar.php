@@ -69,3 +69,46 @@ $nav_active = $nav_active ?? '';
         </div>
     </div>
 </nav>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const profileBtn = document.getElementById('profileBtn');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const profileContainer = document.getElementById('profileDropdownContainer');
+    let isDropdownOpen = false;
+
+    if (profileBtn && dropdownMenu && profileContainer) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isDropdownOpen = !isDropdownOpen;
+            toggleDropdown();
+        });
+
+        function toggleDropdown() {
+            if (isDropdownOpen) {
+                dropdownMenu.classList.remove('hidden');
+                // Animate open
+                requestAnimationFrame(() => {
+                    dropdownMenu.classList.remove('opacity-0', 'scale-95');
+                    dropdownMenu.classList.add('opacity-100', 'scale-100');
+                });
+            } else {
+                // Animate close
+                dropdownMenu.classList.remove('opacity-100', 'scale-100');
+                dropdownMenu.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    dropdownMenu.classList.add('hidden');
+                }, 150);
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if(isDropdownOpen && !profileContainer.contains(e.target)) {
+                isDropdownOpen = false;
+                toggleDropdown();
+            }
+        });
+    }
+});
+</script>
