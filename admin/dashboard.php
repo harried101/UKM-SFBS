@@ -157,6 +157,20 @@ $resRecent = $conn->query($sqlRecent);
 $sqlUpcomingToday = "SELECT COUNT(*) FROM bookings WHERE DATE(StartTime) = CURDATE() AND StartTime > NOW() AND Status IN ('Confirmed', 'Pending')";
 $countUpcomingToday = $conn->query($sqlUpcomingToday)->fetch_row()[0] ?? 0;
 
+// 11. MAINTENANCE TREND ALERT (Logic: >1 Issue in 48h)
+$sqlTrend = "SELECT f.Name, COUNT(fb.FeedbackID) as IssueCount, 
+             GROUP_CONCAT(DISTINCT fb.Category SEPARATOR ', ') as Issues
+             FROM feedback fb
+             JOIN facilities f ON fb.FacilityID = f.FacilityID
+             WHERE fb.SubmittedAt >= NOW() - INTERVAL 48 HOUR
+               AND fb.Category IN ('Broken/Damaged Equipment', 'Lighting/Electrical Issue', 'Dirty/Cleaning Needed')
+             GROUP BY fb.FacilityID
+             HAVING IssueCount >= 2
+             ORDER BY IssueCount DESC
+             LIMIT 1";
+$resTrend = $conn->query($sqlTrend);
+$trendData = $resTrend->fetch_assoc();
+
 if ($conn->connect_error) {
     die("DB Connection failed: " . $conn->connect_error);
 }
@@ -191,7 +205,7 @@ if ($conn->connect_error) {
     h1, h2, h3, .font-serif {
         font-family: 'Playfair Display', serif;
     }
-
+    
     /* Animations */
     .fade-in { animation: fadeIn 0.6s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -284,7 +298,7 @@ include 'includes/navbar.php';
 <main class="container mx-auto px-6 py-8 max-w-7xl">
 
     <!-- ENHANCED STATS CARDS -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fade-in">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 fade-in">
         <!-- Card 1: This Month -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 card-hover">
             <div class="flex justify-between items-start mb-3">
@@ -345,6 +359,41 @@ include 'includes/navbar.php';
             <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Active Facilities</div>
             <div class="text-4xl font-bold text-purple-600 font-serif"><?php echo $countFacilities; ?></div>
             <div class="text-xs text-gray-400 mt-2">Available in system</div>
+        </div>
+
+        <!-- Card 5: Maintenance Alert -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 card-hover cursor-pointer relative overflow-hidden" onclick="window.location.href='view_feedback.php'">
+            <?php if($trendData): 
+                // Found a cluster of maintenance issues
+            ?>
+                <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-red-500 to-red-600 opacity-10 rounded-bl-full"></div>
+                <div class="flex justify-between items-start mb-3 relative z-10">
+                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-xl shadow-lg animate-bounce">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
+                </div>
+                <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Maintenance Alert</div>
+                <div class="flex items-end gap-2">
+                    <div class="text-xl font-bold text-red-600 font-serif truncate max-w-[140px]" title="<?php echo htmlspecialchars($trendData['Name']); ?>">
+                        <?php echo htmlspecialchars($trendData['Name']); ?>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-xs"></i>
+                    <span class="font-bold text-sm text-slate-700"><?php echo $trendData['IssueCount']; ?> reports</span>
+                    <span class="text-xs text-gray-400">in 48h</span>
+                </div>
+            <?php else: ?>
+                <div class="flex justify-between items-start mb-3">
+                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white text-xl shadow-lg">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                </div>
+                <div class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Facility Health</div>
+                <div class="text-lg font-bold text-gray-800 font-serif">Stable</div>
+                <div class="text-xs text-gray-400 mt-1">No recent maintenance spikes</div>
+            <?php endif; ?>
         </div>
     </div>
 

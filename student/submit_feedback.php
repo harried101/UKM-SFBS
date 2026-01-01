@@ -13,6 +13,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Student') {
 $bookingId = $_POST['booking_id'] ?? null;
 $rating = $_POST['rating'] ?? 0;
 $comment = $_POST['comment'] ?? '';
+$category = $_POST['category'] ?? null; // Capture Category
 
 // Check required fields (Booking ID must be present and Rating must be 1-5)
 if (empty($bookingId) || !is_numeric($bookingId) || $rating == 0) {
@@ -63,10 +64,10 @@ try {
     
     // 4. Submission Logic (Insert into feedback table)
     
-    // Schema: FeedbackID, UserID, FacilityID, BookingID, Rating, Comment, SubmittedAt (default NOW())
+    // Schema: FeedbackID, UserID, FacilityID, BookingID, Rating, Comment, SubmittedAt (default NOW()), Category
     $sql_insert = "
-        INSERT INTO feedback (UserID, FacilityID, BookingID, Rating, Comment)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO feedback (UserID, FacilityID, BookingID, Rating, Comment, Category)
+        VALUES (?, ?, ?, ?, ?, ?)
     ";
     $stmt_insert = $conn->prepare($sql_insert);
     
@@ -74,8 +75,8 @@ try {
         throw new Exception("Database prepare error: " . $conn->error);
     }
     
-    // Parameters: i (int), s (string), i (int), i (int), s (string)
-    $stmt_insert->bind_param("isiis", $numericUserId, $facilityId, $bookingId, $rating, $comment);
+    // Parameters: i (int), s (string), i (int), i (int), s (string), s (string)
+    $stmt_insert->bind_param("isiiss", $numericUserId, $facilityId, $bookingId, $rating, $comment, $category);
     $stmt_insert->execute();
     $stmt_insert->close();
 

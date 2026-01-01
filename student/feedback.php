@@ -85,6 +85,21 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
            class="text-center text-sm font-bold text-[#8a0d19] h-5 mb-6 opacity-0 transition-opacity">
         </p>
 
+        <!-- REASON CATEGORY (Hidden by default) -->
+        <div id="categorySection" class="mb-6 hidden transition-all duration-300">
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                What was the main issue? <span class="text-red-500">*</span>
+            </label>
+            <select name="category" id="categoryInput" class="w-full p-4 bg-red-50 border border-red-100 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-500 text-sm font-bold text-[#8a0d19]">
+                <option value="" disabled selected>Select a reason...</option>
+                <option value="Broken/Damaged Equipment">Broken/Damaged Equipment</option>
+                <option value="Lighting/Electrical Issue">Lighting/Electrical Issue</option>
+                <option value="Dirty/Cleaning Needed">Dirty/Cleaning Needed</option>
+                <option value="Crowd/Booking Conflict">Crowd/Booking Conflict</option>
+                <option value="Other/Personal Experience">Other/Personal Experience</option>
+            </select>
+        </div>
+
         <!-- COMMENT -->
         <div class="mb-6">
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
@@ -114,6 +129,8 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
     const stars = document.querySelectorAll('#starContainer i');
     const ratingInput = document.getElementById('ratingValue');
     const ratingText = document.getElementById('ratingText');
+    const categorySection = document.getElementById('categorySection');
+    const categoryInput = document.getElementById('categoryInput');
 
     const messages = ["Terrible", "Bad", "Okay", "Good", "Excellent!"];
 
@@ -128,6 +145,7 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
             const value = parseInt(star.dataset.index);
             ratingInput.value = value;
             highlight(value);
+            toggleCategory(value);
         });
     });
 
@@ -147,6 +165,19 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
     function showText(value) {
         ratingText.textContent = messages[value - 1];
         ratingText.style.opacity = '1';
+    }
+
+    function toggleCategory(rating) {
+        if (rating <= 3) {
+            categorySection.classList.remove('hidden');
+            categorySection.classList.add('fade-in');
+            categoryInput.setAttribute('required', 'required');
+        } else {
+            categorySection.classList.add('hidden');
+            categorySection.classList.remove('fade-in');
+            categoryInput.removeAttribute('required');
+            categoryInput.value = ""; // Reset
+        }
     }
 </script>
 <script src="../assets/js/idle_timer.js.php"></script>
