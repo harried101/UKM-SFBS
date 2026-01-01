@@ -75,8 +75,8 @@ try {
         $slotDuration = intval($schedule['SlotDuration']);
         $stmt->close();
 
-        // C. FETCH EXISTING BOOKINGS
-        $bk_sql = "SELECT TIME(StartTime) as booked_time 
+        // C. FETCH EXISTING BOOKINGS (Active ones only)
+        $bk_sql = "SELECT StartTime 
                    FROM bookings 
                    WHERE FacilityID = ? 
                    AND DATE(StartTime) = ? 
@@ -88,7 +88,8 @@ try {
         
         $booked_times = [];
         while ($row = $bk_res->fetch_assoc()) {
-            $booked_times[] = substr($row['booked_time'], 0, 5); 
+            // Store full datetime to match exact slots
+            $booked_times[] = $row['StartTime']; 
         }
         $stmt->close();
 
@@ -98,15 +99,15 @@ try {
         $end = strtotime($selectedDate . ' ' . $closeTime);
 
         while ($current < $end) {
-            $startTimeStr = date('H:i:s', $current);
-            $compareTime = date('H:i', $current); 
+            // FIX: Use full Y-m-d H:i:s format so DB gets correct date
+            $startTimeStr = date('Y-m-d H:i:s', $current);
             $labelTime = date('h:i A', $current); 
             
             $slotEndTime = $current + ($slotDuration * 60);
             
             if ($slotEndTime > $end) break;
 
-            $isBooked = in_array($compareTime, $booked_times);
+            $isBooked = in_array($startTimeStr, $booked_times);
 
             $slots[] = [
                 'start' => $startTimeStr,
@@ -161,7 +162,7 @@ try {
         }
 
         // ==========================================
-        // CHECK CANCELLATION RATE (Strict > 33%)
+        // CHECK CANCELLATION RATE
         // ==========================================
         $weekMode = 1;
         $statsSql = "SELECT 
@@ -177,37 +178,59 @@ try {
         $stats = $statsStmt->get_result()->fetch_assoc();
         $statsStmt->close();
 
-        // Calculate rate (Apply if ANY bookings exist)
         if ($stats['total'] > 0) {
             $cancelRate = ($stats['canceled'] / $stats['total']) * 100;
             if ($cancelRate > 33) {
                 jsonResponse(false, "Booking Blocked: Your weekly cancellation rate is " . round($cancelRate) . "%. You cannot book new slots until next week.");
             }
         }
-        // ==========================================
 
-        // 4. Double Booking Check
-        $check = $conn->prepare("SELECT BookingID FROM bookings WHERE FacilityID = ? AND StartTime = ? AND Status IN ('Approved', 'Pending', 'Confirmed')");
+        // ==========================================
+        // 4. SMART BOOKING (Handle Duplicates/Re-booking)
+        // ==========================================
+        // Check if a record already exists for this slot (Active OR Cancelled)
+        $check = $conn->prepare("SELECT BookingID, Status FROM bookings WHERE FacilityID = ? AND StartTime = ?");
         $check->bind_param("is", $facilityID, $startTime);
         $check->execute();
-        
-        if ($check->get_result()->num_rows > 0) {
-            jsonResponse(false, 'Sorry, this slot was just taken.');
-        }
+        $existing = $check->get_result()->fetch_assoc();
         $check->close();
 
-        // 5. Insert Booking
         $status = 'Pending';
-        $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status, BookedAt) VALUES (?, ?, ?, ?, ?, NOW())");
-        $ins->bind_param("iisss", $userID, $facilityID, $startTime, $endTime, $status);
 
-        if ($ins->execute()) {
-            jsonResponse(true, 'Booking successful!', ['booking_id' => $ins->insert_id]);
+        if ($existing) {
+            // If slot is taken by an active booking
+            if (in_array($existing['Status'], ['Approved', 'Pending', 'Confirmed'])) {
+                jsonResponse(false, 'Sorry, this slot was just taken.');
+            } 
+            // If slot exists but was Cancelled/Rejected -> REUSE IT (Update)
+            else {
+                $upd = $conn->prepare("UPDATE bookings SET UserID=?, EndTime=?, Status=?, BookedAt=NOW(), CreatedByAdminID=NULL WHERE BookingID=?");
+                $upd->bind_param("issl", $userID, $endTime, $status, $existing['BookingID']); // 'l' logic is fake, bind_param needs correct types
+                // Correct binding: i(UserID), s(EndTime), s(Status), i(BookingID)
+                
+                // Re-prepare correctly
+                $upd = $conn->prepare("UPDATE bookings SET UserID=?, EndTime=?, Status=?, BookedAt=NOW(), CreatedByAdminID=NULL WHERE BookingID=?");
+                $upd->bind_param("issi", $userID, $endTime, $status, $existing['BookingID']);
+                
+                if ($upd->execute()) {
+                    jsonResponse(true, 'Booking successful!', ['booking_id' => $existing['BookingID']]);
+                } else {
+                    jsonResponse(false, 'Update Error: ' . $conn->error);
+                }
+                $upd->close();
+            }
         } else {
-            jsonResponse(false, 'DB Error: ' . $conn->error);
-        }
+            // No existing record -> INSERT NEW
+            $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status, BookedAt) VALUES (?, ?, ?, ?, ?, NOW())");
+            $ins->bind_param("iisss", $userID, $facilityID, $startTime, $endTime, $status);
 
-        $ins->close();
+            if ($ins->execute()) {
+                jsonResponse(true, 'Booking successful!', ['booking_id' => $ins->insert_id]);
+            } else {
+                jsonResponse(false, 'DB Error: ' . $conn->error);
+            }
+            $ins->close();
+        }
     }
 
 } catch (Exception $e) {
