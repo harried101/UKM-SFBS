@@ -6,8 +6,11 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 
 session_start();
 
+require_once 'includes/admin_auth.php';
+require_once '../includes/config.php';
+
 // === Session Timeout ===
-$timeout_limit = 600; // 10 minutes
+$timeout_limit = SESSION_TIMEOUT_SECONDS; // 10 minutes
 if (isset($_SESSION['last_activity'])) {
     $inactive = time() - $_SESSION['last_activity'];
     if ($inactive >= $timeout_limit) {
@@ -51,18 +54,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
 }
 
 // === Fetch Notifications ===
-$stmt = $conn->prepare("SELECT n.NotificationID, n.Message, n.IsRead, n.CreatedAt, b.BookingID 
-                        FROM notifications n 
-                        LEFT JOIN bookings b ON n.BookingID = b.BookingID 
-                        WHERE n.UserID=? 
-                        ORDER BY n.CreatedAt DESC LIMIT 50");
+$stmt = $conn->prepare("SELECT NotificationID, Message, IsRead, CreatedAt
+                        FROM notifications
+                        WHERE UserID=? 
+                        ORDER BY CreatedAt DESC LIMIT 50");
 $stmt->bind_param("i", $adminID);
 $stmt->execute();
-$result = $stmt->get_result();
+$res = $stmt->get_result();
 
 $notifications = [];
 $unreadCount = 0;
-while ($row = $result->fetch_assoc()) {
+while ($row = $res->fetch_assoc()) {
     $notifications[] = $row;
     if ($row['IsRead'] == 0) $unreadCount++;
 }
@@ -148,6 +150,6 @@ function markAllRead() {
 }
 </script>
 
-<script src="../assets/js/idle_timer.js"></script>
+<script src="../assets/js/idle_timer.js.php"></script>
 </body>
 </html>
