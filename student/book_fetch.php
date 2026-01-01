@@ -129,20 +129,36 @@ try {
         }
 
         $userIdentifier = $_SESSION['user_id'];
-        $facilityID = $_POST['facility_id'];
+        $facilityID = $_POST['facility_id']; // Allow Alphanumeric IDs
         $startTime = $_POST['start_time']; 
         
-        // 1. Get Slot Duration
+        // Debug Log
+        file_put_contents('booking_debug.log', date('Y-m-d H:i:s') . " - Attempting booking. FacID: $facilityID, UserID: $userIdentifier\n", FILE_APPEND);
+
+        if (empty($facilityID)) {
+             jsonResponse(false, 'Invalid Facility ID.');
+        }
+
+        // 1. Get Slot Duration AND Verify Facility Exists
         $dayIndex = date('w', strtotime($startTime));
         $dur_sql = "SELECT SlotDuration FROM facilityschedules WHERE FacilityID = ? AND DayOfWeek = ?";
         $d_stmt = $conn->prepare($dur_sql);
-        $d_stmt->bind_param("ii", $facilityID, $dayIndex);
+        $d_stmt->bind_param("si", $facilityID, $dayIndex); // 's' for string ID
         $d_stmt->execute();
         $dur_res = $d_stmt->get_result();
         
         $durationMinutes = 60; 
         if ($dur_row = $dur_res->fetch_assoc()) {
             $durationMinutes = intval($dur_row['SlotDuration']);
+        } else {
+             // If no schedule found, verify if facility actually exists
+             $fac_check = $conn->prepare("SELECT FacilityID FROM facilities WHERE FacilityID = ?");
+             $fac_check->bind_param("s", $facilityID); // 's' for string ID
+             $fac_check->execute();
+             if ($fac_check->get_result()->num_rows === 0) {
+                 jsonResponse(false, 'Facility does not exist.');
+             }
+             $fac_check->close();
         }
         $d_stmt->close();
 
@@ -190,7 +206,7 @@ try {
         // ==========================================
         // Check if a record already exists for this slot (Active OR Cancelled)
         $check = $conn->prepare("SELECT BookingID, Status FROM bookings WHERE FacilityID = ? AND StartTime = ?");
-        $check->bind_param("is", $facilityID, $startTime);
+        $check->bind_param("ss", $facilityID, $startTime); // 's' for string ID
         $check->execute();
         $existing = $check->get_result()->fetch_assoc();
         $check->close();
@@ -205,32 +221,42 @@ try {
             // If slot exists but was Cancelled/Rejected -> REUSE IT (Update)
             else {
                 $upd = $conn->prepare("UPDATE bookings SET UserID=?, EndTime=?, Status=?, BookedAt=NOW(), CreatedByAdminID=NULL WHERE BookingID=?");
-                $upd->bind_param("issl", $userID, $endTime, $status, $existing['BookingID']); // 'l' logic is fake, bind_param needs correct types
-                // Correct binding: i(UserID), s(EndTime), s(Status), i(BookingID)
-                
-                // Re-prepare correctly
-                $upd = $conn->prepare("UPDATE bookings SET UserID=?, EndTime=?, Status=?, BookedAt=NOW(), CreatedByAdminID=NULL WHERE BookingID=?");
                 $upd->bind_param("issi", $userID, $endTime, $status, $existing['BookingID']);
                 
                 if ($upd->execute()) {
                     jsonResponse(true, 'Booking successful!', ['booking_id' => $existing['BookingID']]);
                 } else {
+                    file_put_contents('booking_debug.log', "Update Failed: " . $conn->error . "\n", FILE_APPEND);
                     jsonResponse(false, 'Update Error: ' . $conn->error);
                 }
                 $upd->close();
             }
         } else {
             // No existing record -> INSERT NEW
+            
+            // Double check facility exists right before insert just in case
+            $fac_final_check = $conn->prepare("SELECT COUNT(*) FROM facilities WHERE FacilityID = ?");
+            $fac_final_check->bind_param("s", $facilityID); // 's' for string ID
+            $fac_final_check->execute();
+            if ($fac_final_check->get_result()->fetch_row()[0] == 0) {
+                 file_put_contents('booking_debug.log', "Final Check Failed: Facility $facilityID not found.\n", FILE_APPEND);
+                 jsonResponse(false, 'Facility not found (Final safety check).');
+            }
+            $fac_final_check->close();
+
             $ins = $conn->prepare("INSERT INTO bookings (UserID, FacilityID, StartTime, EndTime, Status, BookedAt) VALUES (?, ?, ?, ?, ?, NOW())");
-            $ins->bind_param("iisss", $userID, $facilityID, $startTime, $endTime, $status);
+            $ins->bind_param("issss", $userID, $facilityID, $startTime, $endTime, $status); // 's' for FacilityID
 
             if ($ins->execute()) {
                 jsonResponse(true, 'Booking successful!', ['booking_id' => $ins->insert_id]);
             } else {
-                jsonResponse(false, 'DB Error: ' . $conn->error);
+                file_put_contents('booking_debug.log', "Insert Failed: " . $conn->error . " | FacID: $facilityID\n", FILE_APPEND);
+                // Throw to catch block or return error
+                throw new Exception("Insert Error: " . $conn->error);
             }
             $ins->close();
         }
+
     }
 
 } catch (Exception $e) {
