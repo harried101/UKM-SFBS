@@ -34,6 +34,7 @@ try {
     if (!$uid) jsonResponse(false, ['message' => 'User not found']);
 
     // 3. Calculate Weekly Stats
+    // We look at bookings scheduled for the current week
     $weekMode = 1; // Week starts Monday
     $sql = "SELECT 
                 COUNT(*) as total_bookings,
@@ -51,29 +52,40 @@ try {
     $total = intval($data['total_bookings']);
     $canceled = intval($data['total_canceled']);
     
-    // Avoid division by zero
-    $rate = ($total > 0) ? round(($canceled / $total) * 100) : 0;
+    // Calculate Rates
+    // cancelRate: Percentage of bookings cancelled (Low is good)
+    $cancelRate = ($total > 0) ? round(($canceled / $total) * 100) : 0;
     
-    // 4. Determine Health Status (Simplified)
-    // Only warn if they strictly cross the 33% penalty threshold
+    // healthScore: 100% means Perfect (0 cancellations). Goes down as you cancel.
+    $healthScore = 100 - $cancelRate;
+    
+    // 4. Determine Health Status
+    // We base status on the health score (High is good)
+    // < 67% Health means > 33% Cancellation Rate (Risk)
     $status = 'Good';
     $color = 'green';
-    $message = 'Your account is in good standing.';
+    $message = 'Your cancellation health is excellent.';
 
     if ($total >= 3) {
-        if ($rate > 33) {
+        if ($healthScore < 67) { // Equivalent to > 33% cancellation
             $status = 'Risk';
             $color = 'red';
-            $message = 'High cancellation rate (>33%). Future bookings blocked.';
+            $message = 'Health Critical: High cancellation rate. Bookings blocked.';
+        } elseif ($healthScore < 85) { // Equivalent to > 15% cancellation
+            $status = 'Fair';
+            $color = 'yellow';
+            $message = 'Your health score is dropping. Avoid frequent cancellations.';
         }
-        // Removed intermediate "Fair" status to avoid confusion at 22%
+    } else {
+        $message = 'Your account is in good standing.';
     }
 
     // 5. Return Data
+    // We send 'healthScore' as 'cancellation_rate' so the frontend displays the high number (100%)
     jsonResponse(true, [
         'total_weekly' => $total,
         'canceled_weekly' => $canceled,
-        'cancellation_rate' => $rate,
+        'cancellation_rate' => $healthScore, // Sending Health Score (100%) for display
         'health_status' => $status,
         'status_color' => $color,
         'message' => $message
