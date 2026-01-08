@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 
     if ($action === 'approve') {
         $status = 'Confirmed';
-        $notificationMessage = "Good news, Your Booking has been approved. Enjoy!!";
+        $notificationMessage = "Good news, Your Booking has been approved. Enjoy!";
         if (!empty($adminNotes)) {
             $notificationMessage .= "\n\nNote: " . $adminNotes;
         }

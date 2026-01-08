@@ -100,15 +100,19 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
             </select>
         </div>
 
-        <!-- COMMENT -->
-        <div class="mb-6">
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Additional Comments
-            </label>
-            <textarea name="comment" rows="4"
-                      class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#8a0d19] focus:ring-1 focus:ring-[#8a0d19] text-sm resize-none"
-                      placeholder="The facility was clean..."></textarea>
-        </div>
+       <!-- COMMENT -->
+<div class="mb-6">
+    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+        Additional Comments
+    </label>
+    <textarea
+        id="comment"
+        name="comment"
+        rows="4"
+        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#8a0d19] focus:ring-1 focus:ring-[#8a0d19] text-sm resize-none"
+        placeholder="The facility was clean..."></textarea>
+</div>
+
 
         <!-- ACTIONS -->
         <div class="flex gap-4">
@@ -168,17 +172,30 @@ $date = htmlspecialchars($_GET['date'] ?? date('d M Y'));
     }
 
     function toggleCategory(rating) {
-        if (rating <= 3) {
-            categorySection.classList.remove('hidden');
-            categorySection.classList.add('fade-in');
-            categoryInput.setAttribute('required', 'required');
-        } else {
-            categorySection.classList.add('hidden');
-            categorySection.classList.remove('fade-in');
-            categoryInput.removeAttribute('required');
-            categoryInput.value = ""; // Reset
-        }
+    const commentInput = document.getElementById('comment');
+    const categorySection = document.getElementById('categorySection');
+    const categoryInput = document.getElementById('category');
+
+    if (rating <= 3) {
+        // Show category & force comment
+        categorySection.classList.remove('hidden');
+        categorySection.classList.add('fade-in');
+
+        commentInput.setAttribute('required', 'required');
+        categoryInput.setAttribute('required', 'required');
+    } else {
+        // Hide & reset
+        categorySection.classList.add('hidden');
+        categorySection.classList.remove('fade-in');
+
+        commentInput.removeAttribute('required');
+        categoryInput.removeAttribute('required');
+
+        categoryInput.value = '';
+        commentInput.value = '';
     }
+}
+
 </script>
 <script src="../assets/js/idle_timer.js.php"></script>
 </body>

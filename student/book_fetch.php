@@ -45,7 +45,30 @@ try {
         $allDays = [0, 1, 2, 3, 4, 5, 6];
         $closedDays = array_diff($allDays, $openDays);
 
-        jsonResponse(true, 'Days fetched', ['closed_days' => array_values($closedDays)]);
+        // --- NEW: Fetch Specific Overrides (Closures) ---
+        // Fetch future closures from TODAY onwards
+        $closureDates = [];
+        $ovrStmt = $conn->prepare("SELECT StartTime, EndTime FROM scheduleoverrides WHERE FacilityID = ? AND EndTime >= CURDATE()");
+        $ovrStmt->bind_param("s", $facilityID);
+        $ovrStmt->execute();
+        $ovrRes = $ovrStmt->get_result();
+        
+        while ($row = $ovrRes->fetch_assoc()) {
+            $start = new DateTime($row['StartTime']);
+            $end = new DateTime($row['EndTime']);
+            
+            // Loop through days in the range
+            while ($start <= $end) {
+                $closureDates[] = $start->format('Y-m-d');
+                $start->modify('+1 day');
+            }
+        }
+        $ovrStmt->close();
+
+        jsonResponse(true, 'Days fetched', [
+            'closed_days' => array_values($closedDays),
+            'closed_dates' => array_unique($closureDates)
+        ]);
     }
 
     // --- 1. GET REQUEST: Fetch Dynamic Slots ---
