@@ -28,12 +28,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'Admin') {
 
 try {
     // 3. QUERY DATABASE
-    // We use LEFT JOIN so that even if a user or facility is deleted, the feedback remains visible.
+    // Added fb.Category to the SELECT statement
     $sql = "
         SELECT 
             fb.FeedbackID,
             fb.Rating,
             fb.Comment,
+            fb.Category, 
             fb.SubmittedAt, 
             u.FirstName,
             u.LastName,
@@ -70,12 +71,14 @@ try {
         $userIdentifier = $row['UserIdentifier'] ?? '-';
         $facilityName = $row['FacilityName'] ?? 'Unknown Facility (Deleted)';
         $comment = $row['Comment'] ?? '';
+        $category = $row['Category'] ?? null; // Capture the category
 
         // Add to array
         $feedbacks[] = [
             'FeedbackID'     => $row['FeedbackID'],
             'Rating'         => (int)$row['Rating'],
             'Comment'        => htmlspecialchars($comment),
+            'Category'       => htmlspecialchars($category), // ADDED THIS LINE
             'FormattedDate'  => $formattedDate,
             'SubmittedAt'    => $row['SubmittedAt'], // Needed for sorting
             'StudentName'    => htmlspecialchars($studentName),
