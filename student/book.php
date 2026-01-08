@@ -216,7 +216,8 @@ if ($facility_id) {
         const legend = document.getElementById('legend');
 
         // --- PRELOAD: Fetch Closed Days for this Facility ---
-        let closedDaysOfWeek = []; // Stores indices of closed days (e.g. [0, 6] for Sun/Sat)
+        let closedDaysOfWeek = []; // Weekly closures (e.g. [0, 6])
+        let closedDates = [];      // Specific date closures (e.g. ['2023-12-25'])
 
         function loadFacilitySettings() {
             fetch(`book_fetch.php?get_closed_days=1&facility_id=${facilityId}`)
@@ -224,6 +225,7 @@ if ($facility_id) {
                 .then(data => {
                     if (data.success) {
                         closedDaysOfWeek = data.closed_days || [];
+                        closedDates = data.closed_dates || [];
                         renderCalendar(currMonth, currYear); // Re-render with new data
                     }
                 })
@@ -253,17 +255,27 @@ if ($facility_id) {
                 
                 const checkDate = new Date(year, month, day);
                 const dayOfWeek = checkDate.getDay();
+                
+                // Format date as YYYY-MM-DD for comparison
+                // Note: Months depend on 0-index in JS, so we use month+1
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 // DISABLE conditions:
                 // 1. Past date
                 // 2. User is blocked (bad health)
-                // 3. Facility is closed on this day (NEW)
-                if (checkDate < today || isBlocked || closedDaysOfWeek.includes(dayOfWeek)) { 
+                // 3. Facility is closed on this day (Weekly)
+                // 4. Facility has a specific closure (Holiday/Maintenance)
+                const isWeeklyClosed = closedDaysOfWeek.includes(dayOfWeek);
+                const isSpecificClosed = closedDates.includes(dateString);
+
+                if (checkDate < today || isBlocked || isWeeklyClosed || isSpecificClosed) { 
                     dateDiv.classList.add('disabled');
-                    // Optional: Visual cue for closed facility days vs just past dates
-                    if (closedDaysOfWeek.includes(dayOfWeek) && checkDate >= today) {
+                    
+                    // Visual cue for closed facility days vs just past dates
+                    if ((isWeeklyClosed || isSpecificClosed) && checkDate >= today) {
                         dateDiv.style.opacity = '0.4'; 
-                        dateDiv.title = "Facility Closed";
+                        dateDiv.title = isSpecificClosed ? "Maintenance/Holiday" : "Facility Closed";
+                        dateDiv.style.backgroundColor = '#f3f4f6'; // Light gray for clarity
                     }
                 } else {
                     dateDiv.onclick = () => selectDate(day, month, year, dateDiv);

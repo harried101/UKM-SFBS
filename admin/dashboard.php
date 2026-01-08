@@ -566,70 +566,7 @@ include 'includes/navbar.php';
         </div>
     </div>
 
-    <!-- PEAK HOURS HEATMAP -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 fade-in">
-        <div class="mb-6">
-            <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                <i class="fas fa-clock text-[#0b4d9d]"></i>
-                Peak Hours Heatmap
-            </h3>
-            <p class="text-xs text-gray-500 mt-1">Most popular booking times (Last 30 days)</p>
-        </div>
-        
-        <?php if (!empty($peakHoursData)): ?>
-            <div class="overflow-x-auto">
-                <div class="inline-block min-w-full">
-                    <div class="flex gap-1 mb-2 text-xs font-medium text-gray-600">
-                        <div class="w-16"></div>
-                        <?php for ($h = 8; $h <= 22; $h++): ?>
-                            <div class="w-10 text-center"><?php echo $h; ?>h</div>
-                        <?php endfor; ?>
-                    </div>
-                    
-                    <?php 
-                    $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                    $maxCount = max(array_column($peakHoursData, 'count'));
-                    
-                    for ($d = 1; $d <= 7; $d++): ?>
-                        <div class="flex gap-1 mb-1">
-                            <div class="w-16 text-xs font-medium text-gray-600 flex items-center"><?php echo $days[$d - 1]; ?></div>
-                            <?php for ($h = 8; $h <= 22; $h++): 
-                                $count = 0;
-                                foreach ($peakHoursData as $data) {
-                                    if ($data['day'] == $d && $data['hour'] == $h) {
-                                        $count = $data['count'];
-                                        break;
-                                    }
-                                }
-                                $intensity = $maxCount > 0 ? ($count / $maxCount) : 0;
-                                $opacity = 0.1 + ($intensity * 0.9);
-                                $bgColor = $count > 0 ? "background-color: rgba(11, 77, 157, $opacity);" : "background-color: #f1f5f9;";
-                            ?>
-                                <div class="w-10 h-10 rounded heatmap-cell flex items-center justify-center text-xs font-medium" 
-                                     style="<?php echo $bgColor; ?>"
-                                     title="<?php echo $days[$d - 1] . ' ' . $h . ':00 - ' . $count . ' bookings'; ?>">
-                                    <?php echo $count > 0 ? $count : ''; ?>
-                                </div>
-                            <?php endfor; ?>
-                        </div>
-                    <?php endfor; ?>
-                </div>
-            </div>
-            <div class="flex items-center justify-center gap-4 mt-4 text-xs text-gray-500">
-                <span>Less</span>
-                <div class="flex gap-1">
-                    <div class="w-6 h-6 rounded" style="background-color: rgba(11, 77, 157, 0.1);"></div>
-                    <div class="w-6 h-6 rounded" style="background-color: rgba(11, 77, 157, 0.3);"></div>
-                    <div class="w-6 h-6 rounded" style="background-color: rgba(11, 77, 157, 0.5);"></div>
-                    <div class="w-6 h-6 rounded" style="background-color: rgba(11, 77, 157, 0.7);"></div>
-                    <div class="w-6 h-6 rounded" style="background-color: rgba(11, 77, 157, 1);"></div>
-                </div>
-                <span>More</span>
-            </div>
-        <?php else: ?>
-            <p class="text-center text-gray-400 italic py-8">No peak hours data available</p>
-        <?php endif; ?>
-    </div>
+
 
     <!-- RECENT ACTIVITY TIMELINE -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden fade-in">

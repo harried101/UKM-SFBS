@@ -62,7 +62,8 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
 
         if ($totalBookings >= 3) {
             // Check against the 33% threshold (High Risk)
-            if ($cancelRate >= 33) { 
+            // AND ensure they have used up their minimum allowance of 2 (i.e., > 2 cancellations)
+            if ($cancelRate >= 33 && $totalCanceled > 2) { 
                 $status = 'High (Blocked)';
                 $color = 'red';
                 $message = 'Booking restricted. Monthly cancellation rate is too high (>33%).';
