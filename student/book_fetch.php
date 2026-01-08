@@ -43,7 +43,7 @@ try {
         $stmt = $conn->prepare($closure_sql);
         if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
         
-        $stmt->bind_param("is", $facilityID, $selectedDate);
+        $stmt->bind_param("ss", $facilityID, $selectedDate);
         $stmt->execute();
         $closure_res = $stmt->get_result();
         
