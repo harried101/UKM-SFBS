@@ -197,7 +197,8 @@ try {
 
         if ($stats['total'] >= 3) {
             $cancelRate = ($stats['canceled'] / $stats['total']) * 100;
-            if ($cancelRate > 33) {
+            // Only block if rate > 33% AND they have exceeded the minimum allowance of 2.
+            if ($cancelRate > 33 && $stats['canceled'] > 2) {
                 // Friendly Message
                 jsonResponse(false, "To ensure fair access for everyone, your booking privileges are paused for the rest of this month due to a high cancellation rate. You can book again next month!");
             }

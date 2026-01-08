@@ -82,7 +82,7 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
         // Formula: allowed < Total * 0.33
         // If they book more, they get more allowance.
         
-        $max_allowed = floor($totalBookings * 0.33); 
+        $max_allowed = max(2, floor($totalBookings * 0.33));
         
         // Safety Buffer: If total bookings < 3, we allow them to cancel until they hit the limit of 3 bookings.
         // But practically, if Total < 3, they are SAFE regardless of cancellations (as per our logic).
