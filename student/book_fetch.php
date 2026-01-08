@@ -60,7 +60,7 @@ try {
                       FROM facilityschedules 
                       WHERE FacilityID = ? AND DayOfWeek = ?";
         $stmt = $conn->prepare($sched_sql);
-        $stmt->bind_param("ii", $facilityID, $dayIndex);
+        $stmt->bind_param("si", $facilityID, $dayIndex);
         $stmt->execute();
         $sched_res = $stmt->get_result();
         

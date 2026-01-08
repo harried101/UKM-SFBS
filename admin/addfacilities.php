@@ -103,7 +103,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($stmt && $stmt->execute()) {
-            $conn->query("DELETE FROM facilityschedules WHERE FacilityID = '$id'");
+            // FIX: Use Prepared Statement to delete old schedules (Prevents 'Ghost' weekends)
+            $del = $conn->prepare("DELETE FROM facilityschedules WHERE FacilityID = ?");
+            $del->bind_param("s", $id);
+            $del->execute();
+            $del->close();
             $ins = $conn->prepare("INSERT INTO facilityschedules (FacilityID, DayOfWeek, OpenTime, CloseTime, SlotDuration) VALUES (?, ?, ?, ?, ?)");
             if (!empty($_POST['available_days'])) {
                 foreach ($_POST['available_days'] as $day) {
