@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             $ins->close();
-            $ins->close();
+          
             header("Location: addfacilities.php?id=$id&msg=" . urlencode($msg));
             exit();
         } else {
