@@ -74,8 +74,9 @@ while ($row = $res->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Manage Closures</title>
     
+      
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
@@ -116,7 +117,12 @@ while ($row = $res->fetch_assoc()) {
 $nav_active = 'facilities'; 
 include 'includes/navbar.php'; 
 ?>
+<style>
+        
+body { font-family: 'Inter', sans-serif; }
+h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
 
+</style>
 <!-- MAIN CONTENT -->
 <main class="flex-grow container mx-auto px-4 md:px-6 py-8 max-w-7xl fade-in">
 
