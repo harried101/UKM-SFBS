@@ -227,21 +227,31 @@ include 'includes/navbar.php';
   
   <script>
     // Custom Date Filter Function
-    $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex, rowData, counter) {
-            var selectedDate = $('#dateFilter').val();
-            if (!selectedDate) return true; // Show all if no date selected
+   $.fn.dataTable.ext.search.push(
+  function (settings, data, dataIndex, rowData) {
 
-            // rowData.SubmittedAt is the raw DB 'YYYY-MM-DD HH:MM:SS'
-            // We just need to check if it starts with the selected 'YYYY-MM-DD'
-            var rowDate = rowData.SubmittedAt; 
-            
-            if (rowDate && rowDate.startsWith(selectedDate)) {
-                return true;
-            }
-            return false;
-        }
-    );
+    // ===== DATE FILTER =====
+    const selectedDate = $('#dateFilter').val();
+    if (selectedDate) {
+      const rowDate = rowData.SubmittedAt; // YYYY-MM-DD HH:MM:SS
+      if (!rowDate || !rowDate.startsWith(selectedDate)) {
+        return false;
+      }
+    }
+
+    // ===== RATING FILTER =====
+    const selectedRating = $('#ratingFilter').val();
+    if (selectedRating) {
+      if (rowData.Rating != selectedRating) {
+        return false;
+      }
+    }
+
+    // Kalau lulus SEMUA filter
+    return true;
+  }
+);
+
 
     $(document).ready(function () {
       const table = $('#feedback').DataTable({
@@ -268,19 +278,31 @@ include 'includes/navbar.php';
                  return `<span class="font-medium text-slate-600">${data}</span>`;
                }
             },
-            { 
-                data: 'Rating',
-                render: function(data) {
-                    let stars = '';
-                    for(let i=0; i<data; i++) stars += '<i class="fa-solid fa-star text-yellow-400 text-[10px]"></i>';
-                    for(let i=data; i<5; i++) stars += '<i class="fa-regular fa-star text-slate-200 text-[10px]"></i>';
-                    
-                    return `<div class="flex items-center gap-2">
-                              <span class="font-bold text-slate-700 w-4 text-center">${data}</span>
-                              <div class="flex gap-0.5">${stars}</div>
-                            </div>`;
-                }
-            },
+            {
+  data: 'Rating',
+  render: function (data, type) {
+
+    // Untuk search & sort → return nilai nombor
+    if (type === 'sort' || type === 'filter') {
+      return data;
+    }
+
+    // Untuk paparan sahaja
+    let stars = '';
+    for (let i = 0; i < data; i++)
+      stars += '<i class="fa-solid fa-star text-yellow-400 text-[10px]"></i>';
+    for (let i = data; i < 5; i++)
+      stars += '<i class="fa-regular fa-star text-slate-200 text-[10px]"></i>';
+
+    return `
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-700 w-4 text-center">${data}</span>
+        <div class="flex gap-0.5">${stars}</div>
+      </div>`;
+  }
+}
+
+            ,
             { 
                data: 'Comment',
                render: function(data) {
@@ -334,9 +356,10 @@ include 'includes/navbar.php';
       });
 
       // Filter logic for Rating (Exact match)
-      $('#ratingFilter').on('change', function () {
-        table.column(2).search(this.value ? '^'+this.value+'$' : '', true, false).draw();
-      });
+     $('#ratingFilter').on('change', function () {
+  table.draw();
+});
+
     });
   </script>
 <?php include 'includes/footer.php'; ?>
