@@ -12,13 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $firstName = trim($_POST['firstName']);
     $lastName = trim($_POST['lastName']);
     $pass = $_POST['password'];
-    $secretKey = $_POST['secret_key'] ?? '';
-    // HARDCODED SECRET KEY (Change this!)
-    $REQUIRED_KEY = 'UKM_SPORT_ADMIN_2025'; 
 
-    if ($secretKey !== $REQUIRED_KEY) {
-        $message = '<div class="alert alert-danger">Invalid Secret Key. Authorization failed.</div>';
-    } elseif (empty($id) || empty($email) || empty($pass)) {
+    if (empty($id) || empty($email) || empty($pass)) {
         $message = '<div class="alert alert-danger">Please fill in all required fields.</div>';
     } else {
         // Determine Role
@@ -91,10 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="mb-3">
             <label class="form-label">Password *</label>
             <input type="password" name="password" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Secret Key (Required)</label>
-            <input type="password" name="secret_key" class="form-control" required placeholder="Enter Secret Key">
         </div>
         <button type="submit" class="btn btn-primary w-100">Create User</button>
     </form>
