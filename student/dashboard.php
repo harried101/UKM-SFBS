@@ -302,21 +302,15 @@ const CARD_ELEMENTS = {
 };
 
 // Tailwind Class Mapping based on status_color from PHP API
-// This is used to override the hardcoded colors (red/amber) with the correct status colors
 const STATUS_CLASSES = {
-    // Low Rate (Good)
     'green': { tagBg: 'bg-green-100', tagText: 'text-green-700', barBg: 'bg-green-500', scoreText: 'text-green-600' },
-    // Moderate Rate (Warning)
     'amber': { tagBg: 'bg-amber-100', tagText: 'text-amber-700', barBg: 'bg-amber-500', scoreText: 'text-amber-600' },
-    // High Rate (Risk)
     'red': { tagBg: 'bg-red-100', tagText: 'text-red-700', barBg: 'bg-red-600', scoreText: 'text-red-600' }
 };
 
-// Helper to clear old CSS classes (e.g., removes the default red color before adding green)
 function resetClasses(element, prefix) {
     const classes = Array.from(element.classList);
     classes.forEach(cls => {
-        // Remove all classes that start with the prefix (e.g., 'text-', 'bg-')
         if (cls.startsWith(prefix)) {
             element.classList.remove(cls);
         }
@@ -325,7 +319,6 @@ function resetClasses(element, prefix) {
 
 async function fetchCancellationHealth() {
     if (!CARD_ELEMENTS.rateValue) return; 
-
     try {
         const response = await fetch('/UKM-SFBS/student/API/fetch_cancellation_health.php'); 
         const result = await response.json();
@@ -336,39 +329,41 @@ async function fetchCancellationHealth() {
             const classes = STATUS_CLASSES[color] || STATUS_CLASSES['green']; 
 
             // --- 1. Update Rate Percentage ---
+            // Display PERCENTAGE for context, but focus on QUOTA in message
             CARD_ELEMENTS.rateValue.textContent = `${data.rate_value}%`; 
-            // Reset and apply new text color
             resetClasses(CARD_ELEMENTS.rateValue, 'text-');
             CARD_ELEMENTS.rateValue.classList.add(classes.scoreText, 'drop-shadow-lg'); 
 
             // --- 2. Update Status Tag ---
-            CARD_ELEMENTS.tag.textContent = data.rate_status;
-            // Reset and apply new background and text color
+            // If we have a quota number, show that instead of generic "Low/High"
+            if (typeof data.cancellations_remaining === 'number') {
+                 CARD_ELEMENTS.tag.textContent = `${data.cancellations_remaining} Free Cancels Left`;
+            } else {
+                 CARD_ELEMENTS.tag.textContent = data.cancellations_remaining; // "Safe (Low Activity)"
+            }
+            
             resetClasses(CARD_ELEMENTS.tag, 'bg-');
             resetClasses(CARD_ELEMENTS.tag, 'text-');
             CARD_ELEMENTS.tag.classList.add(classes.tagBg, classes.tagText);
 
             // --- 3. Update Status Message ---
-            CARD_ELEMENTS.message.textContent = data.message;
+            // Use the friendly quota message
+            CARD_ELEMENTS.message.textContent = data.quota_message;
 
             // --- 4. Update Progress Bar ---
-            // Ensure the width does not exceed 100%
             const barWidth = Math.min(data.rate_value, 100);
             CARD_ELEMENTS.bar.style.width = `${barWidth}%`; 
-            // Reset and apply new bar color
             resetClasses(CARD_ELEMENTS.bar, 'bg-');
             CARD_ELEMENTS.bar.classList.add(classes.barBg);
 
         } else {
             CARD_ELEMENTS.message.textContent = `Error: ${result.data ? result.data.message : 'Failed to fetch rate data.'}`;
             CARD_ELEMENTS.tag.textContent = 'Error';
-            console.error('API Error:', result);
         }
 
     } catch (error) {
         CARD_ELEMENTS.message.textContent = 'Network or Server connection error.';
         CARD_ELEMENTS.tag.textContent = 'Network Error';
-        console.error('Fetch Error:', error);
     }
 }
 

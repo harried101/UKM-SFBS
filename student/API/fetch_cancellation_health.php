@@ -77,15 +77,43 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
             $message = 'Not enough data yet. Your account is in good standing.';
         }
 
+        // ---------- Quota Calculation (User Friendly) ----------
+        // Max cancellations allowed before hitting > 33% (given CURRENT total bookings)
+        // Formula: allowed < Total * 0.33
+        // If they book more, they get more allowance.
+        
+        $max_allowed = floor($totalBookings * 0.33); 
+        
+        // Safety Buffer: If total bookings < 3, we allow them to cancel until they hit the limit of 3 bookings.
+        // But practically, if Total < 3, they are SAFE regardless of cancellations (as per our logic).
+        // So we can display a "Safe Mode" message or a virtual quota.
+        // Let's set a virtual quota of 2 for new users (since 3rd booking activates check).
+        
+        if ($totalBookings < 3) {
+            $cancellations_remaining = "Safe (Low Activity)";
+            $quota_message = "You are in the safety period. You can make up to 3 bookings before cancellation rate applies.";
+        } else {
+            $remaining = $max_allowed - $totalCanceled;
+            $cancellations_remaining = max(0, $remaining);
+            $quota_message = "You have $cancellations_remaining free cancellation(s) remaining for this month.";
+            
+            if ($is_blocked) {
+                $cancellations_remaining = 0;
+                $quota_message = "You have exceeded your cancellation limit.";
+            }
+        }
+
         // ---------- Return Array ----------
         return [
-            'total_monthly'     => $totalBookings, // key changed from weekly
-            'canceled_monthly'  => $totalCanceled, // key changed from weekly
+            'total_monthly'     => $totalBookings, 
+            'canceled_monthly'  => $totalCanceled,
             'rate_value'        => $cancelRate,
             'rate_status'       => $status,
             'status_color'      => $color,
             'message'           => $message,
-            'is_blocked'        => $is_blocked
+            'is_blocked'        => $is_blocked,
+            'cancellations_remaining' => $cancellations_remaining, // NEW
+            'quota_message'     => $quota_message // NEW
         ];
 
     } catch (Exception $e) {
