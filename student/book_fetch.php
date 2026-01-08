@@ -178,18 +178,19 @@ try {
         }
 
         // ==========================================
-        // CHECK CANCELLATION RATE
+        // CHECK CANCELLATION RATE (MONTHLY)
         // ==========================================
-        $weekMode = 1;
+        // $weekMode = 1; // Removed
         $statsSql = "SELECT 
                         COUNT(*) as total,
                         SUM(CASE WHEN Status = 'Canceled' THEN 1 ELSE 0 END) as canceled
                      FROM bookings 
                      WHERE UserID = ? 
-                     AND YEARWEEK(StartTime, ?) = YEARWEEK(NOW(), ?)";
+                     AND MONTH(StartTime) = MONTH(NOW())
+                     AND YEAR(StartTime) = YEAR(NOW())";
         
         $statsStmt = $conn->prepare($statsSql);
-        $statsStmt->bind_param("iii", $userID, $weekMode, $weekMode);
+        $statsStmt->bind_param("i", $userID);
         $statsStmt->execute();
         $stats = $statsStmt->get_result()->fetch_assoc();
         $statsStmt->close();
@@ -197,7 +198,7 @@ try {
         if ($stats['total'] >= 3) {
             $cancelRate = ($stats['canceled'] / $stats['total']) * 100;
             if ($cancelRate > 33) {
-                jsonResponse(false, "Booking Blocked: Your weekly cancellation rate is " . round($cancelRate) . "%. You cannot book new slots until next week.");
+                jsonResponse(false, "Booking Blocked: Your monthly cancellation rate is " . round($cancelRate) . "%. You cannot book new slots until next month.");
             }
         }
 

@@ -27,8 +27,8 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
 
         $uid = (int)$userRow['UserID'];
 
-        // ---------- Weekly Booking Stats (Based on existing logic: ISO week, Monday start) ----------
-        $weekMode = 1;
+        // ---------- Monthly Booking Stats (Modified to Monthly) ----------
+        // $weekMode = 1; // Removed
 
         $sql = "
             SELECT 
@@ -36,11 +36,12 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
                 SUM(CASE WHEN Status = 'Canceled' THEN 1 ELSE 0 END) AS total_canceled
             FROM bookings
             WHERE UserID = ?
-            AND YEARWEEK(StartTime, ?) = YEARWEEK(NOW(), ?)
+            AND MONTH(StartTime) = MONTH(NOW()) 
+            AND YEAR(StartTime) = YEAR(NOW())
         ";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $uid, $weekMode, $weekMode);
+        $stmt->bind_param("i", $uid);
         $stmt->execute();
         $stats = $stmt->get_result()->fetch_assoc();
         $stmt->close();
@@ -64,7 +65,7 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
             if ($cancelRate >= 33) { 
                 $status = 'High (Blocked)';
                 $color = 'red';
-                $message = 'Booking restricted. Weekly cancellation rate is too high (>33%).';
+                $message = 'Booking restricted. Monthly cancellation rate is too high (>33%).';
                 $is_blocked = true;
             } elseif ($cancelRate >= 15) { 
                 // Moderate Risk
@@ -78,8 +79,8 @@ function get_cancellation_stats_internal($conn, $studentIdentifier) {
 
         // ---------- Return Array ----------
         return [
-            'total_weekly'      => $totalBookings,
-            'canceled_weekly'   => $totalCanceled,
+            'total_monthly'     => $totalBookings, // key changed from weekly
+            'canceled_monthly'  => $totalCanceled, // key changed from weekly
             'rate_value'        => $cancelRate,
             'rate_status'       => $status,
             'status_color'      => $color,
