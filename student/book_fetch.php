@@ -194,7 +194,7 @@ try {
         $stats = $statsStmt->get_result()->fetch_assoc();
         $statsStmt->close();
 
-        if ($stats['total'] > 0) {
+        if ($stats['total'] >= 3) {
             $cancelRate = ($stats['canceled'] / $stats['total']) * 100;
             if ($cancelRate > 33) {
                 jsonResponse(false, "Booking Blocked: Your weekly cancellation rate is " . round($cancelRate) . "%. You cannot book new slots until next week.");
