@@ -23,6 +23,31 @@ function jsonResponse($success, $message, $data = []) {
 }
 
 try {
+    // --- 0. NEW: Fetch Facility Closed Days (for Calendar) ---
+    if (isset($_GET['get_closed_days'])) {
+        $facilityID = $_GET['facility_id'] ?? '';
+        if (!$facilityID) jsonResponse(false, 'Missing ID');
+
+        // Fetch all OPEN days (DayOfWeek) from schedule
+        $stmt = $conn->prepare("SELECT DayOfWeek FROM facilityschedules WHERE FacilityID = ?");
+        $stmt->bind_param("s", $facilityID);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        $openDays = [];
+        while ($row = $res->fetch_assoc()) {
+            $openDays[] = (int)$row['DayOfWeek'];
+        }
+        $stmt->close();
+
+        // Calculate CLOSED days (0-6)
+        // 0=Sun, 1=Mon, ..., 6=Sat
+        $allDays = [0, 1, 2, 3, 4, 5, 6];
+        $closedDays = array_diff($allDays, $openDays);
+
+        jsonResponse(true, 'Days fetched', ['closed_days' => array_values($closedDays)]);
+    }
+
     // --- 1. GET REQUEST: Fetch Dynamic Slots ---
     if (isset($_GET['get_slots'])) {
         

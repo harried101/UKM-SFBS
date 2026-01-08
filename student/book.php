@@ -215,6 +215,21 @@ if ($facility_id) {
         const confirmBookingBtn = document.getElementById('confirmBookingBtn');
         const legend = document.getElementById('legend');
 
+        // --- PRELOAD: Fetch Closed Days for this Facility ---
+        let closedDaysOfWeek = []; // Stores indices of closed days (e.g. [0, 6] for Sun/Sat)
+
+        function loadFacilitySettings() {
+            fetch(`book_fetch.php?get_closed_days=1&facility_id=${facilityId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        closedDaysOfWeek = data.closed_days || [];
+                        renderCalendar(currMonth, currYear); // Re-render with new data
+                    }
+                })
+                .catch(err => console.error("Failed to load schedule", err));
+        }
+
         // --- CALENDAR FUNCTIONS (Renders all days as disabled if blocked) ---
         function renderCalendar(month, year) {
             calendarGrid.innerHTML = "";
@@ -237,9 +252,19 @@ if ($facility_id) {
                 dateDiv.className = "calendar-day h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium";
                 
                 const checkDate = new Date(year, month, day);
+                const dayOfWeek = checkDate.getDay();
 
-                if (checkDate < today || isBlocked) { // DISABLE if date is past OR student is blocked
+                // DISABLE conditions:
+                // 1. Past date
+                // 2. User is blocked (bad health)
+                // 3. Facility is closed on this day (NEW)
+                if (checkDate < today || isBlocked || closedDaysOfWeek.includes(dayOfWeek)) { 
                     dateDiv.classList.add('disabled');
+                    // Optional: Visual cue for closed facility days vs just past dates
+                    if (closedDaysOfWeek.includes(dayOfWeek) && checkDate >= today) {
+                        dateDiv.style.opacity = '0.4'; 
+                        dateDiv.title = "Facility Closed";
+                    }
                 } else {
                     dateDiv.onclick = () => selectDate(day, month, year, dateDiv);
                 }
@@ -251,6 +276,9 @@ if ($facility_id) {
                 calendarGrid.appendChild(dateDiv);
             }
         }
+        
+        // Initial Load
+        loadFacilitySettings();
 
 
         function selectDate(day, month, year, element) {
