@@ -30,7 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $updateStmt->bind_param("sss", $token, $expiry, $email);
                     if ($updateStmt->execute()) {
                         // SIMULATE EMAIL SENDING
-                        $resetLink = "http://localhost/UKM-SFBS/reset_password.php?token=" . $token;
+                        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+                        $host = $_SERVER['HTTP_HOST'];
+                        $path = dirname($_SERVER['PHP_SELF']); // Current directory
+                        // If path is root '/', dirname returns '\' on windows or '/' on linux, handle carefully:
+                        // A safer way for this specific structure:
+                        // If we are at root, we just want http://domain/reset_password.php
+                        // If we are at /UKM-SFBS/, we want http://domain/UKM-SFBS/reset_password.php
+                        
+                        $resetLink = $protocol . "://" . $host . $path . "/reset_password.php?token=" . $token;
                         $message = '<div class="alert alert-success">A reset link has been sent to your email (Simulated).</div>';
                         $link = '<div class="alert alert-info"><strong>SIMULATION:</strong><br>Click here to reset: <a href="' . $resetLink . '">' . $resetLink . '</a></div>';
                     } else {

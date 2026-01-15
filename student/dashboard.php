@@ -320,7 +320,7 @@ function resetClasses(element, prefix) {
 async function fetchCancellationHealth() {
     if (!CARD_ELEMENTS.rateValue) return; 
     try {
-        const response = await fetch('/UKM-SFBS/student/API/fetch_cancellation_health.php'); 
+        const response = await fetch('API/fetch_cancellation_health.php'); 
         const result = await response.json();
 
         if (result.success && result.data) {
