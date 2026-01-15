@@ -117,18 +117,20 @@ if ($facility_id) {
         <form id="bookingForm" action="book_walkin_fetch.php" method="POST" class="hidden mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2 fade-in">
             <input type="hidden" name="facility_id" value="<?php echo htmlspecialchars($facility_id); ?>" />
             <input type="hidden" name="start_time" id="hiddenStartTime" />
-            
-            <div class="mb-4">
-                <label class="block text-sm font-bold text-[#071239] mb-2">Student ID (Required)</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                        <i class="fa-solid fa-id-card"></i>
-                    </span>
-                    <input type="text" name="student_id" required placeholder="e.g. A123456" 
-                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#071239] focus:border-transparent uppercase font-medium text-[#071239]">
-                </div>
-                <p class="text-xs text-gray-500 mt-1">Enter the student's matric number.</p>
-            </div>
+          <div class="mb-4">
+    <label class="block text-sm font-bold text-[#071239] mb-2">
+        Student ID <span class="text-red-600">(Required)</span>
+    </label>
+    
+    <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+            <i class="fa-solid fa-id-card"></i>
+        </span>
+        <input type="text" name="student_id" required placeholder="e.g. A123456" 
+               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#071239] focus:border-transparent uppercase font-medium text-[#071239]">
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Enter the student's matric number.</p>
+</div>
 
             <div class="flex justify-between items-center mb-4 text-sm">
                 <span class="text-gray-500">Selected Time:</span>
