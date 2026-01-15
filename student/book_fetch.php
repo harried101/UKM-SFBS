@@ -130,7 +130,7 @@ try {
                    AND DATE(StartTime) = ? 
                    AND Status IN ('Approved', 'Pending', 'Confirmed')";
         $stmt = $conn->prepare($bk_sql);
-        $stmt->bind_param("is", $facilityID, $selectedDate);
+        $stmt->bind_param("ss", $facilityID, $selectedDate);
         $stmt->execute();
         $bk_res = $stmt->get_result();
         
